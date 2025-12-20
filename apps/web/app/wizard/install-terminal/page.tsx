@@ -8,6 +8,7 @@ import { CommandCard } from "@/components/command-card";
 import { AlertCard } from "@/components/alert-card";
 import { cn } from "@/lib/utils";
 import { markStepComplete } from "@/lib/wizardSteps";
+import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useUserOS, useMounted } from "@/lib/userPreferences";
 import {
   SimplerGuide,
@@ -308,6 +309,13 @@ export default function InstallTerminalPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const mounted = useMounted();
 
+  // Analytics tracking for this wizard step
+  const { markComplete } = useWizardAnalytics({
+    step: "install_terminal",
+    stepNumber: 2,
+    stepTitle: "Install Terminal",
+  });
+
   // Redirect if no OS selected (after hydration)
   useEffect(() => {
     if (mounted && os === null) {
@@ -316,10 +324,11 @@ export default function InstallTerminalPage() {
   }, [mounted, os, router]);
 
   const handleContinue = useCallback(() => {
+    markComplete({ selected_os: os });
     markStepComplete(2);
     setIsNavigating(true);
     router.push("/wizard/generate-ssh-key");
-  }, [router]);
+  }, [router, os, markComplete]);
 
   // Show loading state while detecting OS or during SSR
   if (!mounted || !os) {
