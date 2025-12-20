@@ -10,9 +10,14 @@ function subscribe(callback: () => void) {
   const mediaQuery = window.matchMedia(PREFERS_REDUCED_MOTION_QUERY);
   const handler = () => callback();
 
-  // Modern API (all current browsers)
-  mediaQuery.addEventListener("change", handler);
-  return () => mediaQuery.removeEventListener("change", handler);
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }
+
+  // Deprecated fallback (Safari < 14).
+  mediaQuery.addListener(handler);
+  return () => mediaQuery.removeListener(handler);
 }
 
 function getSnapshot() {

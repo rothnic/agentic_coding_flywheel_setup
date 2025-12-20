@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { markStepComplete } from "@/lib/wizardSteps";
 import {
+  SimplerGuide,
+  GuideSection,
+  GuideExplain,
+  GuideTip,
+} from "@/components/simpler-guide";
+import {
   useUserOS,
   useDetectedOS,
   type OperatingSystem,
@@ -173,6 +179,51 @@ export default function OSSelectionPage() {
           <span className="font-medium text-foreground">Tip:</span> Your operating system was automatically detected. Click to confirm or select the other option.
         </p>
       </div>
+
+      {/* Simpler Guide for beginners */}
+      <SimplerGuide>
+        <div className="space-y-6">
+          <GuideSection title="What is this asking?">
+            <p>
+              We need to know what type of computer you&apos;re using so we can show you
+              the right instructions. Different computers need slightly different steps.
+            </p>
+          </GuideSection>
+
+          <GuideExplain term="Operating System">
+            An operating system (or &quot;OS&quot;) is the main software that runs your
+            computer. It&apos;s like the foundation that everything else runs on top of.
+            <br /><br />
+            <strong>Mac</strong> = Apple computers (MacBook, iMac, Mac Mini, Mac Studio).
+            If you see an Apple logo  when your computer starts, you have a Mac.
+            <br /><br />
+            <strong>Windows</strong> = Most non-Apple computers (Dell, HP, Lenovo, etc.).
+            If you see a Windows logo (four colored squares) when your computer starts,
+            you have Windows.
+          </GuideExplain>
+
+          <GuideSection title="How do I know which one I have?">
+            <ul className="list-disc space-y-2 pl-5">
+              <li>
+                <strong>Mac:</strong> Look at the top-left corner of your screen. Do you
+                see an Apple icon ()? Click it and select &quot;About This Mac&quot; —
+                it will say something like &quot;macOS Sonoma&quot; or &quot;macOS Ventura&quot;.
+              </li>
+              <li>
+                <strong>Windows:</strong> Look at the bottom-left corner of your screen.
+                Do you see a Windows icon (four blue squares)? That means you have Windows.
+                You can also press the Windows key on your keyboard (between Ctrl and Alt).
+              </li>
+            </ul>
+          </GuideSection>
+
+          <GuideTip>
+            We already tried to detect your computer type automatically! Look at the card
+            above that says &quot;Detected&quot; — that&apos;s probably correct. Just click
+            on it to confirm, then click &quot;Continue&quot;.
+          </GuideTip>
+        </div>
+      </SimplerGuide>
 
       {/* Continue button */}
       <div className="flex justify-end pt-4">

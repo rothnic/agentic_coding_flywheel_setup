@@ -8,6 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { safeGetJSON, safeSetJSON } from "./utils";
 
 export interface WizardStep {
   /** Step number (1-10) */
@@ -106,24 +107,21 @@ export const wizardStepsKeys = {
 
 /** Get completed steps from localStorage */
 export function getCompletedSteps(): number[] {
-  if (typeof window === "undefined") return [];
-  const stored = localStorage.getItem(COMPLETED_STEPS_KEY);
-  if (!stored) return [];
-  try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed)) {
-      return parsed.filter((n): n is number => typeof n === "number");
-    }
-  } catch {
-    // Invalid JSON, ignore
+  const parsed = safeGetJSON<unknown[]>(COMPLETED_STEPS_KEY);
+  if (Array.isArray(parsed)) {
+    // Filter to only valid step numbers (1-10)
+    return parsed.filter(
+      (n): n is number => typeof n === "number" && n >= 1 && n <= TOTAL_STEPS
+    );
   }
   return [];
 }
 
 /** Save completed steps to localStorage */
 export function setCompletedSteps(steps: number[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(COMPLETED_STEPS_KEY, JSON.stringify(steps));
+  // Validate steps before saving
+  const validSteps = steps.filter((n) => n >= 1 && n <= TOTAL_STEPS);
+  safeSetJSON(COMPLETED_STEPS_KEY, validSteps);
 }
 
 /** Mark a step as completed (pure function, returns new array) */

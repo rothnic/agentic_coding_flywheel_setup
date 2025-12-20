@@ -7,6 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { safeGetItem, safeSetItem } from "./utils";
 
 export type OperatingSystem = "mac" | "windows";
 
@@ -24,8 +25,7 @@ export const userPreferencesKeys = {
  * Get the user's selected operating system from localStorage.
  */
 export function getUserOS(): OperatingSystem | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(OS_KEY);
+  const stored = safeGetItem(OS_KEY);
   if (stored === "mac" || stored === "windows") {
     return stored;
   }
@@ -36,8 +36,7 @@ export function getUserOS(): OperatingSystem | null {
  * Save the user's operating system selection to localStorage.
  */
 export function setUserOS(os: OperatingSystem): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(OS_KEY, os);
+  safeSetItem(OS_KEY, os);
 }
 
 /**
@@ -57,16 +56,19 @@ export function detectOS(): OperatingSystem | null {
  * Get the user's VPS IP address from localStorage.
  */
 export function getVPSIP(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(VPS_IP_KEY);
+  return safeGetItem(VPS_IP_KEY);
 }
 
 /**
  * Save the user's VPS IP address to localStorage.
+ * Only saves if the IP is valid to prevent storing malformed data.
+ * Returns true if saved successfully, false otherwise.
  */
-export function setVPSIP(ip: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(VPS_IP_KEY, ip);
+export function setVPSIP(ip: string): boolean {
+  if (!isValidIP(ip)) {
+    return false;
+  }
+  return safeSetItem(VPS_IP_KEY, ip);
 }
 
 /**

@@ -3,6 +3,8 @@
  * Comprehensive GA4 instrumentation for deep user insights
  */
 
+import { safeGetItem, safeSetItem, safeGetJSON, safeSetJSON } from './utils';
+
 // Types for GA4 events
 declare global {
   interface Window {
@@ -26,10 +28,10 @@ export const isAnalyticsEnabled = (): boolean => {
 // Get or create a persistent client ID for server-side tracking
 const getClientId = (): string => {
   if (typeof window === 'undefined') return '';
-  let clientId = localStorage.getItem('ga_client_id');
+  let clientId = safeGetItem('ga_client_id');
   if (!clientId) {
     clientId = `${Date.now()}.${Math.random().toString(36).slice(2, 11)}`;
-    localStorage.setItem('ga_client_id', clientId);
+    safeSetItem('ga_client_id', clientId);
   }
   return clientId;
 };
@@ -435,11 +437,11 @@ export const getOrCreateUserId = (): string => {
   if (typeof window === 'undefined') return '';
 
   const storageKey = 'acfs_user_id';
-  let userId = localStorage.getItem(storageKey);
+  let userId = safeGetItem(storageKey);
 
   if (!userId) {
     userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-    localStorage.setItem(storageKey, userId);
+    safeSetItem(storageKey, userId);
 
     sendEvent('new_user_created', {
       user_id: userId,
@@ -516,13 +518,7 @@ interface FunnelData {
  */
 export const getFunnelData = (): FunnelData | null => {
   if (typeof window === 'undefined') return null;
-
-  try {
-    const stored = localStorage.getItem(FUNNEL_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
+  return safeGetJSON<FunnelData>(FUNNEL_STORAGE_KEY);
 };
 
 /**
@@ -558,7 +554,7 @@ export const initFunnel = (): FunnelData => {
     campaign: params.get('utm_campaign') || 'none',
   };
 
-  localStorage.setItem(FUNNEL_STORAGE_KEY, JSON.stringify(funnelData));
+  safeSetJSON(FUNNEL_STORAGE_KEY, funnelData);
 
   // Track funnel initiation
   sendEvent('funnel_initiated', {
