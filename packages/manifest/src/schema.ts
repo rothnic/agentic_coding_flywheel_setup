@@ -11,7 +11,7 @@ import { z } from 'zod';
 export const ManifestDefaultsSchema = z.object({
   user: z.string().min(1, 'User cannot be empty'),
   workspace_root: z.string().min(1, 'Workspace root cannot be empty'),
-  mode: z.enum(['vibe', 'standard']).default('vibe'),
+  mode: z.enum(['vibe', 'safe']).default('vibe'),
 });
 
 /**

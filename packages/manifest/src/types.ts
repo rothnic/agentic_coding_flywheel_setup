@@ -12,7 +12,7 @@ export interface ManifestDefaults {
   /** Root directory for projects workspace */
   workspace_root: string;
   /** Installation mode (vibe = passwordless sudo, full permissions) */
-  mode: 'vibe' | 'standard';
+  mode: 'vibe' | 'safe';
 }
 
 /**

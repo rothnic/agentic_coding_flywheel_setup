@@ -72,7 +72,13 @@ export function parseManifestFile(yamlPath: string): ParseResult<Manifest> {
  *   user: ubuntu
  *   workspace_root: /data/projects
  *   mode: vibe
- * modules: []
+ * modules:
+ *   - id: base.system
+ *     description: Base packages
+ *     install:
+ *       - sudo apt-get update -y
+ *     verify:
+ *       - curl --version
  * `;
  * const result = parseManifestString(yaml);
  * ```
