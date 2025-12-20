@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Installer - Post-Install Smoke Test
 # Fast verification that runs at the end of install.sh

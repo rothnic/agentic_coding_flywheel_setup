@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Installer - Cloud & Database Tools Library
 # Installs PostgreSQL, HashiCorp Vault, and Cloud CLIs
@@ -50,9 +51,36 @@ _cloud_run_as_user() {
 
     if [[ "$(whoami)" == "$target_user" ]]; then
         bash -c "$cmd"
-    else
-        $(_cloud_get_sudo) -u "$target_user" -H bash -c "$cmd"
+        return $?
     fi
+
+    if command -v sudo &>/dev/null; then
+        sudo -u "$target_user" -H bash -c "$cmd"
+        return $?
+    fi
+
+    if command -v runuser &>/dev/null; then
+        runuser -u "$target_user" -- bash -c "$cmd"
+        return $?
+    fi
+
+    su - "$target_user" -c "bash -c $(printf %q "$cmd")"
+}
+
+_cloud_run_as_postgres() {
+    local cmd="$1"
+
+    if [[ $EUID -eq 0 ]]; then
+        if command -v runuser &>/dev/null; then
+            runuser -u postgres -- bash -c "$cmd"
+            return $?
+        fi
+
+        su - postgres -c "bash -c $(printf %q "$cmd")"
+        return $?
+    fi
+
+    sudo -u postgres -H bash -c "$cmd"
 }
 
 # Get bun binary path for target user
@@ -132,26 +160,24 @@ install_postgresql() {
 
 # Configure PostgreSQL for development use
 configure_postgresql() {
-    local sudo_cmd
-    sudo_cmd=$(_cloud_get_sudo)
     local target_user="${TARGET_USER:-ubuntu}"
 
     log_detail "Configuring PostgreSQL for development..."
 
     # Create role for target user if it doesn't exist
-    if $sudo_cmd -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$target_user'" 2>/dev/null | grep -q 1; then
+    if _cloud_run_as_postgres "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='$target_user'\" | grep -q 1"; then
         log_detail "PostgreSQL role '$target_user' already exists"
     else
         log_detail "Creating PostgreSQL role '$target_user'..."
-        $sudo_cmd -u postgres createuser -s "$target_user" 2>/dev/null || true
+        _cloud_run_as_postgres "createuser -s '$target_user'" 2>/dev/null || true
     fi
 
     # Create database for target user if it doesn't exist
-    if $sudo_cmd -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='$target_user'" 2>/dev/null | grep -q 1; then
+    if _cloud_run_as_postgres "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='$target_user'\" | grep -q 1"; then
         log_detail "PostgreSQL database '$target_user' already exists"
     else
         log_detail "Creating PostgreSQL database '$target_user'..."
-        $sudo_cmd -u postgres createdb "$target_user" 2>/dev/null || true
+        _cloud_run_as_postgres "createdb '$target_user'" 2>/dev/null || true
     fi
 
     log_success "PostgreSQL configured for $target_user"

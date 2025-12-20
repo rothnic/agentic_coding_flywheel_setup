@@ -1,0 +1,78 @@
+name: Installer CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'install.sh'
+      - 'scripts/**'
+      - '.github/workflows/installer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'install.sh'
+      - 'scripts/**'
+      - '.github/workflows/installer.yml'
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          mapfile -t files < <(git ls-files '*.sh')
+          shellcheck "${files[@]}"
+
+  test-installer:
+    name: Test installer (Ubuntu ${{ matrix.ubuntu }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ['24.04', '25.04']
+    container:
+      image: ubuntu:${{ matrix.ubuntu }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Install container prerequisites
+        working-directory: /
+        run: |
+          apt-get update
+          apt-get install -y sudo curl git ca-certificates jq unzip tar xz-utils gnupg
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run installer
+        run: |
+          bash install.sh --yes --mode vibe
+
+      - name: Run doctor
+        run: |
+          su - ubuntu -c "zsh -ic 'acfs doctor'"
+
+      - name: Verify key tools
+        run: |
+          su - ubuntu -c "zsh -ic 'ntm --help'"
+          su - ubuntu -c "zsh -ic 'ubs --help'"
+          su - ubuntu -c "zsh -ic 'bv --help'"
+          su - ubuntu -c "zsh -ic 'cass --help'"
+          su - ubuntu -c "zsh -ic 'cm --help'"
+          su - ubuntu -c "zsh -ic 'caam --help'"
+          su - ubuntu -c "zsh -ic 'slb --help'"
+          su - ubuntu -c "zsh -ic 'onboard --help'"
+          su - ubuntu -c "zsh -ic 'claude --version'"
+          su - ubuntu -c "zsh -ic 'codex --version'"
+          su - ubuntu -c "zsh -ic 'gemini --version'"

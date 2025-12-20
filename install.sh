@@ -22,10 +22,10 @@ set -euo pipefail
 # Configuration
 # ============================================================
 ACFS_VERSION="0.1.0"
-ACFS_REPO="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
 ACFS_RAW="https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main"
 # Note: ACFS_HOME is set after TARGET_HOME is determined
 ACFS_LOG_DIR="/var/log/acfs"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default options
 YES_MODE=false
@@ -47,7 +47,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 GRAY='\033[0;90m'
-PINK='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Check if gum is available for enhanced UI
@@ -62,7 +61,6 @@ ACFS_SUCCESS="#a6e3a1"
 ACFS_WARNING="#f9e2af"
 ACFS_ERROR="#f38ba8"
 ACFS_MUTED="#6c7086"
-ACFS_ACCENT="#cba6f7"
 
 # ============================================================
 # ASCII Art Banner
@@ -84,7 +82,7 @@ print_banner() {
 '
 
     if [[ "$HAS_GUM" == "true" ]]; then
-        echo "$banner" | gum style --foreground "$ACFS_PRIMARY" --bold
+        echo "$banner" | gum style --foreground "$ACFS_PRIMARY" --bold >&2
     else
         echo -e "${BLUE}$banner${NC}"
     fi
@@ -95,9 +93,9 @@ print_banner() {
 # ============================================================
 log_step() {
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum style --foreground "$ACFS_PRIMARY" --bold "[$1]" | tr -d '\n'
-        echo -n " "
-        gum style "$2"
+        gum style --foreground "$ACFS_PRIMARY" --bold "[$1]" | tr -d '\n' >&2
+        echo -n " " >&2
+        gum style "$2" >&2
     else
         echo -e "${BLUE}[$1]${NC} $2" >&2
     fi
@@ -105,7 +103,7 @@ log_step() {
 
 log_detail() {
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum style --foreground "$ACFS_MUTED" --margin "0 0 0 4" "→ $1"
+        gum style --foreground "$ACFS_MUTED" --margin "0 0 0 4" "→ $1" >&2
     else
         echo -e "${GRAY}    → $1${NC}" >&2
     fi
@@ -113,7 +111,7 @@ log_detail() {
 
 log_success() {
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum style --foreground "$ACFS_SUCCESS" --bold "✓ $1"
+        gum style --foreground "$ACFS_SUCCESS" --bold "✓ $1" >&2
     else
         echo -e "${GREEN}✓ $1${NC}" >&2
     fi
@@ -121,7 +119,7 @@ log_success() {
 
 log_warn() {
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum style --foreground "$ACFS_WARNING" "⚠ $1"
+        gum style --foreground "$ACFS_WARNING" "⚠ $1" >&2
     else
         echo -e "${YELLOW}⚠ $1${NC}" >&2
     fi
@@ -129,7 +127,7 @@ log_warn() {
 
 log_error() {
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum style --foreground "$ACFS_ERROR" --bold "✖ $1"
+        gum style --foreground "$ACFS_ERROR" --bold "✖ $1" >&2
     else
         echo -e "${RED}✖ $1${NC}" >&2
     fi
@@ -211,6 +209,17 @@ command_exists() {
     command -v "$1" &>/dev/null
 }
 
+install_asset() {
+    local rel_path="$1"
+    local dest_path="$2"
+
+    if [[ -f "$SCRIPT_DIR/$rel_path" ]]; then
+        cp "$SCRIPT_DIR/$rel_path" "$dest_path"
+    else
+        curl -fsSL "$ACFS_RAW/$rel_path" -o "$dest_path"
+    fi
+}
+
 run_as_target() {
     local user="$TARGET_USER"
 
@@ -245,6 +254,28 @@ ensure_root() {
     else
         SUDO=""
     fi
+}
+
+confirm_or_exit() {
+    if [[ "$DRY_RUN" == "true" ]] || [[ "$YES_MODE" == "true" ]]; then
+        return 0
+    fi
+
+    if [[ ! -t 0 ]]; then
+        log_fatal "--yes is required when stdin is not a TTY"
+    fi
+
+    if [[ "$HAS_GUM" == "true" ]]; then
+        gum confirm "Proceed with ACFS install? (mode=$MODE)" || exit 1
+        return 0
+    fi
+
+    local reply=""
+    read -r -p "Proceed with ACFS install? (mode=$MODE) [y/N] " reply
+    case "$reply" in
+        y|Y|yes|YES) return 0 ;;
+        *) exit 1 ;;
+    esac
 }
 
 # Set up target-specific paths
@@ -290,18 +321,11 @@ ensure_ubuntu() {
 ensure_base_deps() {
     log_step "0/8" "Checking base dependencies..."
 
-    local missing=()
-    for cmd in curl git jq; do
-        if ! command_exists "$cmd"; then
-            missing+=("$cmd")
-        fi
-    done
+    log_detail "Updating apt package index"
+    $SUDO apt-get update -y
 
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_detail "Installing missing packages: ${missing[*]}"
-        $SUDO apt-get update -y
-        $SUDO apt-get install -y curl git ca-certificates unzip tar xz-utils jq build-essential
-    fi
+    log_detail "Installing base packages"
+    $SUDO apt-get install -y curl git ca-certificates unzip tar xz-utils jq build-essential sudo gnupg
 }
 
 # ============================================================
@@ -309,9 +333,6 @@ ensure_base_deps() {
 # ============================================================
 normalize_user() {
     log_step "1/8" "Normalizing user account..."
-
-    local current_user
-    current_user=$(whoami)
 
     # Create target user if it doesn't exist
     if ! id "$TARGET_USER" &>/dev/null; then
@@ -422,7 +443,7 @@ setup_shell() {
 
     # Copy ACFS zshrc
     log_detail "Installing ACFS zshrc"
-    curl -fsSL "$ACFS_RAW/acfs/zsh/acfs.zshrc" -o "$ACFS_HOME/zsh/acfs.zshrc"
+    install_asset "acfs/zsh/acfs.zshrc" "$ACFS_HOME/zsh/acfs.zshrc"
     $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/zsh/acfs.zshrc"
 
     # Create minimal .zshrc loader for target user
@@ -470,16 +491,17 @@ install_cli_tools() {
         log_detail "gum already installed"
     fi
 
-    # Install apt packages
-    log_detail "Installing apt packages"
+    log_detail "Installing required apt packages"
+    $SUDO apt-get install -y ripgrep tmux fzf direnv
+
+    log_detail "Installing optional apt packages"
     $SUDO apt-get install -y \
-        ripgrep tmux fzf direnv \
         lsd eza bat fd-find btop dust neovim \
         docker.io docker-compose-plugin \
         lazygit 2>/dev/null || true
 
     # Add user to docker group
-    $SUDO usermod -aG docker "$(whoami)" 2>/dev/null || true
+    $SUDO usermod -aG docker "$TARGET_USER" 2>/dev/null || true
 
     log_success "CLI tools installed"
 }
@@ -614,7 +636,7 @@ finalize() {
 
     # Copy tmux config
     log_detail "Installing tmux config"
-    curl -fsSL "$ACFS_RAW/acfs/tmux/tmux.conf" -o "$ACFS_HOME/tmux/tmux.conf"
+    install_asset "acfs/tmux/tmux.conf" "$ACFS_HOME/tmux/tmux.conf"
     $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/tmux/tmux.conf"
 
     # Link to target user's tmux.conf if it doesn't exist
@@ -637,16 +659,23 @@ finalize() {
     )
     local lesson
     for lesson in "${lesson_files[@]}"; do
-        curl -fsSL "$ACFS_RAW/acfs/onboard/lessons/$lesson" -o "$ACFS_HOME/onboard/lessons/$lesson"
+        install_asset "acfs/onboard/lessons/$lesson" "$ACFS_HOME/onboard/lessons/$lesson"
     done
 
     log_detail "Installing onboard command"
-    curl -fsSL "$ACFS_RAW/acfs/onboard/onboard.sh" -o "$ACFS_HOME/onboard/onboard.sh"
+    install_asset "acfs/onboard/onboard.sh" "$ACFS_HOME/onboard/onboard.sh"
     $SUDO chmod 755 "$ACFS_HOME/onboard/onboard.sh"
     $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/onboard"
 
     run_as_target mkdir -p "$TARGET_HOME/.local/bin"
     run_as_target ln -sf "$ACFS_HOME/onboard/onboard.sh" "$TARGET_HOME/.local/bin/onboard"
+
+    # Install acfs command (doctor)
+    log_detail "Installing acfs command"
+    install_asset "scripts/lib/doctor.sh" "$ACFS_HOME/bin/acfs"
+    $SUDO chmod 755 "$ACFS_HOME/bin/acfs"
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs"
+    run_as_target ln -sf "$ACFS_HOME/bin/acfs" "$TARGET_HOME/.local/bin/acfs"
 
     # Create state file
     cat > "$ACFS_STATE_FILE" << EOF
@@ -655,6 +684,10 @@ finalize() {
   "installed_at": "$(date -Iseconds)",
   "mode": "$MODE",
   "target_user": "$TARGET_USER",
+  "yes_mode": $YES_MODE,
+  "skip_postgres": $SKIP_POSTGRES,
+  "skip_vault": $SKIP_VAULT,
+  "skip_cloud": $SKIP_CLOUD,
   "completed_phases": [1, 2, 3, 4, 5, 6, 7, 8]
 }
 EOF
@@ -671,17 +704,17 @@ _smoke_run_as_target() {
     local cmd="$1"
 
     if [[ "$(whoami)" == "$TARGET_USER" ]]; then
-        bash -c "$cmd"
+        bash -lc "$cmd"
         return $?
     fi
 
     if command_exists sudo; then
-        sudo -u "$TARGET_USER" -H bash -c "$cmd"
+        sudo -u "$TARGET_USER" -H bash -lc "$cmd"
         return $?
     fi
 
     # Fallback: use su if sudo isn't available
-    su - "$TARGET_USER" -c "bash -c $(printf %q "$cmd")"
+    su - "$TARGET_USER" -c "bash -lc $(printf %q "$cmd")"
 }
 
 run_smoke_test() {
@@ -927,6 +960,7 @@ main() {
     ensure_root
     init_target_paths
     ensure_ubuntu
+    confirm_or_exit
     ensure_base_deps
 
     if [[ "$DRY_RUN" != "true" ]]; then

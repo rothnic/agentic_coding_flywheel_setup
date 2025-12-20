@@ -177,7 +177,7 @@ gum_confirm() {
             --prompt.foreground "$ACFS_PRIMARY" \
             "$message"
     else
-        read -p "$message [y/N] " response
+        read -r -p "$message [y/N] " response
         [[ "$response" =~ ^[Yy] ]]
     fi
 }
@@ -223,6 +223,7 @@ $content"
         echo "┌─────────────────────────────────────────┐"
         echo "│ $title"
         echo "├─────────────────────────────────────────┤"
+        # shellcheck disable=SC2001
         echo "$content" | sed 's/^/│ /'
         echo "└─────────────────────────────────────────┘"
         echo ""
@@ -303,6 +304,7 @@ $content"
         echo "╔═══════════════════════════════════════════╗"
         echo -e "║ \033[0;32m$title\033[0m"
         echo "╠═══════════════════════════════════════════╣"
+        # shellcheck disable=SC2001
         echo "$content" | sed 's/^/║ /'
         echo "╚═══════════════════════════════════════════╝"
         echo ""

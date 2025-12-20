@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Doctor - System Health Check
 # Validates that ACFS installation is complete and working
@@ -72,6 +73,22 @@ check_command() {
         check "$id" "$label ($version)" "pass" "installed"
     else
         check "$id" "$label" "fail" "not found" "$fix"
+    fi
+}
+
+# Check a command, but treat missing as WARN (optional dependency).
+check_optional_command() {
+    local id="$1"
+    local label="$2"
+    local cmd="$3"
+    local fix="${4:-}"
+
+    if command -v "$cmd" &>/dev/null; then
+        local version
+        version=$("$cmd" --version 2>/dev/null | head -n1 || echo "available")
+        check "$id" "$label ($version)" "pass" "installed"
+    else
+        check "$id" "$label" "warn" "not found" "$fix"
     fi
 }
 
@@ -210,11 +227,11 @@ check_agents() {
 check_cloud() {
     echo "Cloud/DB"
 
-    check_command "cloud.vault" "Vault" "vault"
-    check_command "cloud.postgres18" "PostgreSQL" "psql"
-    check_command "cloud.wrangler" "Wrangler" "wrangler" "bun install -g wrangler"
-    check_command "cloud.supabase" "Supabase CLI" "supabase" "bun install -g supabase"
-    check_command "cloud.vercel" "Vercel CLI" "vercel" "bun install -g vercel"
+    check_optional_command "cloud.vault" "Vault" "vault"
+    check_optional_command "cloud.postgres" "PostgreSQL" "psql"
+    check_optional_command "cloud.wrangler" "Wrangler" "wrangler" "bun install -g wrangler"
+    check_optional_command "cloud.supabase" "Supabase CLI" "supabase" "bun install -g supabase"
+    check_optional_command "cloud.vercel" "Vercel CLI" "vercel" "bun install -g vercel"
 
     echo ""
 }
@@ -243,7 +260,6 @@ check_stack() {
 
 # Print summary
 print_summary() {
-    local total=$((PASS_COUNT + WARN_COUNT + FAIL_COUNT))
     echo "============================================================"
     echo -e "Checks: ${GREEN}$PASS_COUNT passed${NC}, ${YELLOW}$WARN_COUNT warnings${NC}, ${RED}$FAIL_COUNT failed${NC}"
     echo ""
@@ -270,7 +286,7 @@ print_json() {
   "timestamp": "$(date -Iseconds)",
   "mode": "${ACFS_MODE:-vibe}",
   "user": "$(whoami)",
-  "os": {"id": "$(. /etc/os-release && echo $ID)", "version": "$(. /etc/os-release && echo $VERSION_ID)"},
+  "os": {"id": "$(. /etc/os-release && echo "$ID")", "version": "$(. /etc/os-release && echo "$VERSION_ID")"},
   "checks": [$checks_json],
   "summary": {"pass": $PASS_COUNT, "warn": $WARN_COUNT, "fail": $FAIL_COUNT}
 }
@@ -304,7 +320,7 @@ main() {
         echo "ACFS Doctor v$ACFS_VERSION"
         echo "User: $(whoami)"
         echo "Mode: ${ACFS_MODE:-vibe}"
-        echo "OS: $(. /etc/os-release && echo $PRETTY_NAME)"
+        echo "OS: $(. /etc/os-release && echo "$PRETTY_NAME")"
         echo ""
     fi
 

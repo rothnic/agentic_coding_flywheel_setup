@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Installer - Dicklesworthstone Stack Library
 # Installs all 8 Dicklesworthstone tools
@@ -76,9 +77,20 @@ _stack_run_as_user() {
 
     if [[ "$(whoami)" == "$target_user" ]]; then
         bash -c "$cmd"
-    else
-        $(_stack_get_sudo) -u "$target_user" -H bash -c "$cmd"
+        return $?
     fi
+
+    if command -v sudo &>/dev/null; then
+        sudo -u "$target_user" -H bash -c "$cmd"
+        return $?
+    fi
+
+    if command -v runuser &>/dev/null; then
+        runuser -u "$target_user" -- bash -c "$cmd"
+        return $?
+    fi
+
+    su - "$target_user" -c "bash -c $(printf %q "$cmd")"
 }
 
 # Run an installer script from URL as target user

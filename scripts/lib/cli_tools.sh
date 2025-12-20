@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Installer - CLI Tools Library
 # Installs modern CLI replacements that acfs.zshrc depends on
@@ -68,9 +69,20 @@ _cli_run_as_user() {
 
     if [[ "$(whoami)" == "$target_user" ]]; then
         bash -c "$cmd"
-    else
-        $(_cli_get_sudo) -u "$target_user" bash -c "$cmd"
+        return $?
     fi
+
+    if command -v sudo &>/dev/null; then
+        sudo -u "$target_user" -H bash -c "$cmd"
+        return $?
+    fi
+
+    if command -v runuser &>/dev/null; then
+        runuser -u "$target_user" -- bash -c "$cmd"
+        return $?
+    fi
+
+    su - "$target_user" -c "bash -c $(printf %q "$cmd")"
 }
 
 # ============================================================

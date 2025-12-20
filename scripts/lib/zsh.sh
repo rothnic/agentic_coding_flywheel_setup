@@ -139,7 +139,8 @@ install_acfs_zshrc() {
 
     # Backup existing .zshrc if it exists and isn't our loader
     if [[ -f "$user_zshrc" ]] && ! grep -q "ACFS loader" "$user_zshrc" 2>/dev/null; then
-        local backup="$user_zshrc.bak.$(date +%Y%m%d%H%M%S)"
+        local backup
+        backup="$user_zshrc.bak.$(date +%Y%m%d%H%M%S)"
         log_detail "Backing up existing .zshrc to $backup"
         mv "$user_zshrc" "$backup"
     fi
