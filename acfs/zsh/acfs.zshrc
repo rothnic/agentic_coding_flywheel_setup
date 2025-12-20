@@ -1,5 +1,9 @@
+# shellcheck shell=bash disable=SC2034,SC1091
 # ~/.acfs/zsh/acfs.zshrc
 # ACFS canonical zsh config (managed). Safe, fast, minimal duplication.
+#
+# SC2034: ZSH_THEME, plugins, PROMPT, RPROMPT are used by zsh/omz (not bash)
+# SC1091: Dynamic source paths can't be followed by shellcheck
 
 # --- SSH stty guard (prevents weird remote terminal settings) ---
 if [[ -n "$SSH_CONNECTION" ]]; then
@@ -125,7 +129,7 @@ alias search='apt search'
 alias uca='claude update && bun install -g @openai/codex@latest && bun install -g @google/gemini-cli@latest'
 
 # --- Custom functions ---
-mkcd() { mkdir -p "$1" && cd "$1"; }
+mkcd() { mkdir -p "$1" && cd "$1" || return; }
 
 extract() {
   if [[ -f "$1" ]]; then
