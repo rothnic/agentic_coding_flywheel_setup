@@ -100,6 +100,16 @@ JSON_CHECKS=()
 # Related: agentic_coding_flywheel_setup-01s
 DEEP_MODE=false
 
+# Caching for deep checks - skip slow operations that recently passed
+# Related: agentic_coding_flywheel_setup-lz1
+NO_CACHE=false
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/acfs/doctor"
+CACHE_TTL=300  # 5 minutes
+
+# Per-check timeout (prevents indefinite hangs)
+# Related: agentic_coding_flywheel_setup-lz1
+DEEP_CHECK_TIMEOUT=15  # seconds
+
 # Print `acfs` CLI help (only used when this script is installed as the `acfs` entrypoint).
 print_acfs_help() {
     echo "ACFS - Agentic Coding Flywheel Setup"
@@ -151,6 +161,165 @@ json_escape() {
     s=${s//$'\r'/\\r}
     s=${s//$'\t'/\\t}
     printf '%s' "$s"
+}
+
+# ============================================================
+# Timeout and Caching Helpers (bead lz1)
+# ============================================================
+
+# Run a command with timeout, returning special status for timeout
+# Usage: run_with_timeout <timeout_seconds> <description> <command> [args...]
+# Returns: 0=success, 124=timeout, other=command exit code
+# Output: Command stdout (or "TIMEOUT" on timeout)
+run_with_timeout() {
+    local timeout_secs="$1"
+    local description="$2"
+    shift 2
+
+    local result
+    local status
+    result=$(timeout "$timeout_secs" "$@" 2>&1)
+    status=$?
+
+    if ((status == 124)); then
+        echo "TIMEOUT"
+        if [[ "$JSON_MODE" != "true" ]]; then
+            # Log timeout warning (non-fatal)
+            if [[ "$HAS_GUM" == "true" ]]; then
+                gum style --foreground "$ACFS_MUTED" "    ⏱ $description timed out after ${timeout_secs}s" >&2
+            else
+                echo -e "    ${YELLOW}⏱ $description timed out after ${timeout_secs}s${NC}" >&2
+            fi
+        fi
+        return 124
+    fi
+
+    echo "$result"
+    return $status
+}
+
+# Store a successful check result in cache
+# Usage: cache_result <key> <value>
+cache_result() {
+    local key="$1"
+    local value="$2"
+
+    # Skip if caching disabled
+    [[ "$NO_CACHE" == "true" ]] && return 0
+
+    mkdir -p "$CACHE_DIR"
+    echo "$value" > "$CACHE_DIR/$key"
+}
+
+# Get a cached result if it exists and is fresh
+# Usage: get_cached_result <key>
+# Returns: 0 if cache hit, 1 if miss/expired
+# Output: Cached value on hit
+get_cached_result() {
+    local key="$1"
+    local cache_file="$CACHE_DIR/$key"
+
+    # Skip if caching disabled
+    [[ "$NO_CACHE" == "true" ]] && return 1
+
+    # Check if cache file exists
+    [[ -f "$cache_file" ]] || return 1
+
+    # Check cache age (compatible with both Linux and macOS)
+    local file_mtime
+    local current_time
+    current_time=$(date +%s)
+
+    # Try GNU stat first, fall back to BSD stat
+    if file_mtime=$(stat -c %Y "$cache_file" 2>/dev/null); then
+        : # GNU stat worked
+    elif file_mtime=$(stat -f %m "$cache_file" 2>/dev/null); then
+        : # BSD stat worked
+    else
+        return 1  # Can't determine age, cache miss
+    fi
+
+    local age=$((current_time - file_mtime))
+    if ((age >= CACHE_TTL)); then
+        return 1  # Cache expired
+    fi
+
+    cat "$cache_file"
+    return 0
+}
+
+# Run a check with cache support
+# Usage: check_with_cache <cache_key> <description> <command> [args...]
+# Returns: Command exit status (0 = cache hit counts as success)
+check_with_cache() {
+    local cache_key="$1"
+    local description="$2"
+    shift 2
+
+    # Try cache first
+    local cached
+    if cached=$(get_cached_result "$cache_key"); then
+        echo "$cached (cached)"
+        return 0
+    fi
+
+    # Run actual check with timeout
+    local result
+    local status
+    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "$description" "$@")
+    status=$?
+
+    # Cache successful results
+    if ((status == 0)); then
+        cache_result "$cache_key" "$result"
+    fi
+
+    echo "$result"
+    return $status
+}
+
+# Check with [?] (unknown) indicator for timeouts
+# This variant of check() handles timeout status specially
+# Usage: check_with_timeout_status <id> <label> <status> [details] [fix]
+# status can be: pass, warn, fail, timeout
+check_with_timeout_status() {
+    local id="$1"
+    local label="$2"
+    local status="$3"
+    local details="${4:-}"
+    local fix="${5:-}"
+
+    # Convert timeout to special handling
+    if [[ "$status" == "timeout" ]]; then
+        # Timeouts count as warnings for stats (unknown state, not failed)
+        ((WARN_COUNT += 1))
+
+        if [[ "$JSON_MODE" == "true" ]]; then
+            local fix_json="null"
+            if [[ -n "$fix" ]]; then
+                fix_json="\"$(json_escape "$fix")\""
+            fi
+            JSON_CHECKS+=("{\"id\":\"$(json_escape "$id")\",\"label\":\"$(json_escape "$label")\",\"status\":\"timeout\",\"details\":\"$(json_escape "$details")\",\"fix\":$fix_json}")
+            return 0
+        fi
+
+        # Display with [?] indicator
+        if [[ "$HAS_GUM" == "true" ]]; then
+            echo "  $(gum style --foreground "$ACFS_WARNING" --bold "? WAIT") $(gum style "$label")"
+            if [[ -n "$fix" ]]; then
+                echo "        $(gum style --foreground "$ACFS_MUTED" "Fix:") $(gum style --foreground "$ACFS_ACCENT" --italic "$fix")"
+            fi
+        else
+            echo -e "  ${YELLOW}? WAIT${NC} $label"
+            if [[ -n "$fix" ]]; then
+                echo -e "        Fix: $fix"
+            fi
+        fi
+        return 0
+    fi
+
+    # Delegate to standard check for other statuses
+    check "$id" "$label" "$status" "$details" "$fix"
 }
 
 # Check result helper
@@ -466,15 +635,24 @@ DEEP_FAIL_COUNT=0
 
 # Run all deep/functional checks with formatted output
 # Enhanced per bead aqs: Adds counters and summary
+# Enhanced per bead lz1: Adds timing
 # Usage: run_deep_checks
 run_deep_checks() {
     section "Deep Checks (Functional Tests)"
 
+    # Track total deep check time (bead lz1)
+    local start_time
+    start_time=$(date +%s)
+
     if [[ "$JSON_MODE" != "true" ]]; then
+        local cache_status=""
+        if [[ "$NO_CACHE" == "true" ]]; then
+            cache_status=" (cache disabled)"
+        fi
         if [[ "$HAS_GUM" == "true" ]]; then
-            gum style --foreground "$ACFS_MUTED" "  Running functional tests... this may take a moment"
+            gum style --foreground "$ACFS_MUTED" "  Running functional tests...$cache_status"
         else
-            echo -e "  ${CYAN}Running functional tests... this may take a moment${NC}"
+            echo -e "  ${CYAN}Running functional tests...$cache_status${NC}"
         fi
         echo ""
     fi
@@ -499,6 +677,12 @@ run_deep_checks() {
     DEEP_FAIL_COUNT=$((FAIL_COUNT - pre_fail))
     local deep_total=$((DEEP_PASS_COUNT + DEEP_WARN_COUNT + DEEP_FAIL_COUNT))
 
+    # Calculate elapsed time (bead lz1)
+    local end_time elapsed_time
+    end_time=$(date +%s)
+    elapsed_time=$((end_time - start_time))
+    DEEP_CHECK_ELAPSED=$elapsed_time  # Export for JSON output
+
     # Print deep checks summary
     if [[ "$JSON_MODE" != "true" ]]; then
         echo ""
@@ -511,12 +695,12 @@ run_deep_checks() {
                 summary_text="$(gum style --foreground "$ACFS_ERROR" --bold "$DEEP_PASS_COUNT/$deep_total") functional tests passed"
                 summary_text="$summary_text $(gum style --foreground "$ACFS_ERROR" "($DEEP_FAIL_COUNT failed)")"
             fi
-            echo "  $summary_text"
+            echo "  $summary_text $(gum style --foreground "$ACFS_MUTED" "in ${elapsed_time}s")"
         else
             if [[ $DEEP_FAIL_COUNT -eq 0 ]]; then
-                echo -e "  ${GREEN}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed"
+                echo -e "  ${GREEN}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed in ${elapsed_time}s"
             else
-                echo -e "  ${RED}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed (${RED}$DEEP_FAIL_COUNT failed${NC})"
+                echo -e "  ${RED}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed (${RED}$DEEP_FAIL_COUNT failed${NC}) in ${elapsed_time}s"
             fi
         fi
     fi
@@ -761,16 +945,32 @@ check_vault_configured() {
 
 # check_gh_auth - GitHub CLI authentication check
 # Related: bead azw
+# Enhanced: Caching support (bead lz1)
 check_gh_auth() {
     if ! command -v gh &>/dev/null; then
         check "deep.cloud.gh_auth" "GitHub CLI" "warn" "not installed" "sudo apt install gh"
         return
     fi
 
-    if timeout 10 gh auth status &>/dev/null 2>&1; then
+    # Try cache first for auth status (bead lz1)
+    local cached_result
+    if cached_result=$(get_cached_result "gh_auth"); then
+        check "deep.cloud.gh_auth" "GitHub CLI auth" "pass" "$cached_result (cached)"
+        return
+    fi
+
+    # Run with timeout
+    local result
+    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "GitHub CLI auth" gh auth status 2>&1)
+    local status=$?
+
+    if ((status == 124)); then
+        check_with_timeout_status "deep.cloud.gh_auth" "GitHub CLI auth" "timeout" "check timed out" "Check network, then: gh auth login"
+    elif ((status == 0)); then
         # Get the authenticated user for more detail
         local gh_user
         gh_user=$(timeout 5 gh api user --jq '.login' 2>/dev/null) || gh_user="authenticated"
+        cache_result "gh_auth" "$gh_user"
         check "deep.cloud.gh_auth" "GitHub CLI auth" "pass" "$gh_user"
     else
         check "deep.cloud.gh_auth" "GitHub CLI auth" "warn" "not authenticated" "gh auth login"
@@ -779,17 +979,34 @@ check_gh_auth() {
 
 # check_wrangler_auth - Cloudflare Wrangler authentication check
 # Related: bead azw
+# Enhanced: Caching and timeout support (bead lz1)
 check_wrangler_auth() {
     if ! command -v wrangler &>/dev/null; then
         check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare)" "warn" "not installed" "bun install -g wrangler"
         return
     fi
 
-    if timeout 10 wrangler whoami &>/dev/null 2>&1; then
+    # Try cache first (bead lz1)
+    local cached_result
+    if cached_result=$(get_cached_result "wrangler_auth"); then
+        check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "$cached_result (cached)"
+        return
+    fi
+
+    # Run with timeout
+    local result
+    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "Wrangler auth" wrangler whoami 2>&1)
+    local status=$?
+
+    if ((status == 124)); then
+        check_with_timeout_status "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "timeout" "check timed out" "Check network, then: wrangler login"
+    elif ((status == 0)); then
+        cache_result "wrangler_auth" "authenticated"
         check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "authenticated"
     else
         # Check for CLOUDFLARE_API_TOKEN as alternative
         if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            cache_result "wrangler_auth" "CLOUDFLARE_API_TOKEN"
             check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "CLOUDFLARE_API_TOKEN set"
         else
             check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "warn" "not authenticated" "wrangler login"
@@ -831,20 +1048,37 @@ check_supabase_auth() {
 
 # check_vercel_auth - Vercel CLI authentication check
 # Related: bead azw
+# Enhanced: Caching and timeout support (bead lz1)
 check_vercel_auth() {
     if ! command -v vercel &>/dev/null; then
         check "deep.cloud.vercel_auth" "Vercel CLI" "warn" "not installed" "bun install -g vercel"
         return
     fi
 
-    if timeout 10 vercel whoami &>/dev/null 2>&1; then
+    # Try cache first (bead lz1)
+    local cached_result
+    if cached_result=$(get_cached_result "vercel_auth"); then
+        check "deep.cloud.vercel_auth" "Vercel auth" "pass" "$cached_result (cached)"
+        return
+    fi
+
+    # Run with timeout
+    local result
+    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "Vercel auth" vercel whoami 2>&1)
+    local status=$?
+
+    if ((status == 124)); then
+        check_with_timeout_status "deep.cloud.vercel_auth" "Vercel auth" "timeout" "check timed out" "Check network, then: vercel login"
+    elif ((status == 0)); then
         # Get the authenticated user/team for more detail
         local vercel_user
         vercel_user=$(timeout 5 vercel whoami 2>/dev/null) || vercel_user="authenticated"
+        cache_result "vercel_auth" "$vercel_user"
         check "deep.cloud.vercel_auth" "Vercel auth" "pass" "$vercel_user"
     else
         # Check for VERCEL_TOKEN as alternative
         if [[ -n "${VERCEL_TOKEN:-}" ]]; then
+            cache_result "vercel_auth" "VERCEL_TOKEN"
             check "deep.cloud.vercel_auth" "Vercel auth" "pass" "VERCEL_TOKEN set"
         else
             check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login"
@@ -925,7 +1159,7 @@ print_json() {
     if [[ "$DEEP_MODE" == "true" ]]; then
         local deep_total=$((DEEP_PASS_COUNT + DEEP_WARN_COUNT + DEEP_FAIL_COUNT))
         deep_summary_json=",
-  \"deep_summary\": {\"pass\": $DEEP_PASS_COUNT, \"warn\": $DEEP_WARN_COUNT, \"fail\": $DEEP_FAIL_COUNT, \"total\": $deep_total}"
+  \"deep_summary\": {\"pass\": $DEEP_PASS_COUNT, \"warn\": $DEEP_WARN_COUNT, \"fail\": $DEEP_FAIL_COUNT, \"total\": $deep_total, \"elapsed_seconds\": ${DEEP_CHECK_ELAPSED:-0}}"
     fi
 
     cat << EOF
@@ -1029,12 +1263,17 @@ main() {
                 DEEP_MODE=true
                 shift
                 ;;
+            --no-cache)
+                NO_CACHE=true
+                shift
+                ;;
             --help|-h)
-                echo "Usage: acfs doctor [--json] [--deep]"
+                echo "Usage: acfs doctor [--json] [--deep] [--no-cache]"
                 echo ""
                 echo "Options:"
-                echo "  --json    Output results as JSON"
-                echo "  --deep    Run functional tests (auth, connections)"
+                echo "  --json      Output results as JSON"
+                echo "  --deep      Run functional tests (auth, connections)"
+                echo "  --no-cache  Skip cache, run all checks fresh"
                 echo ""
                 echo "By default, doctor runs quick existence checks only."
                 echo "Use --deep for thorough validation including:"
@@ -1042,11 +1281,14 @@ main() {
                 echo "  - Database connectivity (PostgreSQL)"
                 echo "  - Cloud CLI authentication (vault, wrangler, etc.)"
                 echo ""
+                echo "Deep checks are cached for 5 minutes by default."
+                echo "Use --no-cache to force fresh checks."
+                echo ""
                 echo "Examples:"
-                echo "  acfs doctor              # Quick health check"
-                echo "  acfs doctor --deep       # Full functional tests"
-                echo "  acfs doctor --json       # JSON output for tooling"
-                echo "  acfs doctor --deep --json # Both"
+                echo "  acfs doctor                   # Quick health check"
+                echo "  acfs doctor --deep            # Full functional tests"
+                echo "  acfs doctor --deep --no-cache # Force fresh deep checks"
+                echo "  acfs doctor --json            # JSON output for tooling"
                 exit 0
                 ;;
             *)
