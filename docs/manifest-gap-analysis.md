@@ -323,8 +323,139 @@ orchestration:
 
 ---
 
+## CLI Flags Inventory (bead mjt.2.2)
+
+> Added: 2025-12-21 | Maps legacy flags to manifest tags/modules
+
+### install.sh CLI Flags
+
+| Flag | Current Behavior | Proposed Tag/Module Mapping |
+|------|------------------|----------------------------|
+| `--yes` / `-y` | Skip all prompts | Orchestration (not module) |
+| `--dry-run` | Print what would be done | Orchestration |
+| `--print` | List upstream scripts | Orchestration |
+| `--mode vibe` | Passwordless sudo, full agent permissions | `security.vibe_mode` or tag `vibe` |
+| `--mode safe` | Standard sudo, confirmation prompts | Default (no tag) |
+| `--skip-postgres` | Skip PostgreSQL 18 | `db.postgres18.enabled_by_default: false` or tag `skippable` |
+| `--skip-vault` | Skip Vault | `tools.vault.enabled_by_default: false` or tag `skippable` |
+| `--skip-cloud` | Skip wrangler/supabase/vercel | Tag `cloud` + `enabled_by_default: false` |
+| `--resume` | Resume from checkpoint | Orchestration (state.sh) |
+| `--force-reinstall` | Start fresh | Orchestration |
+| `--reset-state` | Delete state file | Orchestration |
+| `--interactive` | Enable resume prompts | Orchestration |
+| `--strict` | All tools critical (checksum abort) | Tag `critical` applied to all |
+| `--skip-preflight` | Skip pre-flight checks | Orchestration |
+
+### acfs update CLI Flags
+
+| Flag | Behavior | Proposed Mapping |
+|------|----------|------------------|
+| `--apt-only` | Only apt packages | Category filter: `base`, `cli` |
+| `--agents-only` | Only coding agents | Category filter: `agents` |
+| `--cloud-only` | Only cloud CLIs | Category filter: `cloud` |
+| `--stack` | Include Dicklesworthstone stack | Category filter: `stack` |
+| `--no-apt` | Skip apt | Exclude category: `base`, `cli` |
+| `--no-agents` | Skip agents | Exclude category: `agents` |
+| `--no-cloud` | Skip cloud CLIs | Exclude category: `cloud` |
+| `--force` | Install missing tools | Reinstall mode |
+| `--dry-run` | Preview changes | Orchestration |
+| `--verbose` | Show details | Orchestration |
+
+### acfs doctor CLI Flags
+
+| Flag | Behavior | Notes |
+|------|----------|-------|
+| `--json` | Machine-readable output | Output format |
+| `--quiet` | Exit code only | Output format |
+| `--deep` | Functional tests | Test depth |
+
+---
+
+## Wizard Mode Defaults (bead mjt.2.2)
+
+The website wizard currently uses a **hardcoded command**:
+```bash
+curl -fsSL "..." | bash -s -- --yes --mode vibe
+```
+
+### Current Wizard Flow (11 steps)
+
+1. Choose Your OS (local)
+2. Install Terminal (local)
+3. Generate SSH Key (local)
+4. Rent a VPS (external)
+5. Create VPS Instance (external)
+6. SSH Into Your VPS
+7. Pre-Flight Check
+8. **Run Installer** ← hardcoded `--yes --mode vibe`
+9. Reconnect as Ubuntu
+10. Status Check (`acfs doctor`)
+11. Launch Onboarding
+
+### Proposed Mode Presets for Manifest
+
+```yaml
+presets:
+  # Default for wizard (beginner-friendly, maximum automation)
+  wizard_default:
+    mode: vibe
+    flags: [--yes]
+    modules:
+      enabled: [all]
+      disabled: []
+    tags:
+      require: [critical, recommended]
+      optional: [cloud, database]
+
+  # Expert mode (minimal, interactive)
+  minimal:
+    mode: safe
+    flags: []
+    modules:
+      enabled: [base.*, shell.*, lang.*, cli.modern, agents.*]
+      disabled: [db.*, cloud.*, stack.*]
+    tags:
+      require: [critical]
+      optional: [recommended]
+
+  # Full stack (everything including optional)
+  full:
+    mode: vibe
+    flags: [--yes]
+    modules:
+      enabled: [all]
+      disabled: []
+    tags:
+      require: [critical, recommended, optional]
+```
+
+### Legacy Flag → Module Tag Mapping
+
+| Legacy Flag | Manifest Equivalent |
+|-------------|---------------------|
+| `--skip-postgres` | `db.postgres18: { enabled_by_default: false }` |
+| `--skip-vault` | `tools.vault: { enabled_by_default: false }` |
+| `--skip-cloud` | All modules with tag `cloud`: `enabled_by_default: false` |
+| `--mode vibe` | Apply tag `vibe_mode` to security-related modules |
+
+### Category → Wizard Step Mapping
+
+| Category | Wizard Relevance | Install Phase |
+|----------|------------------|---------------|
+| `base` | Silent (required) | Phase 1-3 |
+| `shell` | Silent (required) | Phase 4 |
+| `cli` | Silent (required) | Phase 5 |
+| `lang` | Silent (required) | Phase 6 |
+| `agents` | Core value prop | Phase 7 |
+| `cloud` | Optional (skippable) | Phase 8 |
+| `db` | Optional (skippable) | Phase 8 |
+| `stack` | Core value prop | Phase 9 |
+| `acfs` | Silent (orchestration) | Phase 10 |
+
+---
+
 ## Next Steps
 
 1. **mjt.1.1**: Define module taxonomy (categories/tags/defaults) using this gap analysis
-2. **mjt.2.2**: Inventory wizard/docs CLI flags and map to module/tags
+2. **mjt.2.3**: Inventory runtime assets required for curl|bash bootstrap
 3. **mjt.3.1**: Implement schema vNext fields based on identified gaps
