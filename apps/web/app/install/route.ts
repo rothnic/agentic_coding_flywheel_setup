@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * Redirects to the raw install.sh script on GitHub.
  * This allows users to run: curl -fsSL https://agent-flywheel.com/install | bash
  *
- * The -L flag in curl follows redirects, so this works as expected.
+ * The -L flag in curl follows redirects, so this works seamlessly.
  */
 export async function GET() {
   const scriptUrl =

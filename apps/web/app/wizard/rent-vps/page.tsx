@@ -355,7 +355,7 @@ export default function RentVPSPage() {
                   <strong> the key to making this approach work</strong>: you use it to write,
                   revise, and iterate on comprehensive plan documents in markdown. Everything
                   depends on having an extremely detailed, granular plan, which you then convert
-                  into trackable tasks using <Jargon term="beads">Beads</Jargon>. Extended thinking shines
+                  into trackable tasks using <Jargon term="beads">Beads</Jargon>. The extended thinking capability is unmatched
                   for this kind of strategic planning work.
                 </p>
               </div>

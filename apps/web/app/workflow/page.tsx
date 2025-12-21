@@ -428,7 +428,7 @@ const PROMPT_ANALYZE_BEADS = `Re-read AGENTS.md first. Then, can you try using b
 
 const PROMPT_LEVERAGE_TANSTACK = `Ok I want you to look through the ENTIRE project and look for areas where, if we leveraged one of the many TanStack libraries (e.g., query, table, forms, etc), we could make part of the code much better, simpler, more performant, more maintainable, elegant, shorter, more reliable, etc.`;
 
-const PROMPT_BUILD_UI_UX = `I want you to build excellent UI/UX components with an intense focus on making them visually appealing, user-friendly, intuitive, and polished to "Stripe level" quality. Leverage the good libraries that are already part of the project.`;
+const PROMPT_BUILD_UI_UX = `I also want you to do a spectacular job building absolutely world-class UI/UX components, with an intense focus on making the most visually appealing, user-friendly, intuitive, slick, polished, "Stripe level" of quality UI/UX possible for this that leverages the good libraries that are already part of the project.`;
 
 const PROMPT_FIX_BUG = `I want you to very carefully diagnose and then fix the root underlying cause of the bugs/errors shown here, but fix them FOR REAL, not a superficial "bandaid" fix! Here are the details:`;
 
@@ -472,7 +472,7 @@ const PROMPT_LIBRARY = {
     { key: "fix_bug", label: "Fix Bug", prompt: PROMPT_FIX_BUG, desc: "Diagnose and fix root cause", icon: Bug },
     { key: "create_tests", label: "Create Tests", prompt: PROMPT_CREATE_TESTS, desc: "Comprehensive test coverage", icon: TestTube },
     { key: "leverage_tanstack", label: "Leverage TanStack", prompt: PROMPT_LEVERAGE_TANSTACK, desc: "Use TanStack libs where beneficial", icon: Layers },
-    { key: "build_ui_ux", label: "Build UI/UX", prompt: PROMPT_BUILD_UI_UX, desc: "Polished component development", icon: Sparkles },
+    { key: "build_ui_ux", label: "Build UI/UX", prompt: PROMPT_BUILD_UI_UX, desc: "World-class component development", icon: Sparkles },
   ],
   planning: [
     { key: "combine_plans", label: "Combine Plans", prompt: PROMPT_BEST_OF_ALL_WORLDS, desc: "Synthesize best of 3 AI plans", icon: Brain },

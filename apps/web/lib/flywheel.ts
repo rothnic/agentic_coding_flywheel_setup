@@ -402,7 +402,7 @@ export const flywheelTools: FlywheelTool[] = [
     color: "from-rose-400 to-red-500",
     tagline: "Polyglot static analysis",
     description:
-      "Wraps proven static analyzers (ESLint, Ruff, Clippy, golangci-lint) with consistent JSON output. Sub-5-second feedback loops. Works well as pre-commit hook or agent post-processor.",
+      "Wraps best-in-class static analyzers (ESLint, Ruff, Clippy, golangci-lint) with consistent JSON output. Sub-5-second feedback loops. Perfect as pre-commit hook or agent post-processor.",
     deepDescription:
       "UBS v5.0 supports 7 languages with 18 detection categories including null safety, async bugs, security vulnerabilities, and memory leaks. Zero configuration required. Unified JSON/JSONL/SARIF output for automation. Supply chain secured with SHA-256 checksums.",
     connectsTo: ["bv", "slb"],

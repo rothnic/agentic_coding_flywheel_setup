@@ -447,7 +447,7 @@ function WorkflowStepsSection() {
         >
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
             <Link href="/wizard/os-selection">
-              Get Started
+              Start Your Journey
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

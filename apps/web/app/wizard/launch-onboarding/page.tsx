@@ -255,7 +255,7 @@ export default function LaunchOnboardingPage() {
                   This manages your terminal &quot;sessions&quot;. When you run{" "}
                   <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ntm new myproject</code>,
                   it creates a persistent workspace that stays running even if you disconnect.
-                  Great for long-running tasks.
+                  Perfect for long-running tasks!
                 </p>
               </div>
               <div>
