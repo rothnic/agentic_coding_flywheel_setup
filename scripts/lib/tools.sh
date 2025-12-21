@@ -337,14 +337,64 @@ should_auto_skip_on_failure() {
 }
 
 # ============================================================
+# Enhanced Skipped Tools Tracking
+# Related: agentic_coding_flywheel_setup-8z5
+# ============================================================
+
+# Associative array to store skipped tool details (tool -> "reason|url")
+declare -g -A SKIPPED_TOOL_DETAILS=()
+
+# Record a skipped tool with details
+#
+# Arguments:
+#   $1 - Tool name
+#   $2 - Reason for skipping (e.g., "checksum mismatch", "network error")
+#   $3 - Installer URL (optional)
+#
+record_skipped_tool() {
+    local tool="$1"
+    local reason="${2:-Installation failed}"
+    local url="${3:-}"
+
+    SKIPPED_TOOLS+=("$tool")
+    SKIPPED_TOOL_DETAILS["$tool"]="$reason|$url"
+}
+
+# Get the reason a tool was skipped
+get_skip_reason() {
+    local tool="$1"
+    local details="${SKIPPED_TOOL_DETAILS[$tool]:-}"
+    echo "${details%%|*}"
+}
+
+# Get the installer URL for a skipped tool
+get_skip_url() {
+    local tool="$1"
+    local details="${SKIPPED_TOOL_DETAILS[$tool]:-}"
+    echo "${details#*|}"
+}
+
+# ============================================================
 # Summary Report
 # ============================================================
 
-# print_skipped_tools_summary - Print summary of skipped tools
+# Colors for output (will be overridden if logging.sh is sourced)
+_TOOLS_YELLOW="${ACFS_YELLOW:-\033[0;33m}"
+_TOOLS_CYAN="${ACFS_BLUE:-\033[0;36m}"
+_TOOLS_DIM="\033[2m"
+_TOOLS_NC="${ACFS_NC:-\033[0m}"
+
+# report_skipped_tools - Print comprehensive summary of skipped tools
 #
-# Call this at the end of installation to show what was skipped.
+# This is the main post-install report function showing:
+#   - Which tools were skipped
+#   - Why they were skipped
+#   - Installer URLs for manual installation
+#   - Alternative solutions (acfs update)
 #
-print_skipped_tools_summary() {
+# Call this at the end of installation.
+#
+report_skipped_tools() {
     if ! has_skipped_tools; then
         return 0
     fi
@@ -352,21 +402,94 @@ print_skipped_tools_summary() {
     local count
     count="$(count_skipped_tools)"
 
-    echo ""
-    echo "=================================="
-    echo "  INSTALLATION SUMMARY"
-    echo "=================================="
-    echo ""
-    echo "$count tool(s) were skipped due to installation issues:"
-    echo ""
+    echo "" >&2
+    echo -e "${_TOOLS_YELLOW}============================================================${_TOOLS_NC}" >&2
+    echo -e "${_TOOLS_YELLOW}  ⚠ SKIPPED TOOLS SUMMARY${_TOOLS_NC}" >&2
+    echo -e "${_TOOLS_YELLOW}============================================================${_TOOLS_NC}" >&2
+    echo "" >&2
+    echo "The following $count tool(s) were skipped during installation:" >&2
+    echo "" >&2
 
-    local tool
+    local tool reason url
     for tool in "${SKIPPED_TOOLS[@]}"; do
-        echo "  - $tool"
+        reason="$(get_skip_reason "$tool")"
+        url="$(get_skip_url "$tool")"
+
+        echo -e "  → ${_TOOLS_CYAN}$tool${_TOOLS_NC}: $reason" >&2
+        if [[ -n "$url" ]]; then
+            echo -e "    ${_TOOLS_DIM}$url${_TOOLS_NC}" >&2
+        fi
     done
 
-    echo ""
-    echo "These tools can be installed manually later."
-    echo "Run 'acfs doctor' to see detailed status."
-    echo ""
+    echo "" >&2
+    echo "------------------------------------------------------------" >&2
+    echo "" >&2
+    echo "You can install these tools manually:" >&2
+    echo "" >&2
+
+    for tool in "${SKIPPED_TOOLS[@]}"; do
+        url="$(get_skip_url "$tool")"
+        if [[ -n "$url" ]]; then
+            echo "  # Install $tool" >&2
+            echo "  curl -fsSL \"$url\" | bash" >&2
+            echo "" >&2
+        else
+            echo "  # $tool - check documentation for install command" >&2
+            echo "" >&2
+        fi
+    done
+
+    echo "Or wait for ACFS to update checksums and run:" >&2
+    echo -e "  ${_TOOLS_CYAN}acfs update --stack${_TOOLS_NC}" >&2
+    echo "" >&2
+    echo "To see current status:" >&2
+    echo -e "  ${_TOOLS_CYAN}acfs doctor${_TOOLS_NC}" >&2
+    echo "" >&2
+}
+
+# print_skipped_tools_summary - Alias for backwards compatibility
+#
+# Call report_skipped_tools() instead for the full enhanced output.
+#
+print_skipped_tools_summary() {
+    report_skipped_tools
+}
+
+# get_skipped_tools_json - Get skipped tools as JSON for state persistence
+#
+# Returns JSON array suitable for state.json:
+# [{"name": "tool", "reason": "why", "url": "https://..."}]
+#
+get_skipped_tools_json() {
+    if ! has_skipped_tools; then
+        echo "[]"
+        return 0
+    fi
+
+    local json="["
+    local first=true
+    local tool reason url
+
+    for tool in "${SKIPPED_TOOLS[@]}"; do
+        reason="$(get_skip_reason "$tool")"
+        url="$(get_skip_url "$tool")"
+
+        # Escape quotes in strings
+        reason="${reason//\"/\\\"}"
+
+        if [[ "$first" == "true" ]]; then
+            first=false
+        else
+            json+=","
+        fi
+
+        json+="{\"name\":\"$tool\",\"reason\":\"$reason\""
+        if [[ -n "$url" ]]; then
+            json+=",\"url\":\"$url\""
+        fi
+        json+="}"
+    done
+
+    json+="]"
+    echo "$json"
 }
