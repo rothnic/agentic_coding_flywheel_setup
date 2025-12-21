@@ -339,7 +339,7 @@ run_one() {
 
     # Create a temporary file for the test script
     local test_script
-    test_script=$(mktemp)
+    test_script=$(mktemp "${TMPDIR:-/tmp}/acfs_update_test.XXXXXX")
     create_test_script > "$test_script"
     chmod +x "$test_script"
 
