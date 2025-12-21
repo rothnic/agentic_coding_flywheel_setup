@@ -31,6 +31,12 @@ curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_f
 
 The installer is **idempotent**—if interrupted, simply re-run it. It will automatically resume from the last completed phase without prompts.
 
+> **Production environments:** For stable, reproducible installs, pin to a specific commit:
+> ```bash
+> curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/<commit-sha>/install.sh" | bash -s -- --yes --mode vibe
+> ```
+> This ensures all scripts are fetched from the same snapshot, avoiding drift during long-running installs.
+
 ---
 
 ## TL;DR
@@ -2491,23 +2497,37 @@ Control what gets installed:
 --skip-preflight   # Skip pre-flight validation
 ```
 
-### Module Selection (Experimental)
+### Module Selection
 
-Select specific modules using manifest-driven flags:
+Fine-grained control over what gets installed using manifest-driven selection:
 
 ```bash
 --list-modules           # List available modules
---print-plan             # Show execution plan
+--print-plan             # Show execution plan without running
 --only <module>          # Only run specific module(s)
 --only-phase <phase>     # Only run modules in a phase
 --skip <module>          # Skip specific module(s)
---no-deps                # Don't auto-include dependencies
+--no-deps                # Don't auto-include dependencies (⚠️ advanced)
 ```
 
-**Example: Only install agents**:
+**Key behaviors:**
+- **Dependency closure:** `--only` automatically includes required dependencies (safe by default)
+- **Skip safety:** `--skip` fails early if it would break a required dependency chain
+- **Deterministic:** `--print-plan` shows exactly what will run, in what order
+
+**Examples:**
 ```bash
+# Only install agents (plus their dependencies)
 curl -fsSL "..." | bash -s -- --yes --only-phase agents
+
+# Skip PostgreSQL and Vault
+curl -fsSL "..." | bash -s -- --yes --skip db.postgres18 --skip tools.vault
+
+# Preview what would run without executing
+curl -fsSL "..." | bash -s -- --print-plan
 ```
+
+> **Note:** Using `--no-deps` bypasses safety checks and may result in broken installs. Only use if you've already installed dependencies separately.
 
 ### Custom Post-Install Hooks
 
