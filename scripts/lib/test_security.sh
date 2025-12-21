@@ -36,7 +36,7 @@ test_fail() {
 
 # Create temp directory for test fixtures
 setup_fixtures() {
-    TEST_TMP_DIR=$(mktemp -d)
+    TEST_TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/acfs_test_security.XXXXXX")
     trap 'rm -rf "$TEST_TMP_DIR"' EXIT
 
     # Create a simple test script
