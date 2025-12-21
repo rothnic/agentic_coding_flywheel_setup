@@ -68,14 +68,15 @@ describe('authChecks', () => {
     expect(checks.checkCodex()).toEqual({ authenticated: true });
   });
 
-  test('checkGemini uses GOOGLE_API_KEY when set', () => {
+  test('checkGemini returns authenticated when credentials.json exists', () => {
+    const credPath = path.join(HOME, '.config', 'gemini', 'credentials.json');
     const checks = createAuthChecks(
       makeDeps({
-        env: { GOOGLE_API_KEY: 'abc123' },
+        existsSync: (filePath) => filePath === credPath,
       }),
     );
 
-    expect(checks.checkGemini()).toEqual({ authenticated: true, details: 'via GOOGLE_API_KEY' });
+    expect(checks.checkGemini()).toEqual({ authenticated: true });
   });
 
   test('checkGitHub reads gh auth status when available', () => {

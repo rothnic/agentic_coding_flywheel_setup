@@ -141,10 +141,9 @@ check_gemini_status() {
         return
     fi
 
-    # Check for credentials
+    # Check for credentials (OAuth web login, like Claude Code and Codex CLI)
     if user_file_exists "$TARGET_HOME/.config/gemini/credentials.json" || \
-       [[ -n "${GOOGLE_API_KEY:-}" ]] || \
-       [[ -n "${GEMINI_API_KEY:-}" ]]; then
+       [[ -d "$TARGET_HOME/.config/gemini" ]]; then
         SERVICE_STATUS[gemini]="configured"
     else
         SERVICE_STATUS[gemini]="installed"

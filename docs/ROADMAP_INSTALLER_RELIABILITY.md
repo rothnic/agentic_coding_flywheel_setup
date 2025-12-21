@@ -986,11 +986,10 @@ check_gemini_auth() {
         return 2
     fi
 
-    # Check for credentials
-    if [[ -z "${GOOGLE_API_KEY:-}" ]] && [[ -z "${GEMINI_API_KEY:-}" ]]; then
-        if [[ ! -f "$HOME/.config/gemini/credentials.json" ]]; then
-            return 1
-        fi
+    # Check for credentials (OAuth web login, like Claude Code and Codex CLI)
+    if [[ ! -f "$HOME/.config/gemini/credentials.json" ]] && \
+       [[ ! -d "$HOME/.config/gemini" ]]; then
+        return 1
     fi
 
     return 0

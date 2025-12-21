@@ -352,11 +352,11 @@ check_agent_auth() {
         log_warn "  Codex: not configured (run 'codex login' to authenticate)"
     fi
 
-    # Gemini: Check for credentials
-    if [[ -f "$target_home/.config/gemini/credentials.json" ]] || [[ -n "${GOOGLE_API_KEY:-}" ]]; then
+    # Gemini: Check for credentials (OAuth web login, like Claude Code and Codex CLI)
+    if [[ -f "$target_home/.config/gemini/credentials.json" ]] || [[ -d "$target_home/.config/gemini" ]]; then
         log_detail "  Gemini: configured"
     else
-        log_warn "  Gemini: not configured (run 'gemini' to login)"
+        log_warn "  Gemini: not configured (run 'gemini' to login via browser)"
     fi
 }
 

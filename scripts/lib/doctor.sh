@@ -1118,38 +1118,30 @@ check_gemini_auth() {
         return
     fi
 
-    # Check for GOOGLE_API_KEY or GEMINI_API_KEY in environment
-    if [[ -n "${GOOGLE_API_KEY:-}" ]] || [[ -n "${GEMINI_API_KEY:-}" ]]; then
-        local key_name="GOOGLE_API_KEY"
-        [[ -n "${GEMINI_API_KEY:-}" ]] && key_name="GEMINI_API_KEY"
-        check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "$key_name set"
-        return
+    # Gemini CLI uses OAuth web login (like Claude Code and Codex CLI)
+    # Users authenticate via `gemini` command which opens browser login
+    # Credentials are stored in config files, NOT via API keys
+    local found_auth=false
+
+    # Check for Gemini CLI credentials
+    if [[ -f "$HOME/.config/gemini/credentials.json" ]]; then
+        found_auth=true
     fi
 
-    # Check for API key in common config locations
-    local found_key=false
-
-    # Check ~/.zshrc.local (ACFS convention)
-    if [[ -f "$HOME/.zshrc.local" ]]; then
-        if grep -qE "(GOOGLE_API_KEY|GEMINI_API_KEY)" "$HOME/.zshrc.local" 2>/dev/null; then
-            found_key=true
-        fi
+    # Check for Gemini config directory
+    if [[ -d "$HOME/.config/gemini" ]]; then
+        found_auth=true
     fi
 
-    # Check Google Cloud application default credentials
-    if [[ -f "$HOME/.config/gcloud/application_default_credentials.json" ]]; then
-        found_key=true
+    # Check for legacy config
+    if [[ -f "$HOME/.gemini/config" ]]; then
+        found_auth=true
     fi
 
-    # Check for Gemini-specific config
-    if [[ -d "$HOME/.config/gemini" ]] || [[ -f "$HOME/.gemini/config" ]]; then
-        found_key=true
-    fi
-
-    if [[ "$found_key" == "true" ]]; then
-        check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "credentials found"
+    if [[ "$found_auth" == "true" ]]; then
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "authenticated"
     else
-        check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "no API key found" "Set GOOGLE_API_KEY in ~/.zshrc.local"
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "not logged in" "Run 'gemini' to authenticate via browser"
     fi
 }
 
@@ -1342,12 +1334,12 @@ check_supabase_auth() {
     fi
 
     # Check for access token in config directory
-    local supabase_config="$HOME/.supabase"
-    local access_token_file="$supabase_config/access-token"
+    local access_token_file="$HOME/.supabase/access-token"
+    local alt_access_token_file="$HOME/.config/supabase/access-token"
 
-    if [[ -f "$access_token_file" ]]; then
+    if [[ -f "$access_token_file" || -f "$alt_access_token_file" ]]; then
         # Check if token is not empty
-        if [[ -s "$access_token_file" ]]; then
+        if [[ -s "$access_token_file" || -s "$alt_access_token_file" ]]; then
             check "deep.cloud.supabase" "Supabase CLI auth" "pass" "access token exists"
         else
             check "deep.cloud.supabase" "Supabase CLI auth" "warn" "empty access token" "supabase login"
@@ -1393,6 +1385,13 @@ check_vercel_auth() {
         if [[ -n "${VERCEL_TOKEN:-}" ]]; then
             cache_result "vercel_auth" "VERCEL_TOKEN"
             check "deep.cloud.vercel_auth" "Vercel auth" "pass" "VERCEL_TOKEN set"
+            return
+        fi
+
+        # Fallback: detect auth file if offline
+        if [[ -f "$HOME/.config/vercel/auth.json" || -f "$HOME/.vercel/auth.json" ]]; then
+            cache_result "vercel_auth" "auth file present"
+            check "deep.cloud.vercel_auth" "Vercel auth" "pass" "auth file present"
         else
             check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login"
         fi

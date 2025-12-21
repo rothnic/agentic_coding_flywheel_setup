@@ -278,14 +278,12 @@ check_auth_status() {
             if ! command -v gemini &>/dev/null; then
                 return 2
             fi
-            if [[ -n "${GOOGLE_API_KEY:-}" || -n "${GEMINI_API_KEY:-}" ]]; then
-                return 0
-            fi
-            # Gemini uses gcloud/google auth
+            # Gemini CLI uses OAuth web login (like Claude Code and Codex CLI)
+            # Users authenticate via `gemini` command which opens browser login
             if [[ -s "$HOME/.config/gemini/credentials.json" || -d "$HOME/.config/gemini" ]]; then
                 return 0
             fi
-            if [[ -f "$HOME/.gemini/config" || -f "$HOME/.config/gcloud/application_default_credentials.json" ]]; then
+            if [[ -f "$HOME/.gemini/config" ]]; then
                 return 0
             fi
             return 1
@@ -569,7 +567,7 @@ show_menu_gum() {
 
     # Build menu items with styled status indicators
     local -a items=()
-    for i in {0..7}; do
+    for i in {0..8}; do
         local status=""
         if is_completed "$i"; then
             status="✓"
@@ -613,7 +611,7 @@ show_menu_basic() {
     echo -e "${BOLD}Choose a lesson:${NC}"
     echo ""
 
-    for i in {0..7}; do
+    for i in {0..8}; do
         echo -e "  $(format_lesson "$i")"
     done
 
@@ -624,10 +622,10 @@ show_menu_basic() {
     echo -e "  ${DIM}[q] Quit${NC}"
     echo ""
 
-    read -rp "$(echo -e "${CYAN}Choose [1-8, a, r, s, q]:${NC} ")" choice
+    read -rp "$(echo -e "${CYAN}Choose [1-9, a, r, s, q]:${NC} ")" choice
 
     case "$choice" in
-        [1-8]) echo "$choice" ;;
+        [1-9]) echo "$choice" ;;
         a|A) echo "a" ;;
         r|R) echo "r" ;;
         s|S) echo "s" ;;
@@ -826,7 +824,7 @@ show_status() {
     print_header
 
     local completed_count=0
-    for i in {0..7}; do
+    for i in {0..8}; do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
@@ -834,7 +832,7 @@ show_status() {
 
     if has_gum; then
         # Styled progress display with gum
-        local percent=$((completed_count * 100 / 8))
+        local percent=$((completed_count * 100 / 9))
         local filled=$((percent / 2))
         local empty=$((50 - filled))
 
@@ -853,7 +851,7 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
 
         # Lesson list with styled status
         echo ""
-        for i in {0..7}; do
+        for i in {0..8}; do
             local status_icon status_color
             if is_completed "$i"; then
                 status_icon="✓"
@@ -896,16 +894,16 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
         printf '%s' "${DIM}"
         for ((i = 0; i < empty; i++)); do printf '░'; done
         printf '%s' "${NC}"
-        echo " $((completed_count * 100 / 8))%"
+        echo " $((completed_count * 100 / 9))%"
         echo ""
 
-        for i in {0..7}; do
+        for i in {0..8}; do
             echo -e "  $(format_lesson "$i")"
         done
 
         echo ""
 
-        if [[ $completed_count -eq 8 ]]; then
+        if [[ $completed_count -eq 9 ]]; then
             echo -e "${GREEN}${BOLD}All lessons complete! You're ready to fly!${NC}"
         else
             local current
@@ -934,7 +932,7 @@ main_menu() {
         fi
 
         case "$choice" in
-            [1-8])
+            [1-9])
                 local idx=$((choice - 1))
                 set_current "$idx"
                 show_lesson "$idx"
