@@ -196,9 +196,9 @@ check_wrangler_status() {
     fi
 
     # Check for Cloudflare credentials
-    if user_file_exists "$TARGET_HOME/.config/.wrangler/config/default.toml" || \
-       user_file_exists "$TARGET_HOME/.wrangler/config/default.toml" || \
-       [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+    if user_file_exists "$TARGET_HOME/.config/wrangler/config/default.toml" || \
+        user_file_exists "$TARGET_HOME/.wrangler/config/default.toml" || \
+        [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
         SERVICE_STATUS[wrangler]="configured"
     else
         SERVICE_STATUS[wrangler]="installed"
