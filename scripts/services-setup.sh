@@ -260,7 +260,6 @@ print_status_table() {
 
         echo -e "$table_data" | gum table \
             --border.foreground "$ACFS_MUTED" \
-            --cell.foreground "$ACFS_TEXT" \
             --header.foreground "$ACFS_PRIMARY"
     else
         # Fallback to simple display
