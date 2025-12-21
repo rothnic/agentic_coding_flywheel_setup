@@ -16,9 +16,10 @@ test.describe("Wizard Flow", () => {
 
   test("should navigate from home to wizard", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
-    // Click the primary CTA
-    await page.click('text="Start the Wizard"');
+    // Click the primary CTA - wait for it to be stable
+    await page.getByRole("link", { name: /start the wizard/i }).click();
 
     // Should be on step 1 (OS selection)
     await expect(page).toHaveURL("/wizard/os-selection");
@@ -148,7 +149,7 @@ test.describe("SSH Connect Page - Critical Bug Prevention", () => {
     await expect(page.locator("h1").first()).toContainText(/SSH/i);
 
     // The IP should be displayed
-    await expect(page.locator('code:has-text("192.168.1.100")')).toBeVisible();
+    await expect(page.locator('code:has-text("192.168.1.100")').first()).toBeVisible();
 
     // Continue button should be visible and clickable
     await expect(page.locator('button:has-text("continue")')).toBeVisible();
@@ -255,7 +256,7 @@ test.describe("Navigation", () => {
     await page.click('button:has-text("Continue")');
 
     // Now on step 2, click on step 1 in sidebar
-    await page.click('text="Choose OS"');
+    await page.click('text="Choose Your OS"');
 
     // Should navigate back to step 1
     await expect(page).toHaveURL("/wizard/os-selection");
@@ -346,7 +347,7 @@ test.describe("Command Card Copy Functionality", () => {
     await expect(page.locator("h1").first()).toBeVisible({ timeout: 3000 });
 
     // Find a command card with copy button
-    await expect(page.locator('button:has-text("Copy")')).toBeVisible();
+    await expect(page.locator('button:has-text("Copy command")')).toBeVisible();
   });
 });
 
@@ -370,9 +371,10 @@ test.describe("Complete Wizard Flow Integration", () => {
     // Start fresh
     await page.goto("/");
     await page.evaluate(() => localStorage.clear());
+    await page.waitForLoadState("networkidle");
 
     // Step 1: Home -> OS Selection
-    await page.click('text="Start the Wizard"');
+    await page.getByRole("link", { name: /start the wizard/i }).click();
     await expect(page).toHaveURL("/wizard/os-selection");
 
     // Step 1: Select OS
