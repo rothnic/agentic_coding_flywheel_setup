@@ -486,41 +486,140 @@ run_deep_checks() {
 }
 
 # Deep check: Agent authentication
+# Enhanced per bead 325: Check config files, API keys, and low-cost API checks
 deep_check_agent_auth() {
-    # Claude Code auth check
-    if command -v claude &>/dev/null; then
-        # Check if claude has valid auth by running a quick status check
-        if claude --version &>/dev/null; then
-            # Note: Actual auth testing would require running claude
-            # For now, we just verify the binary works
-            check "deep.agent.claude_auth" "Claude Code (binary OK)" "pass" "run test"
-        else
-            check "deep.agent.claude_auth" "Claude Code auth" "warn" "binary error" "claude --help"
-        fi
-    else
-        check "deep.agent.claude_auth" "Claude Code auth" "warn" "not installed"
+    check_claude_auth
+    check_codex_auth
+    check_gemini_auth
+}
+
+# check_claude_auth - Thorough Claude Code authentication check
+# Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
+# Related: bead 325
+check_claude_auth() {
+    # Skip if not installed
+    if ! command -v claude &>/dev/null; then
+        check "deep.agent.claude_auth" "Claude Code" "warn" "not installed" "bun install -g @anthropic-ai/claude-code"
+        return
     fi
 
-    # Codex auth check
-    if command -v codex &>/dev/null; then
-        if codex --version &>/dev/null; then
-            check "deep.agent.codex_auth" "Codex CLI (binary OK)" "pass" "run test"
-        else
-            check "deep.agent.codex_auth" "Codex CLI auth" "warn" "binary error" "codex --help"
-        fi
-    else
-        check "deep.agent.codex_auth" "Codex CLI auth" "warn" "not installed"
+    # Check if binary works
+    if ! claude --version &>/dev/null 2>&1; then
+        check "deep.agent.claude_auth" "Claude Code auth" "fail" "binary error" "Reinstall: bun install -g @anthropic-ai/claude-code"
+        return
     fi
 
-    # Gemini auth check
-    if command -v gemini &>/dev/null; then
-        if gemini --version &>/dev/null; then
-            check "deep.agent.gemini_auth" "Gemini CLI (binary OK)" "pass" "run test"
-        else
-            check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "binary error" "gemini --help"
-        fi
+    # Check for config file (indicates previous auth)
+    local config_file="$HOME/.claude/config.json"
+    if [[ ! -f "$config_file" ]]; then
+        check "deep.agent.claude_auth" "Claude Code auth" "warn" "no config file" "Run: claude to authenticate"
+        return
+    fi
+
+    # Try low-cost API check: --print-system-info doesn't make API calls but verifies setup
+    if timeout 5 claude --print-system-info &>/dev/null 2>&1; then
+        check "deep.agent.claude_auth" "Claude Code auth" "pass" "authenticated"
     else
-        check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "not installed"
+        # Config exists but system info fails - partial setup
+        check "deep.agent.claude_auth" "Claude Code auth" "warn" "config exists, verify failed" "Run: claude to re-authenticate"
+    fi
+}
+
+# check_codex_auth - Thorough Codex CLI authentication check
+# Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
+# Related: bead 325
+check_codex_auth() {
+    # Skip if not installed
+    if ! command -v codex &>/dev/null; then
+        check "deep.agent.codex_auth" "Codex CLI" "warn" "not installed" "bun install -g @openai/codex@latest"
+        return
+    fi
+
+    # Check if binary works
+    if ! codex --version &>/dev/null 2>&1; then
+        check "deep.agent.codex_auth" "Codex CLI auth" "fail" "binary error" "Reinstall: bun install -g @openai/codex@latest"
+        return
+    fi
+
+    # Check for OPENAI_API_KEY in environment
+    if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+        check "deep.agent.codex_auth" "Codex CLI auth" "pass" "OPENAI_API_KEY set"
+        return
+    fi
+
+    # Check for API key in common config locations
+    local found_key=false
+
+    # Check ~/.zshrc.local (ACFS convention)
+    if [[ -f "$HOME/.zshrc.local" ]] && grep -q "OPENAI_API_KEY" "$HOME/.zshrc.local" 2>/dev/null; then
+        found_key=true
+    fi
+
+    # Check ~/.config/openai (common location)
+    if [[ -f "$HOME/.config/openai/api_key" ]] || [[ -f "$HOME/.openai/api_key" ]]; then
+        found_key=true
+    fi
+
+    # Check direnv .envrc in common project dirs
+    if [[ -f "/data/projects/.envrc" ]] && grep -q "OPENAI_API_KEY" "/data/projects/.envrc" 2>/dev/null; then
+        found_key=true
+    fi
+
+    if [[ "$found_key" == "true" ]]; then
+        check "deep.agent.codex_auth" "Codex CLI auth" "pass" "API key found in config"
+    else
+        check "deep.agent.codex_auth" "Codex CLI auth" "warn" "no OPENAI_API_KEY found" "Set OPENAI_API_KEY in ~/.zshrc.local"
+    fi
+}
+
+# check_gemini_auth - Thorough Gemini CLI authentication check
+# Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
+# Related: bead 325
+check_gemini_auth() {
+    # Skip if not installed
+    if ! command -v gemini &>/dev/null; then
+        check "deep.agent.gemini_auth" "Gemini CLI" "warn" "not installed" "bun install -g @google/gemini-cli@latest"
+        return
+    fi
+
+    # Check if binary works
+    if ! gemini --version &>/dev/null 2>&1; then
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "fail" "binary error" "Reinstall: bun install -g @google/gemini-cli@latest"
+        return
+    fi
+
+    # Check for GOOGLE_API_KEY or GEMINI_API_KEY in environment
+    if [[ -n "${GOOGLE_API_KEY:-}" ]] || [[ -n "${GEMINI_API_KEY:-}" ]]; then
+        local key_name="GOOGLE_API_KEY"
+        [[ -n "${GEMINI_API_KEY:-}" ]] && key_name="GEMINI_API_KEY"
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "$key_name set"
+        return
+    fi
+
+    # Check for API key in common config locations
+    local found_key=false
+
+    # Check ~/.zshrc.local (ACFS convention)
+    if [[ -f "$HOME/.zshrc.local" ]]; then
+        if grep -qE "(GOOGLE_API_KEY|GEMINI_API_KEY)" "$HOME/.zshrc.local" 2>/dev/null; then
+            found_key=true
+        fi
+    fi
+
+    # Check Google Cloud application default credentials
+    if [[ -f "$HOME/.config/gcloud/application_default_credentials.json" ]]; then
+        found_key=true
+    fi
+
+    # Check for Gemini-specific config
+    if [[ -d "$HOME/.config/gemini" ]] || [[ -f "$HOME/.gemini/config" ]]; then
+        found_key=true
+    fi
+
+    if [[ "$found_key" == "true" ]]; then
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "credentials found"
+    else
+        check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "no API key found" "Set GOOGLE_API_KEY in ~/.zshrc.local"
     fi
 }
 
