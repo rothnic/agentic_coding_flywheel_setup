@@ -326,8 +326,8 @@ export default function RentVPSPage() {
               </div>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              <strong>Starting small?</strong> Just get a VPS (~$12-21) and one Claude Pro
-              subscription ($20). You can scale up as you see results!
+              <strong>Starting small?</strong> Get the 48GB VPS (~$21/month) and one Claude Pro
+              subscription ($20/month). You can scale up as you see results!
             </p>
           </GuideSection>
 
@@ -338,13 +338,13 @@ export default function RentVPSPage() {
             <ul className="space-y-3">
               <li>
                 <strong>Contabo:</strong> Our top recommendation! Best specs for the price.
-                Cloud VPS 30 (24GB RAM, ~$12/month) or Cloud VPS 40 (48GB RAM, ~$21/month). Interface is basic but functional.
-                Instant activation with no waiting.
+                Cloud VPS 50 (64GB RAM, ~$37/month) is our top pick. Cloud VPS 40 (48GB RAM, ~$21/month)
+                for budget. Interface is basic but functional. Instant activation.
               </li>
               <li>
                 <strong>OVH:</strong> Great alternative with polished interface.
-                VPS-3 (24GB RAM, ~$13/month) or VPS-4 (48GB RAM, ~$22/month). Great EU and US data centers.
-                Instant activation.
+                VPS-5 (64GB RAM, ~$34/month) or VPS-4 (48GB RAM, ~$22/month).
+                Great EU and US data centers. Instant activation.
               </li>
             </ul>
           </GuideSection>
@@ -359,8 +359,8 @@ export default function RentVPSPage() {
               </GuideStep>
 
               <GuideStep number={2} title="Choose a plan with enough resources">
-                Look for a plan with <strong>6–8 vCPU</strong> and <strong>16–32GB RAM</strong>.
-                If you see NVMe storage, that&apos;s a nice bonus. Click &quot;Configure&quot; or &quot;Order&quot;.
+                Look for a plan with <strong>12+ vCPU</strong> and <strong>48GB+ RAM</strong> (32GB absolute minimum).
+                NVMe storage is standard on all recommended plans. Click &quot;Configure&quot; or &quot;Order&quot;.
               </GuideStep>
 
               <GuideStep number={3} title="Configure your VPS">
@@ -402,16 +402,16 @@ export default function RentVPSPage() {
             </p>
             <ul className="space-y-2">
               <li>
-                <strong>vCPU (6-8):</strong> The &quot;brain&quot; of the computer. More = faster.
-                6 is comfortable, 8 is great.
+                <strong>vCPU (12+):</strong> The &quot;brain&quot; of the computer. More = faster.
+                12 vCPU is comfortable for multi-agent work, 16 is great.
               </li>
               <li>
-                <strong>RAM (16–32 GB):</strong> Short-term memory. This is crucial for running
-                multiple AI agents. 16GB is workable; 32GB is comfortable.
+                <strong>RAM (48–64 GB):</strong> Short-term memory. This is crucial for running
+                multiple AI agents. 32GB is absolute minimum; 48GB+ is recommended.
               </li>
               <li>
-                <strong>Storage (200GB+ SSD):</strong> Long-term storage for files, databases,
-                and AI model caches. SSD means it&apos;s fast. 200GB is a good starting point.
+                <strong>Storage (250GB+ NVMe):</strong> Long-term storage for files, databases,
+                and AI model caches. NVMe is fast. 250GB is a good starting point.
               </li>
               <li>
                 <strong>Ubuntu:</strong> The operating system we&apos;ll install. It&apos;s like
@@ -421,8 +421,8 @@ export default function RentVPSPage() {
           </GuideSection>
 
           <GuideTip>
-            If you&apos;re not sure what to pick, start with a plan around <strong>6 vCPU</strong> and
-            <strong> 16–32GB RAM</strong>. Both Contabo and OVH typically activate servers quickly.
+            If you&apos;re not sure what to pick, get the <strong>Cloud VPS 50</strong> (64GB RAM, 16 vCPU, ~$37/month)
+            from Contabo - best value for serious multi-agent work. Both providers activate quickly.
           </GuideTip>
 
           <GuideCaution>
