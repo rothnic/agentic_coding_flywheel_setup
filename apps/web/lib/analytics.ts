@@ -4,6 +4,7 @@
  */
 
 import { safeGetItem, safeSetItem, safeGetJSON, safeSetJSON } from './utils';
+import { TOTAL_STEPS } from './wizardSteps';
 
 // Types for GA4 events
 declare global {
@@ -622,8 +623,8 @@ export const trackFunnelStepEnter = (
     is_new_max_step: isNewMaxStep,
     max_step_reached: funnelData.maxStepReached,
     time_from_previous_step_seconds: timeFromPreviousStep,
-    total_steps: 10,
-    progress_percentage: Math.round((stepNumber / 10) * 100),
+    total_steps: TOTAL_STEPS,
+    progress_percentage: Math.round((stepNumber / TOTAL_STEPS) * 100),
     is_returning: !isNewMaxStep && stepNumber <= funnelData.maxStepReached,
   });
 
@@ -643,7 +644,7 @@ export const trackFunnelStepEnter = (
       milestone: 'installer_step',
       funnel_id: funnelData.sessionId,
     });
-  } else if (stepNumber === 10) {
+  } else if (stepNumber === TOTAL_STEPS) {
     sendEvent('funnel_milestone', {
       milestone: 'final_step',
       funnel_id: funnelData.sessionId,
@@ -692,8 +693,8 @@ export const trackFunnelStepComplete = (
     step_name: stepName,
     time_on_step_seconds: timeOnStep,
     completed_steps_count: funnelData.completedSteps.length,
-    total_steps: 10,
-    completion_percentage: Math.round((funnelData.completedSteps.length / 10) * 100),
+    total_steps: TOTAL_STEPS,
+    completion_percentage: Math.round((funnelData.completedSteps.length / TOTAL_STEPS) * 100),
     ...additionalData,
   });
 
@@ -702,7 +703,7 @@ export const trackFunnelStepComplete = (
     trackConversion('vps_created', 10);
   } else if (stepNumber === 7) {
     trackConversion('installer_run', 50);
-  } else if (stepNumber === 10) {
+  } else if (stepNumber === TOTAL_STEPS) {
     trackFunnelComplete();
   }
 };
@@ -748,7 +749,7 @@ export const trackFunnelDropoff = (reason?: string): void => {
   if (typeof window === 'undefined') return;
 
   const funnelData = getFunnelData();
-  if (!funnelData || funnelData.completedSteps.includes(10)) return;
+  if (!funnelData || funnelData.completedSteps.includes(TOTAL_STEPS)) return;
 
   const startTime = new Date(funnelData.startedAt).getTime();
   const totalTimeSeconds = Math.round((Date.now() - startTime) / 1000);
@@ -847,6 +848,6 @@ export const getFunnelSummary = (): Record<string, unknown> | null => {
     completedSteps: funnelData.completedSteps,
     totalTimeMinutes: Math.round(totalTimeSeconds / 60),
     source: funnelData.source,
-    completionRate: Math.round((funnelData.completedSteps.length / 10) * 100),
+    completionRate: Math.round((funnelData.completedSteps.length / TOTAL_STEPS) * 100),
   };
 };
