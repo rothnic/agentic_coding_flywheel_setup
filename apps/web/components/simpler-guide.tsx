@@ -115,7 +115,7 @@ export function GuideSection({
         <Icon className="h-5 w-5 shrink-0 text-[oklch(0.78_0.16_75)]" />
         <h3 className="font-semibold text-foreground">{title}</h3>
       </div>
-      <div className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
   );
 }
@@ -187,7 +187,7 @@ export function GuideExplain({
       <p className="mb-2 font-medium text-[oklch(0.85_0.12_195)]">
         What is &quot;{term}&quot;?
       </p>
-      <div className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
   );
 }
@@ -277,7 +277,7 @@ export function GuideCaution({
       <p className="mb-2 flex items-center gap-2 font-medium text-[oklch(0.88_0.12_75)]">
         <span className="text-lg">⚠️</span> Important
       </p>
-      <div className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
   );
 }
@@ -302,7 +302,7 @@ export function GuideTip({
       <p className="mb-2 flex items-center gap-2 font-medium text-[oklch(0.82_0.12_145)]">
         <span className="text-lg">💡</span> Tip
       </p>
-      <div className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
   );
 }
