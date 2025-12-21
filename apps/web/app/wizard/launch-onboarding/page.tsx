@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { PartyPopper, Rocket, BookOpen, ExternalLink, Sparkles, ArrowRight } from "lucide-react";
+import { PartyPopper, BookOpen, ExternalLink, Sparkles, ArrowRight, GraduationCap, Terminal } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
 import { markStepComplete, setCompletedSteps, TOTAL_STEPS } from "@/lib/wizardSteps";
+import { trackConversion } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -127,20 +128,31 @@ export default function LaunchOnboardingPage() {
         </p>
       </div>
 
-      {/* Launch onboard */}
+      {/* Learning Hub CTA - Primary */}
       <Card className="border-primary/20 bg-primary/5 p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Rocket className="h-6 w-6 text-primary" />
-            <h2 className="text-xl font-semibold">Start the onboarding tutorial</h2>
+            <GraduationCap className="h-6 w-6 text-primary" />
+            <h2 className="text-xl font-semibold">Continue Your Learning Journey</h2>
           </div>
           <p className="text-muted-foreground">
-            Learn the basics of your new environment with an interactive tutorial:
+            Master your new environment with 9 guided lessons covering Linux basics,
+            tmux sessions, AI agents, and advanced workflows.
           </p>
-          <CommandCard
-            command="onboard"
-            description="Launch interactive onboarding"
-          />
+          <Link href="/learn" onClick={() => trackConversion('learning_hub_started')}>
+            <Button size="lg" className="w-full sm:w-auto">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Start Learning Hub
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
+            <Terminal className="h-4 w-4" />
+            <span>
+              Prefer the terminal? Run{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">onboard</code>{" "}
+              for the CLI version.
+            </span>
+          </div>
         </div>
       </Card>
 
@@ -315,18 +327,26 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">Ready for the Advanced Workflow?</h2>
           </div>
           <p className="text-muted-foreground">
-            Part One is complete! Continue to Part Two to learn the powerful multi-agent
+            After completing the Learning Hub basics, dive into the powerful multi-agent
             workflow that lets you build production-ready software at incredible speed.
             You&apos;ll learn how to orchestrate multiple AI agents working in parallel,
             use the &quot;best of all worlds&quot; planning technique, and run agent swarms
             that build features while you sleep.
           </p>
-          <Link href="/workflow">
-            <Button size="lg" className="w-full sm:w-auto">
-              Continue to Part Two: The Workflow
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/learn">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Start with Basics
+              </Button>
+            </Link>
+            <Link href="/workflow">
+              <Button size="lg" className="w-full sm:w-auto">
+                Skip to Advanced
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </Card>
 
