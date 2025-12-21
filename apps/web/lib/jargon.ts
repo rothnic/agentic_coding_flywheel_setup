@@ -31,6 +31,37 @@ export interface JargonTerm {
  */
 export const jargonDictionary: Record<string, JargonTerm> = {
   // ═══════════════════════════════════════════════════════════════
+  // HARDWARE & SERVER SPECIFICATIONS
+  // ═══════════════════════════════════════════════════════════════
+
+  vcpu: {
+    term: "vCPU",
+    short: "Virtual CPU, a share of a physical processor's computing power",
+    long: "A vCPU (virtual CPU) is a portion of a physical processor that's assigned to your VPS. When a VPS has '4 vCPUs,' you're getting the equivalent of 4 processor cores. These aren't dedicated physical chips; the cloud provider divides a powerful physical server into multiple virtual machines. More vCPUs mean your server can do more things simultaneously: running multiple AI agents, compiling code, and serving requests all at once.",
+    analogy: "Think of a pizza cut into 8 slices. If you order '2 vCPUs,' you get 2 slices of the pizza (the physical processor). You're sharing the pizza with others, but your slices are guaranteed to be there when you're hungry. The more slices you have, the more computing tasks you can handle at once.",
+    why: "For AI coding agents, vCPU count matters because running multiple agents simultaneously requires parallel processing power. A 4-vCPU server can comfortably run 2-3 AI agents in parallel, while an 8-vCPU server handles 4-6 agents. When the wizard recommends specs, vCPUs determine how much parallel work your server can handle.",
+    related: ["ram", "vps", "nvme"],
+  },
+
+  ram: {
+    term: "RAM",
+    short: "Random Access Memory, the fast temporary storage your computer uses while working",
+    long: "RAM (Random Access Memory) is your computer's short-term memory. Unlike your hard drive which stores files permanently, RAM holds data that programs are actively using right now. When you open an application, it loads into RAM for fast access. More RAM means you can run more programs simultaneously without slowdowns. When you close a program, its RAM is freed up; when you shut down, RAM is erased (it's 'volatile' memory).",
+    analogy: "RAM is like your desk space while working. A bigger desk (more RAM) lets you spread out more documents and work on multiple things without constantly putting papers away and getting new ones. Your filing cabinet (hard drive/SSD) stores everything long-term, but your desk is where active work happens. If your desk is too small, you spend all your time shuffling papers instead of working.",
+    why: "AI coding agents are memory-hungry. Each agent session can use 2-4 GB of RAM, and running multiple agents multiplies that. The code they analyze, the context they maintain, and the tools they use all live in RAM. With 16 GB RAM, you can comfortably run 2-3 agents; with 32 GB or more, you can run a full agent swarm. The '16 GB minimum' recommendation ensures you won't hit frustrating slowdowns.",
+    related: ["vcpu", "vps", "nvme"],
+  },
+
+  nvme: {
+    term: "NVMe SSD",
+    short: "Ultra-fast solid-state storage that's 10x faster than traditional hard drives",
+    long: "NVMe (Non-Volatile Memory Express) SSDs are the fastest type of storage available. Unlike traditional hard drives with spinning disks, SSDs have no moving parts. NVMe goes further by connecting directly to your computer's high-speed lanes, eliminating bottlenecks. Read/write speeds of 3,000-7,000 MB/second are common, compared to 100-200 MB/second for traditional drives. This makes everything faster: booting, loading programs, searching files, and especially package installations.",
+    analogy: "Imagine the difference between sending a letter through the mail (hard drive) versus texting (SSD), versus a direct brain-to-brain link (NVMe). NVMe storage talks to your processor with almost no delay, making everything feel instant.",
+    why: "AI coding involves constant file operations: reading code, writing changes, searching text, installing packages. NVMe storage makes all of this nearly instant. When ripgrep searches 10,000 files, NVMe means results appear in milliseconds. When bun installs packages, they extract instantly. Fast storage is one of those upgrades where you don't realize how much it matters until you experience it.",
+    related: ["vcpu", "ram", "vps"],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
   // CORE INFRASTRUCTURE CONCEPTS
   // ═══════════════════════════════════════════════════════════════
 
@@ -342,6 +373,42 @@ export const jargonDictionary: Record<string, JargonTerm> = {
     related: ["idempotent"],
   },
 
+  passphrase: {
+    term: "Passphrase",
+    short: "An optional password that protects your SSH private key",
+    long: "A passphrase is a password you can add to your SSH private key for extra security. Without a passphrase, anyone who gets your private key file can use it immediately. With a passphrase, they'd also need to know the password. When you set a passphrase, you'll be prompted to enter it each time you use the key (though SSH agents can remember it for your session). For AI coding workflows, we often skip the passphrase because agents need to connect non-interactively.",
+    analogy: "Like a PIN on your phone. Even if someone steals your phone (gets your key file), they still need the PIN (passphrase) to access it. Without the PIN, the phone is useless to them.",
+    why: "Passphrases add a second layer of security, but they require human interaction to enter. For automated workflows where agents connect to servers, passphrase-less keys are common. For personal use, a passphrase is recommended since you can use an SSH agent to remember it.",
+    related: ["private-key", "ssh-key", "ssh"],
+  },
+
+  chmod: {
+    term: "chmod",
+    short: "Change file permissions, controlling who can read, write, or execute a file",
+    long: "chmod (change mode) is a Linux command that sets file permissions. Every file has three permission types (read, write, execute) for three groups (owner, group, others). 'chmod 600' means only the owner can read and write. 'chmod 700' means only the owner can read, write, and execute. SSH private keys must be chmod 600 or 700, otherwise SSH refuses to use them (this is a security requirement).",
+    analogy: "Like access levels in a building. Some rooms are 'employees only' (owner), some are 'department access' (group), and some are 'public' (others). chmod sets who can enter (read), who can modify things (write), and who can use the equipment (execute).",
+    why: "When SSH says 'permissions too open,' it means your private key is readable by others and could be stolen. Running 'chmod 600 ~/.ssh/acfs_ed25519' fixes this by making it owner-only. This is one of the most common SSH troubleshooting steps.",
+    related: ["private-key", "ssh", "terminal"],
+  },
+
+  ed25519: {
+    term: "Ed25519",
+    short: "A modern, fast, and secure type of SSH key (recommended over older RSA)",
+    long: "Ed25519 is a modern cryptographic algorithm for SSH keys. It's faster, more secure, and produces shorter keys than the older RSA algorithm. Ed25519 keys are 256 bits but provide security equivalent to 3000-bit RSA keys. All modern SSH implementations support Ed25519, and it's now the recommended default for new SSH keys.",
+    analogy: "Like the difference between a heavy old safe and a modern lightweight one. The new safe is actually more secure AND easier to carry around. Ed25519 is the 'new safe'; better security in a smaller package.",
+    why: "We use Ed25519 for the SSH keys generated by the wizard because it's the most secure option that works everywhere. The key file is named 'acfs_ed25519' because it uses this algorithm. If a server doesn't accept it (very rare, usually ancient systems), RSA is the fallback.",
+    related: ["ssh-key", "private-key", "public-key"],
+  },
+
+  lts: {
+    term: "LTS",
+    short: "Long Term Support, a version that receives security updates for 5+ years",
+    long: "LTS (Long Term Support) versions of software get bug fixes and security updates for an extended period, typically 5 years for Ubuntu. Regular releases might only get 9 months of support. For example, Ubuntu 24.04 LTS will receive updates until 2029, while Ubuntu 23.10 (non-LTS) stopped receiving updates in mid-2024. LTS releases prioritize stability over cutting-edge features.",
+    analogy: "Like buying a car with a 5-year warranty versus a 9-month warranty. The LTS car might not have the absolute latest features, but you know it'll be maintained and supported for years to come.",
+    why: "We recommend Ubuntu LTS versions for VPS because servers need reliability. You don't want your production environment to suddenly need an OS upgrade because support ended. LTS gives you a stable, long-lived foundation.",
+    related: ["ubuntu", "linux", "vps"],
+  },
+
   sudo: {
     term: "sudo",
     short: "Run a command as administrator (superuser)",
@@ -552,6 +619,42 @@ export const jargonDictionary: Record<string, JargonTerm> = {
     related: ["git", "repository"],
   },
 
+  "ci-cd": {
+    term: "CI/CD",
+    short: "Continuous Integration/Continuous Deployment, automated testing and deployment",
+    long: "CI/CD is a practice where code changes are automatically tested and deployed. Continuous Integration (CI) means every code push triggers automated tests, catching bugs immediately. Continuous Deployment (CD) means if tests pass, the code is automatically deployed to production. GitHub Actions, GitLab CI, and CircleCI are popular CI/CD tools. The goal is: push code, tests run automatically, and if everything passes, your changes go live without manual intervention.",
+    analogy: "Like a conveyor belt at a factory. Parts (code) go in, automated quality checks (tests) happen at each station, and if everything passes, the finished product (deployment) comes out the other end. No human needed to manually inspect each piece.",
+    why: "CI/CD prevents 'it works on my machine' problems by testing in a consistent environment. It also means deployments are fast and safe; push a button (or just push code) and your changes are live. AI agents can trigger CI/CD pipelines to test their own code.",
+    related: ["github", "deployment", "git"],
+  },
+
+  "rate-limits": {
+    term: "Rate Limits",
+    short: "Restrictions on how many API requests you can make per minute/hour",
+    long: "Rate limits are caps that API providers place on how many requests you can make in a given time period. For example, an AI API might allow 60 requests per minute. If you exceed this, you'll get an error (usually HTTP 429 'Too Many Requests') and have to wait before making more. Rate limits prevent abuse and ensure fair access for all users. Higher-tier API plans typically have higher rate limits.",
+    analogy: "Like a buffet with a 'maximum 3 plates per person' rule. You can eat as much as you want from each plate, but you can only go up to the buffet so many times. Rate limits ensure everyone gets a turn.",
+    why: "AI agents can make many API calls quickly, especially when running multiple agents in parallel. Understanding rate limits helps you plan your workflow: you might need multiple API keys, paid tiers, or pacing to avoid hitting limits. Rate limits are also why running your own VPS (for compute) matters, since you're not competing for API resources with other users.",
+    related: ["api", "ai-agents"],
+  },
+
+  codebase: {
+    term: "Codebase",
+    short: "All the source code files that make up a software project",
+    long: "A codebase is the complete collection of source code for a software project. It includes all the programming files, configuration, tests, documentation, and everything needed to build and run the software. 'Large codebase' typically means tens of thousands to millions of lines of code. 'Navigate the codebase' means finding your way around all these files to understand how things work.",
+    analogy: "Like all the blueprints, wiring diagrams, plumbing plans, and material specs for a building. The codebase is everything needed to understand and modify the software 'building.'",
+    why: "AI agents are particularly good at navigating large codebases. While humans get lost in thousands of files, agents with tools like ripgrep can search and understand code across the entire project in seconds.",
+    related: ["repository", "git"],
+  },
+
+  production: {
+    term: "Production",
+    short: "The live environment where real users interact with your software",
+    long: "Production (or 'prod') is the live, real-world version of your software that actual users see and use. It's opposed to 'development' (where you write code) and 'staging' (where you test before going live). 'Push to production' means deploying your code so users can see it. 'Production bug' is a bug affecting real users. Production environments have stricter requirements: they must be reliable, fast, and secure.",
+    analogy: "Development is the dress rehearsal, staging is the preview performance, and production is opening night with a paying audience. Mistakes in production have real consequences.",
+    why: "Understanding the dev/staging/prod distinction helps you work safely. You experiment in development, verify in staging, and only push to production when you're confident. AI agents should generally work in development, with human oversight before production changes.",
+    related: ["deployment", "environment"],
+  },
+
   environment: {
     term: "Environment",
     short: "A complete setup where code runs, like development, staging, or production",
@@ -624,6 +727,33 @@ export const jargonDictionary: Record<string, JargonTerm> = {
     related: ["vps", "ssh"],
   },
 
+  hostname: {
+    term: "Hostname",
+    short: "The human-readable name of a computer on a network",
+    long: "A hostname is a label assigned to a computer that identifies it on a network. While IP addresses are numbers (like 192.168.1.100), hostnames are words (like 'my-vps' or 'ubuntu-server'). When you see your terminal prompt showing 'ubuntu@vps-hostname', the part after @ is the hostname. You can set any hostname you like when creating a VPS; it's purely for your convenience and doesn't affect how the server works.",
+    analogy: "If an IP address is like a phone number, a hostname is like a contact name. '555-0123' and 'Mom' refer to the same person; one is technical, one is human-friendly.",
+    why: "Hostnames make it easier to identify which server you're connected to. When managing multiple VPS instances, meaningful hostnames like 'prod-server' or 'dev-agent-1' help you avoid mistakes.",
+    related: ["ip-address", "vps", "ssh"],
+  },
+
+  port: {
+    term: "Port",
+    short: "A numbered endpoint for network connections (SSH uses port 22)",
+    long: "A port is like a door number on a building. While an IP address identifies which computer to connect to, the port number identifies which service on that computer. Port 22 is for SSH, port 80 is for HTTP websites, port 443 is for HTTPS. When you SSH to a server, you're connecting to IP address + port 22. A single server can run many services, each listening on a different port.",
+    analogy: "Imagine a large office building (the server) with many offices (ports). To reach the accounting department, you go to the building address (IP) and then office 22 (port). Different departments (services) have different office numbers.",
+    why: "If SSH isn't working, one common issue is that port 22 is blocked by a firewall. Understanding ports helps you troubleshoot connection problems and understand how network services are organized.",
+    related: ["ssh", "ip-address", "vps"],
+  },
+
+  fingerprint: {
+    term: "Fingerprint",
+    short: "A unique code that verifies a server's identity the first time you connect",
+    long: "When you first SSH into a new server, you'll see a message asking you to verify the server's 'fingerprint' (also called host key). This is a unique cryptographic identifier for that server. By checking the fingerprint, you're confirming you're connecting to the real server and not an impostor. Your computer remembers fingerprints of servers you've connected to, so you only see this prompt once per server.",
+    analogy: "Like checking someone's ID the first time you meet them. Once you've verified who they are (accepted the fingerprint), your computer remembers them. If someone tries to impersonate them later, the fingerprint won't match and you'll get a warning.",
+    why: "Fingerprint verification prevents 'man-in-the-middle' attacks where someone intercepts your connection and pretends to be your server. The first time you connect, it's safe to accept if you just created the VPS. If you see a warning on a server you've connected to before, something may be wrong.",
+    related: ["ssh", "ssh-key", "sha256"],
+  },
+
   configuration: {
     term: "Configuration",
     short: "Settings that control how software behaves",
@@ -676,6 +806,73 @@ export const jargonDictionary: Record<string, JargonTerm> = {
     analogy: "Like a bank vault for your passwords and API keys. Instead of keeping them in your pocket (config files), you store them securely and retrieve them only when needed, with full audit trail.",
     why: "As you build real applications, secret management becomes critical. Vault is the industry standard for secure secret storage.",
     related: ["configuration", "deployment"],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADVANCED AGENTIC WORKFLOW CONCEPTS
+  // ═══════════════════════════════════════════════════════════════
+
+  "parallel-agents": {
+    term: "Parallel Agents",
+    short: "Multiple AI agents working simultaneously on different tasks",
+    long: "Running agents in parallel means having multiple AI assistants work at the same time on different parts of a project. While one agent writes the API, another writes tests, and a third handles documentation. This dramatically speeds up development because tasks that would be sequential (one after another) happen simultaneously. The key challenge is coordination; agents need to know what others are working on to avoid conflicts.",
+    analogy: "Like a kitchen with multiple chefs. One handles appetizers, one does mains, one makes desserts. They work faster together than one chef doing everything sequentially, but they need to communicate to avoid both reaching for the same pan.",
+    why: "Parallel agents are the core of the Agent Flywheel. Tools like Agent Mail coordinate who's working on what, NTM manages multiple terminal sessions, and Beads tracks which tasks are ready. This lets you achieve in hours what would take days working sequentially.",
+    related: ["ai-agents", "agent-mail", "ntm", "beads"],
+  },
+
+  "extended-thinking": {
+    term: "Extended Thinking",
+    short: "AI mode where the model 'thinks' longer for more complex reasoning",
+    long: "Extended Thinking (also called 'Deep Think' or 'Chain of Thought') is a mode where AI models spend more time reasoning before responding. Instead of quickly generating an answer, the model works through the problem step by step, similar to how a human might sketch out their thought process. This produces better results for complex problems like architecture decisions, debugging tricky issues, or planning multi-step implementations. OpenAI's GPT Pro and Anthropic's Claude offer extended thinking modes.",
+    analogy: "Like the difference between answering '2+2' instantly versus working through a calculus problem on paper. Some questions benefit from the AI 'showing its work' internally before giving you the final answer.",
+    why: "For planning complex features or debugging subtle bugs, extended thinking produces dramatically better results. The Agent Flywheel workflow uses GPT Pro's Extended Thinking for high-level planning, then Claude Code for execution. You pay more per query, but the quality difference is worth it for important decisions.",
+    related: ["llm", "ai-agents", "prompt"],
+  },
+
+  "stream-deck": {
+    term: "Stream Deck",
+    short: "A physical button panel for triggering actions with one press",
+    long: "A Stream Deck is a customizable keyboard with LCD buttons that can trigger any action: run a script, open a program, paste text, control smart home devices, or trigger AI agent prompts. Each button can display an icon and be programmed for any function. Content creators use them for streaming controls; developers use them for frequently-used commands. Pressing one button can execute a multi-step workflow that would otherwise require typing several commands.",
+    analogy: "Like having a control panel with labeled buttons for your most common tasks. Instead of typing commands or navigating menus, you press the 'Deploy to Production' button and it just happens.",
+    why: "In the Agent Flywheel workflow, Stream Deck buttons trigger pre-written prompts for AI agents. 'Plan feature X,' 'Review this PR,' 'Run the test suite'; all single button presses. This removes friction from the agentic workflow and lets you dispatch agents with a single tap.",
+    related: ["cli", "prompt"],
+  },
+
+  "unix-philosophy": {
+    term: "Unix Philosophy",
+    short: "Design principle where each tool does one thing well and tools compose together",
+    long: "The Unix Philosophy is a set of design principles from the 1970s that still guides modern software: (1) Make each program do one thing well, (2) Write programs to work together, (3) Write programs to handle text streams, because that's a universal interface. Instead of one giant program that does everything, you have small, focused tools that combine. 'ls | grep foo | wc -l' (list files, filter for 'foo', count lines) is Unix Philosophy in action.",
+    analogy: "Like a well-designed kitchen where you have a great knife, a great pan, and a great cutting board, rather than one 'UltraCooker 3000' that tries to do everything but does nothing well. Simple, focused tools that combine elegantly.",
+    why: "The Agent Flywheel tools follow Unix Philosophy. Each tool (NTM, Agent Mail, Beads, UBS) does one thing well. They communicate through standard formats (JSON, Git, text). This means tools can improve independently, and you can swap one out without breaking others.",
+    related: ["cli", "json"],
+  },
+
+  json: {
+    term: "JSON",
+    short: "JavaScript Object Notation, a simple format for structured data",
+    long: "JSON (JavaScript Object Notation) is a text format for representing structured data. It looks like: {\"name\": \"John\", \"age\": 30, \"languages\": [\"Python\", \"JavaScript\"]}. It's human-readable (you can open it in any text editor) and machine-parseable (programs can easily read and write it). JSON has become the standard way to exchange data between programs, APIs, and services. Nearly every programming language can read and write JSON.",
+    analogy: "Like a standardized form that everyone agrees on. Instead of each program inventing its own way to describe data, JSON is the common language they all speak.",
+    why: "Many Agent Flywheel tools communicate using JSON. Agent Mail sends JSON messages, APIs return JSON responses, configuration files use JSON. Understanding JSON helps you read logs, debug issues, and understand how tools communicate.",
+    related: ["api", "configuration"],
+  },
+
+  mcp: {
+    term: "MCP",
+    short: "Model Context Protocol, a standard for connecting AI to external tools",
+    long: "MCP (Model Context Protocol) is a standard that lets AI models connect to external tools and data sources. Instead of the AI only knowing what's in its training data, MCP lets it query databases, read files, call APIs, and use specialized tools in real-time. For example, an MCP server might expose your codebase, letting the AI search and understand your specific project. MCP is an open standard, so tools implementing it work with multiple AI providers.",
+    analogy: "Like giving the AI a phone with different apps. Instead of just knowing what's in its head, it can 'call' different services: look up your database, check your file system, query your project management tool. MCP is the universal protocol those calls use.",
+    why: "MCP servers extend AI capabilities. Agent Mail has an MCP server that lets AI agents send messages to each other. Other MCP servers provide web search, database access, or specialized tools. The Agent Flywheel uses MCP to connect tools into an integrated ecosystem.",
+    related: ["ai-agents", "api", "json"],
+  },
+
+  autonomous: {
+    term: "Autonomous",
+    short: "Working independently without constant human supervision",
+    long: "Autonomous operation means an AI agent can work on its own for extended periods, making decisions, handling errors, and completing tasks without needing human input at every step. This doesn't mean 'no supervision'; you set the goal, define boundaries, and review results. But between those checkpoints, the agent operates independently. An autonomous agent might work for hours, making dozens of commits, while you're away.",
+    analogy: "Like giving instructions to a contractor rather than supervising every hammer swing. You define what you want built, check in periodically, and review the finished work, but you don't need to be present for every task.",
+    why: "Autonomous operation is the goal of agentic AI. When agents can work unsupervised, you multiply your productivity; agents work while you sleep, think about other problems, or take breaks. The Agent Flywheel tools (Agent Mail, Beads, NTM) enable autonomous operation by providing coordination, task tracking, and session persistence.",
+    related: ["agentic", "ai-agents", "parallel-agents"],
   },
 };
 
