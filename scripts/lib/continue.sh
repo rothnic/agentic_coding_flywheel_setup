@@ -200,15 +200,17 @@ show_status() {
 
     echo ""
 
-    # Show log file locations
-    echo -e "  ${DIM}Log files:${NC}"
-    if [[ -f "$ACFS_INSTALL_LOG" ]]; then
-        echo -e "    ${DIM}Install:  $ACFS_INSTALL_LOG${NC}"
+    # Show log file locations (only if any exist)
+    if [[ -f "$ACFS_INSTALL_LOG" ]] || [[ -f "$ACFS_UPGRADE_LOG" ]]; then
+        echo -e "  ${DIM}Log files:${NC}"
+        if [[ -f "$ACFS_INSTALL_LOG" ]]; then
+            echo -e "    ${DIM}Install:  $ACFS_INSTALL_LOG${NC}"
+        fi
+        if [[ -f "$ACFS_UPGRADE_LOG" ]]; then
+            echo -e "    ${DIM}Upgrade:  $ACFS_UPGRADE_LOG${NC}"
+        fi
+        echo ""
     fi
-    if [[ -f "$ACFS_UPGRADE_LOG" ]]; then
-        echo -e "    ${DIM}Upgrade:  $ACFS_UPGRADE_LOG${NC}"
-    fi
-    echo ""
 
     # Return whether installation is running
     $is_running
@@ -309,12 +311,18 @@ main() {
             echo "  2. Run: onboard"
             echo "  3. Start coding with: cc, cod, or gmi"
         else
-            echo "To view past logs:"
-            if [[ -f "$ACFS_INSTALL_LOG" ]]; then
-                echo "  cat $ACFS_INSTALL_LOG"
-            fi
-            if [[ -f "$ACFS_UPGRADE_LOG" ]]; then
-                echo "  cat $ACFS_UPGRADE_LOG"
+            # Only show log viewing instructions if logs exist
+            if [[ -f "$ACFS_INSTALL_LOG" ]] || [[ -f "$ACFS_UPGRADE_LOG" ]]; then
+                echo "To view past logs:"
+                if [[ -f "$ACFS_INSTALL_LOG" ]]; then
+                    echo "  cat $ACFS_INSTALL_LOG"
+                fi
+                if [[ -f "$ACFS_UPGRADE_LOG" ]]; then
+                    echo "  cat $ACFS_UPGRADE_LOG"
+                fi
+            else
+                echo "No ACFS installation logs found."
+                echo "Run the ACFS installer to get started."
             fi
         fi
     fi
