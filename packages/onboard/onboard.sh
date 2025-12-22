@@ -805,7 +805,7 @@ show_completion_certificate() {
             "$(gum style --foreground "$ACFS_SUCCESS" --bold '🚀 You are ready to fly! 🚀')"
 
         echo ""
-        gum confirm --affirmative "Continue" --negative "" "" || true
+        gum confirm --affirmative "Continue" --negative "" || true
     else
         echo ""
         echo -e "${CYAN}${BOLD}╔═══════════════════════════════════════════════════════════╗${NC}"
