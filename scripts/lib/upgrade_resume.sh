@@ -5,12 +5,17 @@
 # This script is copied to /var/lib/acfs/ and executed after
 # each reboot during the Ubuntu upgrade process.
 #
+# CRITICAL SAFETY: This script includes safeguards to prevent
+# reboot loops. It checks actual system state, not just the
+# state file, and disables itself when complete or on failure.
+#
 # Workflow:
-# 1. Source libraries from /var/lib/acfs/lib/
-# 2. Mark resume in state
+# 1. FIRST: Check if already at target version (prevent loops)
+# 2. Source libraries from /var/lib/acfs/lib/
 # 3. Check if more upgrades needed
-# 4. If complete: cleanup and launch continue_install.sh
+# 4. If complete: cleanup, disable service, launch continue_install.sh
 # 5. If not complete: run next upgrade and trigger reboot
+# 6. On failure: update MOTD with error, disable service, exit (NO reboot)
 #
 # This script is designed to be run by systemd on boot.
 # ============================================================
@@ -21,6 +26,8 @@ set -euo pipefail
 ACFS_RESUME_DIR="/var/lib/acfs"
 ACFS_LIB_DIR="${ACFS_RESUME_DIR}/lib"
 ACFS_LOG="/var/log/acfs/upgrade_resume.log"
+UBUNTU_TARGET_VERSION="25.10"
+SERVICE_NAME="acfs-upgrade-resume"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$ACFS_LOG")"
@@ -38,14 +45,126 @@ log_error() {
     echo "[$timestamp] ERROR: $*" | tee -a "$ACFS_LOG" >&2
 }
 
-# Main execution starts here
+# Cleanup function - disables the service to prevent loops
+cleanup_service() {
+    log "Disabling ${SERVICE_NAME} service to prevent reboot loops..."
+    systemctl disable "${SERVICE_NAME}.service" 2>/dev/null || true
+    systemctl stop "${SERVICE_NAME}.service" 2>/dev/null || true
+}
+
+# Update MOTD with failure message and instructions
+update_motd_failure() {
+    local error_msg="$1"
+    local motd_file="/etc/update-motd.d/00-acfs-upgrade"
+
+    cat > "$motd_file" << 'MOTD_SCRIPT'
+#!/bin/bash
+C='\033[0;31m'    # Red
+Y='\033[1;33m'    # Yellow
+B='\033[1m'       # Bold
+N='\033[0m'       # Reset
+
+echo ""
+echo -e "${C}╔══════════════════════════════════════════════════════════════╗${N}"
+echo -e "${C}║${N}  ${C}${B}     ✖ ACFS UBUNTU UPGRADE FAILED ✖${N}                      ${C}║${N}"
+echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
+echo -e "${C}║${N}                                                              ${C}║${N}"
+MOTD_SCRIPT
+
+    # Add the error message
+    cat >> "$motd_file" << MOTD_ERROR
+echo -e "\${C}║\${N}  \${Y}Error:\${N} ${error_msg}"
+MOTD_ERROR
+
+    cat >> "$motd_file" << 'MOTD_FOOTER'
+echo -e "${C}║${N}                                                              ${C}║${N}"
+echo -e "${C}║${N}  ${B}TO RETRY:${N}                                                   ${C}║${N}"
+echo -e "${C}║${N}    curl -fsSL https://bit.ly/acfs-install | bash -s -- --yes ${C}║${N}"
+echo -e "${C}║${N}                                                              ${C}║${N}"
+echo -e "${C}║${N}  ${B}TO VIEW LOGS:${N}                                               ${C}║${N}"
+echo -e "${C}║${N}    cat /var/log/acfs/upgrade_resume.log                      ${C}║${N}"
+echo -e "${C}║${N}                                                              ${C}║${N}"
+echo -e "${C}╚══════════════════════════════════════════════════════════════╝${N}"
+echo ""
+MOTD_FOOTER
+
+    chmod +x "$motd_file"
+}
+
+# Remove MOTD
+remove_motd() {
+    rm -f /etc/update-motd.d/00-acfs-upgrade
+}
+
+# Launch continue script
+launch_continue_script() {
+    if [[ -f "${ACFS_RESUME_DIR}/continue_install.sh" ]]; then
+        log "Launching continue_install.sh to resume ACFS installation"
+        nohup bash "${ACFS_RESUME_DIR}/continue_install.sh" >> "$ACFS_LOG" 2>&1 &
+        log "ACFS installation continuation launched (PID: $!)"
+        return 0
+    else
+        log "No continue_install.sh found - manual installation needed"
+        return 1
+    fi
+}
+
+# ============================================================
+# MAIN EXECUTION STARTS HERE
+# ============================================================
+
 log "=== ACFS Upgrade Resume Starting ==="
 log "Script: $0"
 log "Current directory: $(pwd)"
 
+# ============================================================
+# CRITICAL SAFETY CHECK #1: Are we already at target version?
+# This prevents reboot loops if the state file is stale/wrong.
+# ============================================================
+
+# Get current Ubuntu version directly from the system (not state file)
+if [[ -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    source /etc/os-release
+    CURRENT_UBUNTU_VERSION="${VERSION_ID:-unknown}"
+else
+    log_error "Cannot read /etc/os-release"
+    CURRENT_UBUNTU_VERSION="unknown"
+fi
+
+log "Current Ubuntu version (from system): $CURRENT_UBUNTU_VERSION"
+log "Target Ubuntu version: $UBUNTU_TARGET_VERSION"
+
+# If we're already at target, we're DONE - clean up and exit
+if [[ "$CURRENT_UBUNTU_VERSION" == "$UBUNTU_TARGET_VERSION" ]]; then
+    log "SUCCESS: Already at target version $UBUNTU_TARGET_VERSION!"
+    log "Cleaning up upgrade infrastructure..."
+
+    # Disable service FIRST to prevent any possibility of loop
+    cleanup_service
+
+    # Remove MOTD
+    remove_motd
+
+    # Clean up resume files
+    rm -f "${ACFS_RESUME_DIR}/upgrade_resume.sh" 2>/dev/null || true
+    rm -rf "${ACFS_LIB_DIR}" 2>/dev/null || true
+
+    # Launch continue script
+    launch_continue_script || true
+
+    log "=== Upgrade Resume Complete (target reached) ==="
+    exit 0
+fi
+
+# ============================================================
 # Check if libraries exist
+# ============================================================
+
 if [[ ! -d "$ACFS_LIB_DIR" ]]; then
     log_error "Library directory not found: $ACFS_LIB_DIR"
+    cleanup_service
+    update_motd_failure "Library files missing"
     exit 1
 fi
 
@@ -62,6 +181,8 @@ if [[ -f "$ACFS_LIB_DIR/state.sh" ]]; then
     source "$ACFS_LIB_DIR/state.sh"
 else
     log_error "state.sh not found"
+    cleanup_service
+    update_motd_failure "state.sh missing"
     exit 1
 fi
 
@@ -70,99 +191,90 @@ if [[ -f "$ACFS_LIB_DIR/ubuntu_upgrade.sh" ]]; then
     source "$ACFS_LIB_DIR/ubuntu_upgrade.sh"
 else
     log_error "ubuntu_upgrade.sh not found"
+    cleanup_service
+    update_motd_failure "ubuntu_upgrade.sh missing"
     exit 1
 fi
 
 # Set state file location for resume context
 export ACFS_STATE_FILE="${ACFS_RESUME_DIR}/state.json"
 
+# ============================================================
 # Check current stage in state
+# ============================================================
+
 current_stage=""
 if [[ -f "$ACFS_STATE_FILE" ]] && command -v jq &>/dev/null; then
     current_stage=$(jq -r '.ubuntu_upgrade.stage // "unknown"' "$ACFS_STATE_FILE" 2>/dev/null) || current_stage="unknown"
 fi
-log "Current stage: $current_stage"
+log "Current stage from state file: $current_stage"
 
 # Handle pre_upgrade_reboot stage specially
-# This happens when we rebooted to clear pending kernel updates BEFORE starting
-# the actual Ubuntu version upgrade. In this case, we just need to relaunch
-# the installer to continue with the actual upgrade.
 if [[ "$current_stage" == "pre_upgrade_reboot" ]]; then
     log "Pre-upgrade reboot completed. Relaunching installer to continue..."
 
-    # Update MOTD
     upgrade_update_motd "Pre-upgrade reboot complete. Starting Ubuntu upgrade..." 2>/dev/null || true
 
-    # Launch the continue script to resume the installer
-    if [[ -f "${ACFS_RESUME_DIR}/continue_install.sh" ]]; then
-        log "Launching continue_install.sh to resume installation"
-
-        # Execute the continue script
-        # Use nohup to survive this script exiting
-        nohup bash "${ACFS_RESUME_DIR}/continue_install.sh" >> "$ACFS_LOG" 2>&1 &
-
-        log "Installation continuation launched (PID: $!)"
+    if launch_continue_script; then
         log "=== Pre-Upgrade Reboot Resume Complete ==="
         exit 0
     else
         log_error "No continue_install.sh found"
+        cleanup_service
+        update_motd_failure "continue_install.sh missing"
         exit 1
     fi
 fi
 
-# Ensure non-LTS upgrades are permitted (LTS defaults to Prompt=lts).
+# Ensure non-LTS upgrades are permitted
 ubuntu_enable_normal_releases || true
 
 # Mark that we've successfully resumed after reboot
 log "Marking upgrade as resumed"
 state_upgrade_resumed
 
-# Check current Ubuntu version after reboot
-current_version=$(ubuntu_get_version_string) || {
-    log_error "Failed to get current Ubuntu version"
-    exit 1
-}
-log "Current Ubuntu version: $current_version"
+# ============================================================
+# Check if upgrade is complete (using state file)
+# ============================================================
 
-# Check if upgrade is complete
 if state_upgrade_is_complete; then
-    log "All upgrades complete! Target version reached."
+    log "All upgrades complete per state file!"
 
-    # Mark upgrade as fully completed
     state_upgrade_mark_complete
-
-    # Restore LTS-only upgrade settings if we changed them.
     ubuntu_restore_lts_only || true
+    remove_motd
+    cleanup_service
 
-    # Remove upgrade MOTD banner (so users aren't told upgrade is still running).
-    upgrade_remove_motd || true
+    # Clean up resume files
+    rm -f "${ACFS_RESUME_DIR}/upgrade_resume.sh" 2>/dev/null || true
+    rm -rf "${ACFS_LIB_DIR}" 2>/dev/null || true
 
-    # Cleanup systemd service and temporary files
-    log "Cleaning up resume infrastructure..."
-    ubuntu_cleanup_resume "acfs-upgrade-resume"
-
-    # Check if continue script exists
-    if [[ -f "${ACFS_RESUME_DIR}/continue_install.sh" ]]; then
-        log "Launching continue_install.sh to resume ACFS installation"
-
-        # Execute the continue script
-        # Use nohup to survive this script exiting
-        nohup bash "${ACFS_RESUME_DIR}/continue_install.sh" >> "$ACFS_LOG" 2>&1 &
-
-        log "ACFS installation continuation launched (PID: $!)"
-    else
-        log "No continue_install.sh found - manual intervention may be needed"
-    fi
+    launch_continue_script || true
 
     log "=== Upgrade Resume Complete ==="
     exit 0
 fi
 
+# ============================================================
 # More upgrades needed - get next version
+# ============================================================
+
 next_version=$(state_upgrade_get_next_version)
 if [[ -z "$next_version" ]]; then
     log_error "No next version found but upgrade not marked complete"
-    state_upgrade_set_error "No next version found"
+    log "This may indicate a corrupted state file. Current version: $CURRENT_UBUNTU_VERSION"
+
+    # Safety check: if we're at target, just clean up
+    if [[ "$CURRENT_UBUNTU_VERSION" == "$UBUNTU_TARGET_VERSION" ]]; then
+        log "Actually at target version - cleaning up anyway"
+        cleanup_service
+        remove_motd
+        launch_continue_script || true
+        exit 0
+    fi
+
+    cleanup_service
+    update_motd_failure "State file corrupted - rerun installer"
     exit 1
 fi
 
@@ -170,34 +282,45 @@ log "Next upgrade target: $next_version"
 
 # Update MOTD with progress
 log "Updating MOTD with upgrade progress..."
-upgrade_update_motd "Upgrading: $current_version → $next_version"
+upgrade_update_motd "Upgrading: $CURRENT_UBUNTU_VERSION → $next_version"
 
 # Run preflight checks before continuing
 log "Running preflight checks..."
 if ! ubuntu_preflight_checks; then
     log_error "Preflight checks failed - cannot continue upgrade"
     state_upgrade_set_error "Preflight checks failed after reboot"
-    upgrade_update_motd "UPGRADE PAUSED - preflight checks failed"
+    cleanup_service
+    update_motd_failure "Preflight checks failed"
     exit 1
 fi
 
-# Start the next upgrade
-log "Starting upgrade from $current_version to $next_version"
-state_upgrade_start "$current_version" "$next_version"
-
+# ============================================================
 # Perform the upgrade
+# ============================================================
+
+log "Starting upgrade from $CURRENT_UBUNTU_VERSION to $next_version"
+state_upgrade_start "$CURRENT_UBUNTU_VERSION" "$next_version"
+
 if ! ubuntu_do_upgrade "$next_version"; then
     log_error "do-release-upgrade failed"
-    state_upgrade_set_error "do-release-upgrade failed for $current_version → $next_version"
-    upgrade_update_motd "UPGRADE FAILED - check logs"
+    state_upgrade_set_error "do-release-upgrade failed for $CURRENT_UBUNTU_VERSION → $next_version"
+
+    # CRITICAL: Disable service to prevent reboot loop on failure
+    cleanup_service
+    update_motd_failure "do-release-upgrade failed"
+
+    log "=== Upgrade Failed - Service Disabled ==="
+    # DO NOT REBOOT - just exit
     exit 1
 fi
 
-# Mark upgrade step complete
+# ============================================================
+# Upgrade succeeded - prepare for reboot
+# ============================================================
+
 state_upgrade_complete "$next_version"
 log "Upgrade to $next_version completed successfully"
 
-# Mark that we need to reboot
 state_upgrade_needs_reboot
 log "System needs reboot to complete upgrade"
 
