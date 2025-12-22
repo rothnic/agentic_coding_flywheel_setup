@@ -6,6 +6,7 @@ import { ExternalLink, Terminal, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommandCard } from "@/components/command-card";
 import { AlertCard } from "@/components/alert-card";
+import { OutputPreview } from "@/components/alert-card";
 import { TrackedLink } from "@/components/tracked-link";
 import { cn } from "@/lib/utils";
 import { markStepComplete } from "@/lib/wizardSteps";
@@ -175,6 +176,99 @@ function MacContent() {
           </GuideCaution>
         </div>
       </SimplerGuide>
+    </div>
+  );
+}
+
+/**
+ * Terminal Basics section - teaches users how to interact with the terminal
+ * This is the foundational "Terminal Onboarding" content that helps beginners
+ * understand prompts, copy/paste, and verify their terminal works.
+ */
+function TerminalBasicsSection({ os }: { os: "mac" | "windows" }) {
+  return (
+    <div className="space-y-6 rounded-2xl border-2 border-primary/20 bg-primary/5 p-6">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold text-foreground">
+          Try Your First Commands
+        </h2>
+        <p className="text-muted-foreground">
+          Before we continue, let&apos;s make sure you can use the terminal. This
+          takes 2 minutes and will make everything easier!
+        </p>
+      </div>
+
+      {/* Understanding the Prompt */}
+      <div className="space-y-3">
+        <h3 className="font-semibold">1. Understanding the Prompt</h3>
+        <p className="text-sm text-muted-foreground">
+          When you open your terminal, you&apos;ll see a blinking cursor after some text.
+          That text is called the <strong className="text-foreground">prompt</strong>.
+          It tells you the terminal is ready for your command.
+        </p>
+        <OutputPreview title="Common prompts look like:">
+          <div className="space-y-1">
+            <p><span className="text-[oklch(0.72_0.19_145)]">yourname@computer:~$</span> <span className="animate-pulse">_</span></p>
+            <p><span className="text-[oklch(0.72_0.19_145)]">%</span> <span className="animate-pulse">_</span></p>
+            {os === "windows" && <p><span className="text-[oklch(0.72_0.19_145)]">PS C:\Users\You&gt;</span> <span className="animate-pulse">_</span></p>}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            The <strong>$</strong>, <strong>%</strong>, or <strong>&gt;</strong> symbol means
+            &quot;type here&quot;. You type after it, then press Enter.
+          </p>
+        </OutputPreview>
+      </div>
+
+      {/* Copy/Paste in Terminal */}
+      <div className="space-y-3">
+        <h3 className="font-semibold">2. Copy &amp; Paste in Terminal</h3>
+        <p className="text-sm text-muted-foreground">
+          Copying and pasting in terminals works a bit differently than in regular apps.
+        </p>
+        {os === "mac" ? (
+          <AlertCard variant="info" title="Mac Terminal Copy/Paste">
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              <li><strong>Copy from wizard:</strong> Click the copy button on any command (or use ⌘+C)</li>
+              <li><strong>Paste into terminal:</strong> Press <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs">⌘</kbd> + <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs">V</kbd></li>
+              <li><strong>Alternative:</strong> Right-click → Paste</li>
+            </ul>
+          </AlertCard>
+        ) : (
+          <AlertCard variant="info" title="Windows Terminal Copy/Paste">
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              <li><strong>Copy from wizard:</strong> Click the copy button on any command (or Ctrl+C)</li>
+              <li><strong>Paste into terminal:</strong> <strong>Right-click</strong> anywhere in the terminal, OR press <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs">Ctrl</kbd> + <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs">Shift</kbd> + <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs">V</kbd></li>
+              <li><strong>Note:</strong> Ctrl+C in terminal means &quot;cancel&quot;, not copy!</li>
+            </ul>
+          </AlertCard>
+        )}
+      </div>
+
+      {/* Try Your First Command */}
+      <div className="space-y-3">
+        <h3 className="font-semibold">3. Type Your First Command</h3>
+        <p className="text-sm text-muted-foreground">
+          Let&apos;s verify everything works. Type this command in your terminal and press Enter:
+        </p>
+        <CommandCard
+          command="echo hello"
+          description="Print 'hello' to the screen"
+          showCheckbox
+          persistKey="first-command-echo"
+        />
+        <OutputPreview title="You should see:">
+          <p className="text-[oklch(0.72_0.19_145)]">hello</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            If you see &quot;hello&quot; printed below your command, your terminal is working!
+          </p>
+        </OutputPreview>
+      </div>
+
+      {/* Success State */}
+      <AlertCard variant="success" title="You're ready!">
+        If you can type commands and see output, you&apos;ve got the basics!
+        In the next steps, we&apos;ll use these same skills to connect to your VPS.
+      </AlertCard>
     </div>
   );
 }
@@ -369,6 +463,9 @@ export default function InstallTerminalPage() {
 
       {/* OS-specific content */}
       {os === "mac" ? <MacContent /> : <WindowsContent />}
+
+      {/* Terminal Basics - Try Your First Commands */}
+      <TerminalBasicsSection os={os} />
 
       {/* Continue button */}
       <div className="flex justify-end pt-4">
