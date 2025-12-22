@@ -551,23 +551,85 @@ show_auth_service() {
 # Display Functions
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Print header
+# Calculate progress statistics
+# Returns: completed_count|total|percent|est_minutes_remaining
+calc_progress_stats() {
+    local completed_count=0
+    for i in {0..8}; do
+        if is_completed "$i"; then
+            ((completed_count++))
+        fi
+    done
+    local total=9
+    local percent=$((completed_count * 100 / total))
+    local remaining=$((total - completed_count))
+    local est_minutes=$((remaining * 5))  # ~5 min per lesson average
+    echo "${completed_count}|${total}|${percent}|${est_minutes}"
+}
+
+# Render progress bar (20 chars wide)
+render_progress_bar() {
+    local percent=$1
+    local width=20
+    local filled=$((percent * width / 100))
+    local empty=$((width - filled))
+    local bar=""
+    for ((i = 0; i < filled; i++)); do bar+="█"; done
+    for ((i = 0; i < empty; i++)); do bar+="░"; done
+    echo "$bar"
+}
+
+# Print header with progress bar
 print_header() {
     clear 2>/dev/null || true
+
+    # Get progress stats
+    local stats completed total percent est_minutes
+    stats=$(calc_progress_stats)
+    IFS='|' read -r completed total percent est_minutes <<< "$stats"
+    local bar
+    bar=$(render_progress_bar "$percent")
+
     if has_gum; then
+        # Build time remaining text
+        local time_text=""
+        if [[ "$completed" -lt "$total" ]]; then
+            if [[ "$est_minutes" -ge 60 ]]; then
+                time_text="Est. remaining: ~$((est_minutes / 60))h $((est_minutes % 60))m"
+            elif [[ "$est_minutes" -gt 0 ]]; then
+                time_text="Est. remaining: ~${est_minutes} minutes"
+            fi
+        else
+            time_text="🎉 All lessons complete!"
+        fi
+
         gum style \
             --border rounded \
             --border-foreground "$ACFS_ACCENT" \
             --padding "1 4" \
             --margin "1" \
             "$(gum style --foreground "$ACFS_PINK" --bold '📚 ACFS Onboarding')" \
-            "$(gum style --foreground "$ACFS_MUTED" --italic "Learn the agentic coding workflow")"
+            "$(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS_SUCCESS" --bold "$completed/$total") $(gum style --foreground "$ACFS_MUTED" "($percent%)")" \
+            "$(gum style --foreground "$ACFS_MUTED" --italic "$time_text")"
     else
+        # Plain text fallback
+        local time_text=""
+        if [[ "$completed" -lt "$total" ]]; then
+            if [[ "$est_minutes" -ge 60 ]]; then
+                time_text="Est. remaining: ~$((est_minutes / 60))h $((est_minutes % 60))m"
+            elif [[ "$est_minutes" -gt 0 ]]; then
+                time_text="Est. remaining: ~${est_minutes} minutes"
+            fi
+        else
+            time_text="All lessons complete!"
+        fi
+
         echo ""
-        echo -e "${BOLD}${MAGENTA}╭─────────────────────────────────────────╮${NC}"
-        echo -e "${BOLD}${MAGENTA}│       📚 ACFS Onboarding Tutorial       │${NC}"
-        echo -e "${BOLD}${MAGENTA}│  Learn the agentic coding workflow      │${NC}"
-        echo -e "${BOLD}${MAGENTA}╰─────────────────────────────────────────╯${NC}"
+        echo -e "${BOLD}${MAGENTA}╭─────────────────────────────────────────────────────╮${NC}"
+        echo -e "${BOLD}${MAGENTA}│${NC}  ${BOLD}📚 ACFS Onboarding${NC}                                   ${BOLD}${MAGENTA}│${NC}"
+        echo -e "${BOLD}${MAGENTA}│${NC}  ${CYAN}${bar}${NC} ${GREEN}${completed}/${total}${NC} (${percent}%)            ${BOLD}${MAGENTA}│${NC}"
+        echo -e "${BOLD}${MAGENTA}│${NC}  ${DIM}${time_text}${NC}$(printf '%*s' $((27 - ${#time_text})) '')${BOLD}${MAGENTA}│${NC}"
+        echo -e "${BOLD}${MAGENTA}╰─────────────────────────────────────────────────────╯${NC}"
         echo ""
     fi
 }
