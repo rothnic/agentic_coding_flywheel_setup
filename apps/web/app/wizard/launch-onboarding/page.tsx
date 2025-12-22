@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { PartyPopper, BookOpen, ExternalLink, Sparkles, ArrowRight, GraduationCap, Terminal } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { CommandCard } from "@/components/command-card";
 import { markStepComplete, setCompletedSteps, TOTAL_STEPS } from "@/lib/wizardSteps";
 import { trackConversion } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -152,6 +153,97 @@ export default function LaunchOnboardingPage() {
               for the CLI version.
             </span>
           </div>
+        </div>
+      </Card>
+
+      {/* Your First 5 Minutes */}
+      <Card className="border-primary/30 bg-primary/5 p-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[oklch(0.78_0.16_75)]" />
+            <h2 className="text-xl font-semibold">Your First 5 Minutes</h2>
+          </div>
+          <p className="text-muted-foreground">
+            Let&apos;s make sure everything works with a quick test run.
+          </p>
+        </div>
+
+        <div className="mt-6 space-y-6">
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              1
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Create a project folder</h3>
+              <CommandCard command="mkdir ~/my-first-project && cd ~/my-first-project" />
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              2
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Authenticate Claude</h3>
+              <CommandCard command="claude" />
+              <p className="text-sm text-muted-foreground">
+                A browser window will open. Log in with your Anthropic account,
+                then return to your terminal.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              3
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Start Claude Code</h3>
+              <CommandCard command="cc" />
+              <p className="text-sm text-muted-foreground">
+                After authenticating, this launches Claude Code.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              4
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Your first prompt</h3>
+              <p className="text-sm text-muted-foreground">
+                In the Claude prompt, type:
+              </p>
+              <div className="rounded-lg bg-muted px-4 py-3 font-mono text-sm">
+                Create a simple Python script that prints &quot;Hello from AI!&quot; and run it
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              5
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Watch the magic!</h3>
+              <p className="text-sm text-muted-foreground">
+                Claude will:
+              </p>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>✓ Create a file called <span className="font-mono">hello.py</span></li>
+                <li>✓ Write the Python code</li>
+                <li>✓ Run the script for you</li>
+                <li>✓ Show &quot;Hello from AI!&quot; in the output</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-lg border border-[oklch(0.72_0.19_145/0.3)] bg-[oklch(0.72_0.19_145/0.1)] p-4 text-center">
+          <p className="text-lg font-medium">
+            🎉 Congratulations! You just used AI to write and run code!
+          </p>
         </div>
       </Card>
 
