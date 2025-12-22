@@ -249,6 +249,14 @@ acfs() {
         return 1
       fi
       ;;
+    continue|status|progress)
+      if [[ -f "$HOME/.acfs/scripts/lib/continue.sh" ]]; then
+        bash "$HOME/.acfs/scripts/lib/continue.sh" "$@"
+      else
+        echo "Error: continue.sh not found"
+        return 1
+      fi
+      ;;
     version|-v|--version)
       if [[ -f "$HOME/.acfs/VERSION" ]]; then
         cat "$HOME/.acfs/VERSION"
@@ -262,6 +270,7 @@ acfs() {
       echo "Usage: acfs <command>"
       echo ""
       echo "Commands:"
+      echo "  continue        View installation progress (after Ubuntu upgrade)"
       echo "  services-setup  Configure AI agents and cloud services"
       echo "  doctor          Check system health and tool status"
       echo "  update          Update ACFS tools to latest versions"

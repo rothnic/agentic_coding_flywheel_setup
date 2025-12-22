@@ -82,6 +82,7 @@ echo -e "${C}║${N}  ${B}TO RETRY:${N}                                         
 echo -e "${C}║${N}    curl -fsSL https://bit.ly/acfs-install | bash -s -- --yes ${C}║${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 echo -e "${C}║${N}  ${B}TO VIEW LOGS:${N}                                               ${C}║${N}"
+echo -e "${C}║${N}    acfs continue                                             ${C}║${N}"
 echo -e "${C}║${N}    cat /var/log/acfs/upgrade_resume.log                      ${C}║${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 echo -e "${C}╚══════════════════════════════════════════════════════════════╝${N}"
