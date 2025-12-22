@@ -69,7 +69,9 @@ set_phase() {
 
     # Update state file if state functions are available
     if type -t state_phase_start &>/dev/null; then
-        state_phase_start "$phase_id"
+        # Best-effort: state tracking requires a valid state file (and usually jq).
+        # Never let state tracking abort the installer under `set -e`.
+        state_phase_start "$phase_id" || true
     fi
 }
 
@@ -83,7 +85,8 @@ clear_phase() {
 
     # Update state file if state functions are available
     if [[ -n "$completed_phase" ]] && type -t state_phase_complete &>/dev/null; then
-        state_phase_complete "$completed_phase"
+        # Best-effort: never abort phase completion on state write errors.
+        state_phase_complete "$completed_phase" || true
     fi
 }
 
@@ -111,7 +114,8 @@ try_step() {
 
     # Update state file if available
     if type -t state_step_update &>/dev/null; then
-        state_step_update "$description"
+        # Best-effort: state writes can fail early (no state file yet) or if jq is missing.
+        state_step_update "$description" || true
     fi
 
     # Log step start if logging available
@@ -129,12 +133,18 @@ try_step() {
     # We use process substitution to capture both stdout and stderr
     if [[ "$ERROR_VERBOSE" == "true" ]]; then
         # Verbose mode: show output in real-time AND capture it
-        "$@" 2>&1 | tee "$output_file"
-        exit_code=${PIPESTATUS[0]}
+        if "$@" 2>&1 | tee "$output_file"; then
+            exit_code=0
+        else
+            exit_code=${PIPESTATUS[0]}
+        fi
     else
         # Normal mode: capture silently, show on error
-        "$@" > "$output_file" 2>&1
-        exit_code=$?
+        if "$@" > "$output_file" 2>&1; then
+            exit_code=0
+        else
+            exit_code=$?
+        fi
     fi
 
     if [[ $exit_code -eq 0 ]]; then
@@ -142,7 +152,7 @@ try_step() {
         LAST_ERROR=""
         LAST_ERROR_CODE=0
         LAST_ERROR_OUTPUT=""
-        rm -f "$output_file" 2>/dev/null
+        rm -f "$output_file" 2>/dev/null || true
         return 0
     fi
 
@@ -164,11 +174,11 @@ try_step() {
         fi
     fi
 
-    rm -f "$output_file" 2>/dev/null
+    rm -f "$output_file" 2>/dev/null || true
 
     # Update state file with failure info
     if type -t state_phase_fail &>/dev/null; then
-        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR"
+        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR" || true
     fi
 
     # Log error if logging available
@@ -226,7 +236,7 @@ try_step_retry() {
         CURRENT_STEP="$description (attempt $attempt/$max_attempts)"
 
         if type -t state_step_update &>/dev/null; then
-            state_step_update "$CURRENT_STEP"
+            state_step_update "$CURRENT_STEP" || true
         fi
 
         if [[ $attempt -gt 1 ]] && type -t log_detail &>/dev/null; then
@@ -255,7 +265,7 @@ try_step_retry() {
     LAST_ERROR_TIME=$(date -Iseconds)
 
     if type -t state_phase_fail &>/dev/null; then
-        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR"
+        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR" || true
     fi
 
     if type -t log_error &>/dev/null; then
@@ -390,8 +400,11 @@ should_skip_phase() {
 
     # Check state file if available
     if type -t state_should_skip_phase &>/dev/null; then
-        state_should_skip_phase "$phase_id"
-        return $?
+        # state_should_skip_phase is expected to return 0 (skip) or 1 (run).
+        # Under `set -e`, a 1 return must not abort the caller.
+        local code=0
+        state_should_skip_phase "$phase_id" || code=$?
+        return "$code"
     fi
 
     return 1  # Default: don't skip
@@ -568,7 +581,7 @@ try_step_with_backoff() {
     CURRENT_STEP="$description"
 
     if type -t state_step_update &>/dev/null; then
-        state_step_update "$description"
+        state_step_update "$description" || true
     fi
 
     if type -t log_detail &>/dev/null; then
@@ -587,7 +600,7 @@ try_step_with_backoff() {
 
     # Failure - error context already set by retry_with_backoff
     if type -t state_phase_fail &>/dev/null; then
-        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR"
+        state_phase_fail "$CURRENT_PHASE" "$description" "$LAST_ERROR" || true
     fi
 
     return "$exit_code"

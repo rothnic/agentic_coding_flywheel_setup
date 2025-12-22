@@ -9,6 +9,15 @@ const RATE_LIMIT_MAX_REQUESTS = 60; // 60 requests per minute per IP
 const MAX_EVENTS_PER_REQUEST = 10;
 const MAX_CLIENT_ID_LENGTH = 100;
 const MAX_EVENT_NAME_LENGTH = 40;
+const MAX_REQUEST_BODY_BYTES = 32_000; // hard cap to reduce abuse/memory pressure
+const MAX_PARAM_KEYS_PER_EVENT = 25;
+const MAX_PARAM_KEY_LENGTH = 40;
+const MAX_PARAM_STRING_LENGTH = 300;
+const MAX_USER_ID_LENGTH = 64;
+const MAX_USER_PROPERTIES = 10;
+const MAX_USER_PROPERTY_KEY_LENGTH = 24;
+const MAX_USER_PROPERTY_STRING_LENGTH = 120;
+const GA_FETCH_TIMEOUT_MS = 3000;
 
 // Simple in-memory rate limiter (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -27,11 +36,64 @@ function cleanupExpiredEntries(): void {
   }
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeIP(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return 'unknown';
+  if (trimmed.length > 80) return 'unknown';
+
+  // [IPv6]:port
+  if (trimmed.startsWith('[')) {
+    const endIdx = trimmed.indexOf(']');
+    if (endIdx > 1) {
+      return normalizeIP(trimmed.slice(1, endIdx));
+    }
+    return 'unknown';
+  }
+
+  // IPv4:port
+  if (trimmed.includes('.') && trimmed.includes(':')) {
+    const beforePort = trimmed.split(':')[0]?.trim();
+    if (beforePort) return normalizeIP(beforePort);
+  }
+
+  // IPv4
+  if (trimmed.includes('.')) {
+    const parts = trimmed.split('.');
+    if (parts.length !== 4) return 'unknown';
+    for (const part of parts) {
+      if (!/^\d{1,3}$/.test(part)) return 'unknown';
+      const n = Number(part);
+      if (!Number.isInteger(n) || n < 0 || n > 255) return 'unknown';
+    }
+    return trimmed;
+  }
+
+  // IPv6 (basic validation; exact canonicalization is unnecessary for rate limiting)
+  if (trimmed.includes(':') && /^[0-9a-fA-F:]+$/.test(trimmed) && trimmed.length <= 45) {
+    return trimmed.toLowerCase();
+  }
+
+  return 'unknown';
+}
+
 function getClientIP(request: NextRequest): string {
+  const requestIP = (request as unknown as { ip?: string }).ip;
+  const forwardedFor =
+    request.headers.get('x-vercel-forwarded-for') ||
+    request.headers.get('x-forwarded-for');
+
   return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
+    normalizeIP(
+      requestIP ||
+        forwardedFor?.split(',')[0]?.trim() ||
+        request.headers.get('cf-connecting-ip') ||
+        request.headers.get('x-real-ip') ||
+        ''
+    ) || 'unknown'
   );
 }
 
@@ -48,6 +110,10 @@ function isRateLimited(ip: string): boolean {
   const record = rateLimitMap.get(ip);
 
   if (!record || now > record.resetTime) {
+    // Hard cap: don't allow unbounded growth if IP signal becomes untrusted/unique.
+    if (!record && rateLimitMap.size >= MAX_MAP_SIZE) {
+      return true;
+    }
     rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return false;
   }
@@ -73,16 +139,79 @@ function isValidClientId(clientId: string): boolean {
   return /^[a-zA-Z0-9._-]+$/.test(clientId);
 }
 
+function isValidUserId(userId: string): boolean {
+  if (!userId || userId.length > MAX_USER_ID_LENGTH) return false;
+  return /^[a-zA-Z0-9._-]+$/.test(userId);
+}
+
+function isValidParamKey(key: string): boolean {
+  if (!key || key.length > MAX_PARAM_KEY_LENGTH) return false;
+  return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key);
+}
+
+function sanitizeEventParams(params: unknown): Record<string, string | number | boolean> {
+  if (!isPlainObject(params)) return {};
+
+  const sanitized: Record<string, string | number | boolean> = {};
+  let count = 0;
+
+  for (const [key, value] of Object.entries(params)) {
+    if (count >= MAX_PARAM_KEYS_PER_EVENT) break;
+    if (!isValidParamKey(key)) continue;
+
+    if (typeof value === 'string') {
+      sanitized[key] = value.slice(0, MAX_PARAM_STRING_LENGTH);
+      count++;
+      continue;
+    }
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) continue;
+      sanitized[key] = value;
+      count++;
+      continue;
+    }
+    if (typeof value === 'boolean') {
+      sanitized[key] = value;
+      count++;
+    }
+  }
+
+  return sanitized;
+}
+
+function sanitizeUserProperties(
+  userProperties: unknown
+): Record<string, { value: string | number }> | undefined {
+  if (!isPlainObject(userProperties)) return undefined;
+
+  const sanitized: Record<string, { value: string | number }> = {};
+  let count = 0;
+
+  for (const [key, value] of Object.entries(userProperties)) {
+    if (count >= MAX_USER_PROPERTIES) break;
+    if (!key || key.length > MAX_USER_PROPERTY_KEY_LENGTH) continue;
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)) continue;
+    if (!isPlainObject(value)) continue;
+
+    const rawValue = value.value;
+    if (typeof rawValue === 'string') {
+      sanitized[key] = { value: rawValue.slice(0, MAX_USER_PROPERTY_STRING_LENGTH) };
+      count++;
+      continue;
+    }
+    if (typeof rawValue === 'number') {
+      if (!Number.isFinite(rawValue)) continue;
+      sanitized[key] = { value: rawValue };
+      count++;
+    }
+  }
+
+  return count > 0 ? sanitized : undefined;
+}
+
 interface EventPayload {
   name: string;
   params?: Record<string, string | number | boolean>;
-}
-
-interface TrackRequest {
-  client_id: string;
-  events: EventPayload[];
-  user_id?: string;
-  user_properties?: Record<string, { value: string | number }>;
 }
 
 /**
@@ -93,12 +222,28 @@ interface TrackRequest {
  * Body: { client_id, events: [{ name, params }], user_id?, user_properties? }
  */
 export async function POST(request: NextRequest) {
+  const contentType = request.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return NextResponse.json({ error: 'Unsupported content type' }, { status: 415 });
+  }
+
+  const contentLength = request.headers.get('content-length');
+  if (contentLength) {
+    const bytes = Number(contentLength);
+    if (Number.isFinite(bytes) && bytes > MAX_REQUEST_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+  }
+
   // Rate limiting
   const clientIP = getClientIP(request);
   if (isRateLimited(clientIP)) {
     return NextResponse.json(
       { error: 'Rate limit exceeded' },
-      { status: 429 }
+      {
+        status: 429,
+        headers: { 'Retry-After': Math.ceil(RATE_LIMIT_WINDOW_MS / 1000).toString() },
+      }
     );
   }
 
@@ -110,10 +255,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body: TrackRequest = await request.json();
+    const rawBody: unknown = await request.json();
+    if (!isPlainObject(rawBody)) {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const clientId = rawBody.client_id;
+    const events = rawBody.events;
+    const userId = rawBody.user_id;
+    const userProperties = rawBody.user_properties;
+
+    if (typeof clientId !== 'string' || !Array.isArray(events)) {
+      return NextResponse.json({ error: 'Missing client_id or events' }, { status: 400 });
+    }
 
     // Validate required fields
-    if (!body.client_id || !body.events?.length) {
+    if (!clientId || events.length === 0) {
       return NextResponse.json(
         { error: 'Missing client_id or events' },
         { status: 400 }
@@ -121,7 +278,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate client_id format
-    if (!isValidClientId(body.client_id)) {
+    if (!isValidClientId(clientId)) {
       return NextResponse.json(
         { error: 'Invalid client_id format' },
         { status: 400 }
@@ -129,47 +286,77 @@ export async function POST(request: NextRequest) {
     }
 
     // Limit number of events per request
-    if (body.events.length > MAX_EVENTS_PER_REQUEST) {
+    if (events.length > MAX_EVENTS_PER_REQUEST) {
       return NextResponse.json(
         { error: `Maximum ${MAX_EVENTS_PER_REQUEST} events per request` },
         { status: 400 }
       );
     }
 
+    if (userId !== undefined) {
+      if (typeof userId !== 'string' || !isValidUserId(userId)) {
+        return NextResponse.json({ error: 'Invalid user_id format' }, { status: 400 });
+      }
+    }
+
+    const sanitizedUserProperties = sanitizeUserProperties(userProperties);
+
+    const sanitizedEvents: EventPayload[] = [];
+
     // Validate all event names
-    for (const event of body.events) {
+    for (const event of events) {
+      if (!isPlainObject(event) || typeof event.name !== 'string') {
+        return NextResponse.json({ error: 'Invalid event payload' }, { status: 400 });
+      }
       if (!isValidEventName(event.name)) {
         return NextResponse.json(
           { error: `Invalid event name: ${event.name?.slice(0, 20)}` },
           { status: 400 }
         );
       }
+      sanitizedEvents.push({ name: event.name, params: sanitizeEventParams(event.params) });
+    }
+
+    const rawSessionId = clientId.split('.')[0] || '';
+    const sessionId = /^\d{1,16}$/.test(rawSessionId) ? rawSessionId : Date.now().toString();
+
+    if (sanitizedEvents.length === 0) {
+      return NextResponse.json({ error: 'No valid events' }, { status: 400 });
     }
 
     // Build the Measurement Protocol payload
     const payload = {
-      client_id: body.client_id,
-      events: body.events.map(event => ({
+      client_id: clientId,
+      events: sanitizedEvents.map(event => ({
         name: event.name,
         params: {
-          engagement_time_msec: 100,
-          session_id: body.client_id.split('.')[0] || Date.now().toString(),
           ...event.params,
+          engagement_time_msec: 100,
+          session_id: sessionId,
         },
       })),
-      ...(body.user_id && { user_id: body.user_id }),
-      ...(body.user_properties && { user_properties: body.user_properties }),
+      ...(userId && { user_id: userId }),
+      ...(sanitizedUserProperties && { user_properties: sanitizedUserProperties }),
     };
 
     // Send to GA4 Measurement Protocol
-    const response = await fetch(
-      `https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }
-    );
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), GA_FETCH_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       console.error('GA4 MP error:', response.status, await response.text());
@@ -182,10 +369,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Track API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

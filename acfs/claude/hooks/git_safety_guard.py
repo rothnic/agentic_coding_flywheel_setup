@@ -54,13 +54,13 @@ DESTRUCTIVE_PATTERNS = [
     (r"git reset --merge", "Can destroy uncommitted changes during merge"),
 
     # Git: Clean untracked files
-    (r"git clean -[a-z]*f", "Permanently removes untracked files"),
-    (r"git clean -[a-z]*d[a-z]*f", "Permanently removes untracked files and directories"),
+    # Matches -f, -xf, -df, -fd, --force, etc.
+    # Note: Dry runs (-n) are whitelisted in SAFE_PATTERNS first.
+    (r"git clean\b.*(?:-[a-z]*f|--force)", "Permanently removes untracked files"),
 
     # Git: Force push
-    (r"git push --force", "Rewrites remote history, potentially destroying work"),
-    (r"git push -f\b", "Rewrites remote history, potentially destroying work"),
-    (r"git push.*--force-with-lease", "Rewrites remote history (safer but still destructive)"),
+    # Matches --force, -f, --force-with-lease, and refspec with + (e.g. +main)
+    (r"git push\b.*(?:--force|-f\b|\+\w+)", "Rewrites remote history, potentially destroying work"),
 
     # Git: Dangerous branch operations
     (r"git branch -D", "Force-deletes branch bypassing merge safety checks"),
