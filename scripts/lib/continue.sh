@@ -53,8 +53,11 @@ is_upgrade_service_running() {
 
 # Check if the installer process is running
 is_installer_running() {
-    pgrep -f "install.sh" &>/dev/null || \
-    pgrep -f "continue_install.sh" &>/dev/null
+    # Check for ACFS installer specifically (not just any install.sh)
+    # Look for bash running the continue_install.sh or install.sh with ACFS args
+    pgrep -f "bash.*/var/lib/acfs/continue_install.sh" &>/dev/null || \
+    pgrep -f "bash.*install.sh.*--mode" &>/dev/null || \
+    pgrep -f "bash.*install.sh.*--yes" &>/dev/null
 }
 
 # Get state from state.json
@@ -295,11 +298,7 @@ main() {
             show_live_log
         fi
     else
-        # Installation is not running
-        echo -e "${GREEN}Installation is not currently running.${NC}"
-        echo ""
-
-        # Check if installation was completed
+        # Installation is not running - check if it was completed
         local status
         status=$(get_install_status)
         if [[ "$status" == "complete" ]]; then
