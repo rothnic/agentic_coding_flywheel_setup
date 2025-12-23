@@ -202,9 +202,9 @@ prompt_ssh_key() {
         fi
     fi
 
-    # 2. Check if stdin is a terminal (interactive mode)
-    if [[ ! -t 0 ]]; then
-        log_warn "Non-interactive mode detected, skipping SSH key prompt"
+    # 2. Check if we can prompt the user (handle curl | bash pipe)
+    if [[ ! -t 0 ]] && [[ ! -r /dev/tty ]]; then
+        log_warn "Non-interactive mode detected (no TTY), skipping SSH key prompt"
         log_detail "You can add your key later with: ssh-copy-id root@<ip>"
         return 0
     fi
@@ -225,9 +225,18 @@ prompt_ssh_key() {
     echo "(Press Enter to skip - you'll need password for future logins)"
     echo ""
 
-    # 4. Read the key
+    # 4. Read the key (handle pipe vs tty)
     local pubkey
-    read -r -p "Paste your public key: " pubkey
+    if [[ -t 0 ]]; then
+        read -r -p "Paste your public key: " pubkey
+    else
+        # When running via curl | bash, stdin is the script content.
+        # We must read from /dev/tty to get user input.
+        # Note: read -p writes prompt to stderr, which is visible.
+        # We manually print prompt to stderr to be explicit/consistent.
+        echo -n "Paste your public key: " >&2
+        read -r pubkey < /dev/tty
+    fi
 
     # 5. Handle skip (empty input)
     if [[ -z "$pubkey" ]]; then
