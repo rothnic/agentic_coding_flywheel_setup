@@ -171,18 +171,21 @@ gum_confirm() {
     local message="$1"
 
     if [[ "$HAS_GUM" == "true" ]]; then
-        if [[ -r /dev/tty ]]; then
+        if [[ -r /dev/tty && -w /dev/tty ]]; then
             gum confirm \
                 --affirmative "Yes" \
                 --negative "No" \
                 --prompt.foreground "$ACFS_PRIMARY" \
                 "$message" < /dev/tty > /dev/tty
-        else
+        elif [[ -t 0 && -t 1 ]]; then
             gum confirm \
                 --affirmative "Yes" \
                 --negative "No" \
                 --prompt.foreground "$ACFS_PRIMARY" \
                 "$message"
+        else
+            echo "ERROR: --yes is required when no TTY is available" >&2
+            return 1
         fi
     else
         local response=""
@@ -205,18 +208,43 @@ gum_choose() {
     local options=("$@")
 
     if [[ "$HAS_GUM" == "true" ]]; then
-        gum choose \
-            --header.foreground "$ACFS_PRIMARY" \
-            --cursor.foreground "$ACFS_ACCENT" \
-            --selected.foreground "$ACFS_SUCCESS" \
-            --header "$prompt" \
-            "${options[@]}"
+        if [[ -r /dev/tty ]]; then
+            gum choose \
+                --header.foreground "$ACFS_PRIMARY" \
+                --cursor.foreground "$ACFS_ACCENT" \
+                --selected.foreground "$ACFS_SUCCESS" \
+                --header "$prompt" \
+                "${options[@]}" < /dev/tty
+        elif [[ -t 0 ]]; then
+            gum choose \
+                --header.foreground "$ACFS_PRIMARY" \
+                --cursor.foreground "$ACFS_ACCENT" \
+                --selected.foreground "$ACFS_SUCCESS" \
+                --header "$prompt" \
+                "${options[@]}"
+        else
+            echo "ERROR: --yes is required when no TTY is available" >&2
+            return 1
+        fi
     else
-        echo "$prompt"
-        select opt in "${options[@]}"; do
-            echo "$opt"
-            break
-        done
+        if [[ -t 0 ]]; then
+            echo "$prompt"
+            select opt in "${options[@]}"; do
+                echo "$opt"
+                break
+            done
+        elif [[ -r /dev/tty ]]; then
+            echo "$prompt" >&2
+            (
+                select opt in "${options[@]}"; do
+                    echo "$opt"
+                    break
+                done
+            ) < /dev/tty
+        else
+            echo "ERROR: --yes is required when no TTY is available" >&2
+            return 1
+        fi
     fi
 }
 
