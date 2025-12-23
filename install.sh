@@ -1999,6 +1999,11 @@ setup_filesystem() {
     # Ensure /data is owned by target user
     try_step "Setting /data ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" /data || true
 
+    # CRITICAL: Fix home directory ownership FIRST, before any run_as_target calls
+    # Some cloud images (e.g., Hetzner) have /home/ubuntu owned by root after user creation
+    # If we don't fix this first, all run_as_target mkdir calls below will fail
+    try_step "Fixing home directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || true
+
     # User directories (in TARGET_HOME, not $HOME)
     # CRITICAL: Create these as target user to ensure correct ownership
     local user_dirs=("Development" "Projects" "dotfiles")
@@ -2019,11 +2024,6 @@ setup_filesystem() {
     # This prevents NTM, UBS, CASS, Bun, etc. from creating them as root via sudo
     try_step "Creating .local/bin directory" run_as_target mkdir -p "$TARGET_HOME/.local/bin" || return 1
     try_step "Creating .bun directory" run_as_target mkdir -p "$TARGET_HOME/.bun" || return 1
-
-    # Ensure home directory and contents have correct ownership (safety net)
-    # Some cloud images have /home/ubuntu owned by root after user creation
-    # This is CRITICAL - many installers will fail if home dir is root-owned
-    try_step "Fixing home directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || true
 
     log_success "Filesystem setup complete"
 }
