@@ -415,11 +415,15 @@ export default function InstallTerminalPage() {
     stepTitle: "Install Terminal",
   });
 
-  // Redirect if no OS selected (after hydration)
+  // Redirect if no OS selected or if Linux (Linux users skip this step)
   useEffect(() => {
     if (!ready) return;
     if (os === null) {
       router.push(withCurrentSearch("/wizard/os-selection"));
+    } else if (os === "linux") {
+      // Linux users already have a terminal - skip to SSH key generation
+      markStepComplete(2);
+      router.push(withCurrentSearch("/wizard/generate-ssh-key"));
     }
   }, [ready, os, router]);
 
