@@ -57,12 +57,14 @@ update_motd_failure() {
     local error_msg="$1"
     local motd_file="/etc/update-motd.d/00-acfs-upgrade"
 
-    # Truncate error message to fit box (max 51 chars for content area)
-    if [[ ${#error_msg} -gt 51 ]]; then
-        error_msg="${error_msg:0:48}..."
+    # Truncate error message to fit box
+    # Box content: "║  Error: " (10) + message + " ║" (2) = 64, so max = 52
+    local max_len=52
+    if [[ ${#error_msg} -gt $max_len ]]; then
+        error_msg="${error_msg:0:49}..."
     fi
     local padded_err
-    padded_err=$(printf "%-51s" "$error_msg")
+    padded_err=$(printf "%-${max_len}s" "$error_msg")
 
     cat > "$motd_file" << 'MOTD_SCRIPT'
 #!/bin/bash
@@ -73,14 +75,14 @@ N='\033[0m'       # Reset
 
 echo ""
 echo -e "${C}╔══════════════════════════════════════════════════════════════╗${N}"
-echo -e "${C}║${N}         ${C}${B}*** ACFS UBUNTU UPGRADE FAILED ***${N}               ${C}║${N}"
+echo -e "${C}║${N}           ${C}${B}*** ACFS UBUNTU UPGRADE FAILED ***${N}                ${C}║${N}"
 echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 MOTD_SCRIPT
 
     # Add the error message with proper padding
     cat >> "$motd_file" << MOTD_ERROR
-echo -e "\${C}║\${N}  \${Y}Error:\${N} ${padded_err} \${C}║\${N}"
+echo -e "\${C}║\${N}  \${Y}Error:\${N} ${padded_err}\${C}║\${N}"
 MOTD_ERROR
 
     cat >> "$motd_file" << 'MOTD_FOOTER'
@@ -134,13 +136,26 @@ launch_continue_script() {
     log "Launching continue_install.sh to resume ACFS installation"
 
     # Use systemd-run to spawn a proper transient service that survives this script's exit
+    # --collect: auto-cleanup unit after it finishes (avoids "unit already exists" errors)
+    # --no-block: don't wait for service to complete (we want to exit immediately)
+    # Service output goes to journal (check with: journalctl -u acfs-continue-install)
     if command -v systemd-run &>/dev/null; then
-        systemd-run --unit=acfs-continue-install \
+        # Remove any stale unit from previous failed attempts
+        systemctl reset-failed acfs-continue-install 2>/dev/null || true
+
+        if systemd-run --collect --no-block \
+            --unit=acfs-continue-install \
             --description="ACFS Installation Continuation" \
             --property=Type=oneshot \
             --property=TimeoutStartSec=7200 \
-            /bin/bash "$script" >> "$ACFS_LOG" 2>&1 &
-        log "ACFS continuation launched via systemd-run"
+            /bin/bash "$script" 2>&1 | tee -a "$ACFS_LOG"; then
+            log "ACFS continuation launched via systemd-run"
+            log "Monitor with: journalctl -u acfs-continue-install -f"
+        else
+            log "systemd-run failed, falling back to nohup"
+            nohup bash "$script" >> "$ACFS_LOG" 2>&1 &
+            log "ACFS continuation launched via nohup (PID: $!)"
+        fi
     else
         # Fallback to nohup if systemd-run unavailable (shouldn't happen on Ubuntu)
         nohup bash "$script" >> "$ACFS_LOG" 2>&1 &

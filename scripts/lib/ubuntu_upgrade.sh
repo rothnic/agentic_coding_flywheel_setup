@@ -799,7 +799,7 @@ N='\033[0m'       # Reset
 
 echo ""
 echo -e "${C}╔══════════════════════════════════════════════════════════════╗${N}"
-echo -e "${C}║${N}       ${Y}${B}>>> ACFS UBUNTU UPGRADE IN PROGRESS <<<${N}             ${C}║${N}"
+echo -e "${C}║${N}          ${Y}${B}>>> ACFS UBUNTU UPGRADE IN PROGRESS <<<${N}             ${C}║${N}"
 echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 MOTD_HEADER
@@ -811,14 +811,14 @@ MOTD_STATUS
 
     cat >> "$motd_file" << 'MOTD_FOOTER'
 echo -e "${C}║${N}                                                              ${C}║${N}"
-echo -e "${C}║${N}  The upgrade runs ${G}automatically${N} in the background.        ${C}║${N}"
-echo -e "${C}║${N}  System will reboot after each step. ${Y}Do NOT interrupt.${N}    ${C}║${N}"
+echo -e "${C}║${N}  The upgrade runs ${G}automatically${N} in the background.           ${C}║${N}"
+echo -e "${C}║${N}  System will reboot after each step. ${Y}Do NOT interrupt.${N}       ${C}║${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
 echo -e "${C}║${N}  ${B}MONITOR PROGRESS:${N}                                           ${C}║${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
-echo -e "${C}║${N}    ${G}/var/lib/acfs/check_status.sh${N}      (status summary)    ${C}║${N}"
-echo -e "${C}║${N}    ${D}tail -f /var/log/acfs/upgrade_resume.log${N}  (live log)   ${C}║${N}"
+echo -e "${C}║${N}    ${G}/var/lib/acfs/check_status.sh${N}          (status summary)   ${C}║${N}"
+echo -e "${C}║${N}    ${D}tail -f /var/log/acfs/upgrade_resume.log${N}      (live log)  ${C}║${N}"
 echo -e "${C}║${N}                                                              ${C}║${N}"
 echo -e "${C}╚══════════════════════════════════════════════════════════════╝${N}"
 echo ""
