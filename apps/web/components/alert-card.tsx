@@ -61,7 +61,7 @@ const variantStyles: Record<
   },
   magic: {
     container:
-      "border-primary/30 bg-primary/8 shadow-sm shadow-primary/10",
+      "border-primary/30 bg-primary/[0.08] shadow-sm shadow-primary/10",
     icon: "text-primary",
     title: "text-primary",
     defaultIcon: Sparkles,
