@@ -105,6 +105,32 @@ export default function RunInstallerPage() {
         and check if it&apos;s still running.
       </AlertCard>
 
+      {/* CRITICAL: SSH Key Prompt Warning */}
+      <AlertCard variant="destructive" title="WATCH FOR: SSH Key Prompt">
+        <div className="space-y-3">
+          <p>
+            <strong>Early in the installation</strong>, you&apos;ll see a prompt asking for your SSH public key:
+          </p>
+          <OutputPreview title="You'll see something like:" className="my-3">
+            <div className="space-y-1">
+              <p className="text-muted-foreground">╔══════════════════════════════════════════════════════════════╗</p>
+              <p className="text-muted-foreground">║  SSH Key Setup                                               ║</p>
+              <p className="text-muted-foreground">╚══════════════════════════════════════════════════════════════╝</p>
+              <p className="text-[oklch(0.78_0.16_75)]">Paste your public key: <span className="animate-pulse">_</span></p>
+            </div>
+          </OutputPreview>
+          <p>
+            <strong className="text-foreground">This is when you paste the key you saved earlier!</strong>{" "}
+            It&apos;s the one that starts with <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh-ed25519 AAAA...</code>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            If you miss this prompt or press Enter without pasting, you won&apos;t be able to connect as the{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ubuntu</code> user with your SSH key later.
+            (You can fix this manually if needed.)
+          </p>
+        </div>
+      </AlertCard>
+
       {/* The command */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">

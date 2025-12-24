@@ -192,37 +192,63 @@ can_sudo_nopasswd() {
 # Returns 0 on success or skip, 1 on invalid key
 prompt_ssh_key() {
     local authorized_keys="/root/.ssh/authorized_keys"
+    local has_existing_key=false
+    local existing_key_info=""
 
-    # 1. Check if we already have a valid key
+    # 1. Check if we already have a valid key - but DON'T skip, just note it
     # Match all OpenSSH key formats: ssh-*, ecdsa-sha2-*, sk-* (security keys)
     if [[ -f "$authorized_keys" ]]; then
         if grep -qE "^(ssh-|ecdsa-sha2-|sk-)" "$authorized_keys" 2>/dev/null; then
-            log_detail "SSH key already present, skipping prompt"
-            return 0
+            has_existing_key=true
+            # Get a brief description of existing keys for display
+            existing_key_info=$(grep -E "^(ssh-|ecdsa-sha2-|sk-)" "$authorized_keys" 2>/dev/null | while read -r line; do
+                # Show key type and comment (last field) only
+                local key_type comment
+                key_type=$(echo "$line" | awk '{print $1}')
+                comment=$(echo "$line" | awk '{print $NF}')
+                echo "  - $key_type ...${comment}"
+            done | head -3)
         fi
     fi
 
     # 2. Check if we can prompt the user (handle curl | bash pipe)
     if [[ ! -t 0 ]] && [[ ! -r /dev/tty ]]; then
+        if [[ "$has_existing_key" == "true" ]]; then
+            log_detail "SSH key already present (non-interactive mode)"
+            return 0
+        fi
         log_warn "Non-interactive mode detected (no TTY), skipping SSH key prompt"
         log_detail "You can add your key later with: ssh-copy-id root@<ip>"
         return 0
     fi
 
-    # 3. Display prompt UI
+    # 3. Display prompt UI - different message if keys already exist
     echo ""
     echo "╔══════════════════════════════════════════════════════════════╗"
     echo "║  SSH Key Setup                                               ║"
     echo "╠══════════════════════════════════════════════════════════════╣"
-    echo "║  Let's set up SSH key authentication so you won't need      ║"
-    echo "║  to enter a password every time you connect.                ║"
+    if [[ "$has_existing_key" == "true" ]]; then
+        echo "║  SSH keys already exist on this server:                     ║"
+        echo "╠══════════════════════════════════════════════════════════════╣"
+        echo "$existing_key_info"
+        echo "║                                                              ║"
+        echo "║  If these are YOUR keys, press Enter to skip.               ║"
+        echo "║  If you need to ADD your local key, paste it below.         ║"
+    else
+        echo "║  Let's set up SSH key authentication so you won't need      ║"
+        echo "║  to enter a password every time you connect.                ║"
+    fi
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo ""
     echo "Your public key should start with:"
     echo "  ssh-ed25519 AAAAC3NzaC1...  OR  ssh-rsa AAAAB3NzaC1..."
     echo ""
     echo "You saved this earlier when you ran ssh-keygen on your computer."
-    echo "(Press Enter to skip - you'll need password for future logins)"
+    if [[ "$has_existing_key" == "true" ]]; then
+        echo "(Press Enter to keep existing keys only)"
+    else
+        echo "(Press Enter to skip - you'll need password for future logins)"
+    fi
     echo ""
 
     # 4. Read the key (handle pipe vs tty)
@@ -240,9 +266,13 @@ prompt_ssh_key() {
 
     # 5. Handle skip (empty input)
     if [[ -z "$pubkey" ]]; then
-        log_warn "SSH key setup skipped"
-        log_detail "You can add your key later by running:"
-        log_detail "  echo 'your-key-here' >> ~/.ssh/authorized_keys"
+        if [[ "$has_existing_key" == "true" ]]; then
+            log_detail "Keeping existing SSH keys"
+        else
+            log_warn "SSH key setup skipped"
+            log_detail "You can add your key later by running:"
+            log_detail "  echo 'your-key-here' >> ~/.ssh/authorized_keys"
+        fi
         return 0
     fi
 
