@@ -50,11 +50,11 @@ export function ConnectionCheck({
                   <span>Wrong - You&apos;re on your laptop</span>
                 </div>
                 <div className="mt-2 rounded bg-[oklch(0.12_0.01_260)] px-3 py-2 font-mono text-xs">
-                  <span className="text-muted-foreground">C:\Users\Steve&gt;</span>
+                  <span className="text-muted-foreground">C:\Users\YourName&gt;</span>
                   <span className="animate-pulse"> _</span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  or: <code className="text-foreground/70">MacBook:~ steve$</code>
+                  or: <code className="text-foreground/70">YourMac:~ yourname$</code>
                 </p>
               </div>
 
