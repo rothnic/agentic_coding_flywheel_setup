@@ -216,19 +216,42 @@ info_get_lessons_total() {
     echo "9"  # Fixed in ACFS onboard
 }
 
+# Map onboard lesson index (0-8) to a human title.
+info_get_lesson_title() {
+    case "${1:-}" in
+        0) echo "Welcome & Overview" ;;
+        1) echo "Linux Navigation" ;;
+        2) echo "SSH & Persistence" ;;
+        3) echo "tmux Basics" ;;
+        4) echo "Agent Commands (cc, cod, gmi)" ;;
+        5) echo "NTM Command Center" ;;
+        6) echo "NTM Prompt Palette" ;;
+        7) echo "The Flywheel Loop" ;;
+        8) echo "Keeping Updated" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
 # Get next lesson
 info_get_next_lesson() {
     local progress
     progress=$(info_get_onboard_progress)
     if command -v jq &>/dev/null; then
-        local completed
-        completed=$(echo "$progress" | jq -r '(.completed // []) | length')
-        local next=$((completed + 1))
-        if [[ $next -le 9 ]]; then
-            printf "%02d_*.md" "$next"
-        else
+        local completed_count
+        completed_count=$(echo "$progress" | jq -r '(.completed // []) | length' 2>/dev/null || echo "0")
+
+        if [[ "$completed_count" -ge 9 ]]; then
             echo "All complete!"
+            return 0
         fi
+
+        local next_idx
+        next_idx=$(echo "$progress" | jq -r '(.completed // []) as $c | ([range(0;9) as $i | select(($c | index($i)) == null) | $i] | first // 0)' 2>/dev/null || echo "0")
+        [[ "$next_idx" =~ ^[0-8]$ ]] || next_idx=0
+
+        local title
+        title=$(info_get_lesson_title "$next_idx")
+        echo "Lesson $((next_idx + 1)) - $title"
     else
         echo "unknown"
     fi
