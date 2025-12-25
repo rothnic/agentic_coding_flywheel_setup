@@ -219,7 +219,7 @@ sudo reboot
 cat /etc/os-release | grep VERSION_ID
 
 # 4. If at target version, manually update state
-jq '.ubuntu_upgrade.stage = "completed"' /var/lib/acfs/state.json > /tmp/state.json
+jq '.ubuntu_upgrade.current_stage = "completed" | .ubuntu_upgrade.needs_reboot = false' /var/lib/acfs/state.json > /tmp/state.json
 sudo mv /tmp/state.json /var/lib/acfs/state.json
 
 # 5. Disable the resume service
