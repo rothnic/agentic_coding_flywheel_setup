@@ -937,6 +937,7 @@ update_zsh_plugins() {
         fi
 
         if [[ ! -d "$plugin_dir/.git" ]]; then
+            log_item "warn" "$plugin" "not a git repo (skipped)"
             log_to_file "Plugin $plugin exists but is not a git repo"
             continue
         fi
@@ -1214,6 +1215,18 @@ EOF
 }
 
 main() {
+    # Guard against running as root (unless ACFS is actually installed in /root)
+    if [[ $EUID -eq 0 ]] && [[ "${HOME}" != "/root" ]]; then
+        echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
+        echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
+        if [[ "$YES_MODE" != "true" ]]; then
+            read -r -p "Continue anyway? [y/N] " response
+            if [[ ! "$response" =~ ^[Yy] ]]; then
+                exit 1
+            fi
+        fi
+    fi
+
     # Ensure PATH includes user tool directories
     ensure_path
 
