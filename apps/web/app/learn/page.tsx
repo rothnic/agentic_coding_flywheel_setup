@@ -54,21 +54,23 @@ function LessonCard({
   status,
   index,
   isSelected,
+  prefersReducedMotion,
 }: {
   lesson: (typeof LESSONS)[0];
   status: LessonStatus;
   index: number;
   isSelected?: boolean;
+  prefersReducedMotion?: boolean;
 }) {
   const isAccessible = status !== "locked";
 
   const cardContent = (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ ...springs.smooth, delay: index * 0.05 }}
-      whileHover={isAccessible ? { y: -4, scale: 1.02 } : undefined}
-      whileTap={isAccessible ? { scale: 0.98 } : undefined}
+      transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: index * 0.05 }}
+      whileHover={isAccessible && !prefersReducedMotion ? { y: -4, scale: 1.02 } : undefined}
+      whileTap={isAccessible && !prefersReducedMotion ? { scale: 0.98 } : undefined}
     >
       <Card
         className={`group relative overflow-hidden p-5 transition-all duration-300 ${
@@ -100,8 +102,8 @@ function LessonCard({
           ) : status === "current" ? (
             <motion.div
               className="flex h-6 w-6 items-center justify-center rounded-full bg-primary"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              animate={prefersReducedMotion ? undefined : { scale: [1, 1.1, 1] }}
+              transition={prefersReducedMotion ? undefined : { duration: 2, repeat: Infinity }}
             >
               <Play className="h-3 w-3 text-primary-foreground" />
             </motion.div>
@@ -153,6 +155,7 @@ export default function LearnDashboard() {
   const completionPercentage = getCompletionPercentage(completedLessons);
   const nextLesson = getNextUncompletedLesson(completedLessons);
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
 
   // Keyboard navigation state
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
@@ -214,9 +217,9 @@ export default function LearnDashboard() {
         {/* Header */}
         <motion.div
           className="mb-8 flex items-center justify-between"
-          initial={{ opacity: 0, y: -10 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={springs.smooth}
+          transition={prefersReducedMotion ? { duration: 0 } : springs.smooth}
         >
           <Link
             href="/"
@@ -242,20 +245,20 @@ export default function LearnDashboard() {
         {/* Hero section */}
         <motion.div
           className="mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...springs.smooth, delay: 0.1 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.1 }}
         >
           <motion.div
             className="mb-4 flex justify-center"
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={prefersReducedMotion ? false : { scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ ...springs.bouncy, delay: 0.2 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { ...springs.bouncy, delay: 0.2 }}
           >
             <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg shadow-primary/20">
               <GraduationCap className="h-8 w-8 text-primary" />
-              {/* Sparkle effect */}
-              <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-primary animate-pulse" />
+              {/* Sparkle effect - respects reduced motion */}
+              <Sparkles className={`absolute -right-1 -top-1 h-4 w-4 text-primary ${prefersReducedMotion ? "" : "animate-pulse"}`} />
             </div>
           </motion.div>
           <h1 className="mb-3 font-mono text-3xl font-bold tracking-tight md:text-4xl">
@@ -270,9 +273,9 @@ export default function LearnDashboard() {
 
         {/* Progress card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...springs.smooth, delay: 0.2 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.2 }}
         >
           <Card className="group relative mb-10 overflow-hidden border-primary/20 bg-primary/5 p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10">
             {/* Subtle gradient glow on hover */}
@@ -297,9 +300,9 @@ export default function LearnDashboard() {
                 {/* Circular progress with animation */}
                 <motion.div
                   className="relative h-16 w-16"
-                  initial={{ scale: 0.8, opacity: 0 }}
+                  initial={prefersReducedMotion ? false : { scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ ...springs.bouncy, delay: 0.3 }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { ...springs.bouncy, delay: 0.3 }}
                 >
                   <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                     <path
@@ -314,9 +317,9 @@ export default function LearnDashboard() {
                       className="stroke-primary"
                       strokeWidth="3"
                       strokeLinecap="round"
-                      initial={{ strokeDasharray: "0, 100" }}
+                      initial={prefersReducedMotion ? { strokeDasharray: `${completionPercentage}, 100` } : { strokeDasharray: "0, 100" }}
                       animate={{ strokeDasharray: `${completionPercentage}, 100` }}
-                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                      transition={prefersReducedMotion ? { duration: 0 } : { duration: 1, delay: 0.5, ease: "easeOut" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -330,9 +333,9 @@ export default function LearnDashboard() {
                 <div className="text-sm">
                   <motion.div
                     className="font-mono text-2xl font-bold text-primary"
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ ...springs.smooth, delay: 0.4 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.4 }}
                   >
                     {completedLessons.length}/{TOTAL_LESSONS}
                   </motion.div>
@@ -346,9 +349,9 @@ export default function LearnDashboard() {
               <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <motion.div
                   className="h-full bg-gradient-to-r from-primary to-[oklch(0.7_0.2_330)]"
-                  initial={{ width: 0 }}
+                  initial={prefersReducedMotion ? { width: `${completionPercentage}%` } : { width: 0 }}
                   animate={{ width: `${completionPercentage}%` }}
-                  transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.5, ease: "easeOut" }}
                 />
               </div>
             </div>
