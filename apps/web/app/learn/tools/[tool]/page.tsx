@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { type ReactNode } from "react";
+import { type ReactNode, use } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
   Bot,
+  ChevronRight,
   GitBranch,
   GraduationCap,
   Home,
@@ -12,13 +15,11 @@ import {
   LayoutGrid,
   Search,
   ShieldCheck,
+  Sparkles,
+  Terminal,
   Wrench,
 } from "lucide-react";
 import { motion } from "@/components/motion";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CommandCard } from "@/components/command-card";
-import { springs, backgrounds } from "@/lib/design-tokens";
 
 type ToolId =
   | "claude-code"
@@ -38,7 +39,8 @@ type ToolCard = {
   title: string;
   tagline: string;
   icon: ReactNode;
-  accent: string;
+  gradient: string;
+  glowColor: string;
   /** Primary docs/repo link */
   docsUrl: string;
   docsLabel: string;
@@ -53,8 +55,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "claude-code",
     title: "Claude Code",
     tagline: "Anthropic's AI coding agent - deep reasoning and architecture",
-    icon: <Bot className="h-8 w-8 text-white" />,
-    accent: "from-orange-400 to-amber-500",
+    icon: <Bot className="h-8 w-8" />,
+    gradient: "from-orange-500/20 via-amber-500/20 to-orange-500/20",
+    glowColor: "rgba(251,146,60,0.4)",
     docsUrl: "https://docs.anthropic.com/en/docs/claude-code",
     docsLabel: "Anthropic Docs",
     quickCommand: "cc",
@@ -64,8 +67,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "codex-cli",
     title: "Codex CLI",
     tagline: "OpenAI's coding agent - fast iteration and structured work",
-    icon: <GraduationCap className="h-8 w-8 text-white" />,
-    accent: "from-emerald-400 to-teal-500",
+    icon: <GraduationCap className="h-8 w-8" />,
+    gradient: "from-emerald-500/20 via-teal-500/20 to-emerald-500/20",
+    glowColor: "rgba(52,211,153,0.4)",
     docsUrl: "https://github.com/openai/codex",
     docsLabel: "GitHub",
     quickCommand: "cod",
@@ -75,8 +79,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "gemini-cli",
     title: "Gemini CLI",
     tagline: "Google's coding agent - large context exploration",
-    icon: <Search className="h-8 w-8 text-white" />,
-    accent: "from-blue-400 to-indigo-500",
+    icon: <Search className="h-8 w-8" />,
+    gradient: "from-blue-500/20 via-indigo-500/20 to-blue-500/20",
+    glowColor: "rgba(99,102,241,0.4)",
     docsUrl: "https://github.com/google-gemini/gemini-cli",
     docsLabel: "GitHub",
     quickCommand: "gmi",
@@ -86,8 +91,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "ntm",
     title: "Named Tmux Manager",
     tagline: "The agent cockpit - spawn and orchestrate multiple agents",
-    icon: <LayoutGrid className="h-8 w-8 text-white" />,
-    accent: "from-sky-400 to-blue-500",
+    icon: <LayoutGrid className="h-8 w-8" />,
+    gradient: "from-sky-500/20 via-blue-500/20 to-sky-500/20",
+    glowColor: "rgba(56,189,248,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/named_tmux_manager",
     docsLabel: "GitHub",
     quickCommand: "ntm spawn myproject --cc=2",
@@ -97,8 +103,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "beads",
     title: "Beads",
     tagline: "Task graphs + robot triage for dependency-aware work tracking",
-    icon: <GitBranch className="h-8 w-8 text-white" />,
-    accent: "from-emerald-400 to-teal-500",
+    icon: <GitBranch className="h-8 w-8" />,
+    gradient: "from-emerald-500/20 via-teal-500/20 to-emerald-500/20",
+    glowColor: "rgba(52,211,153,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/beads_viewer",
     docsLabel: "GitHub",
     quickCommand: "bd ready",
@@ -108,8 +115,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "agent-mail",
     title: "MCP Agent Mail",
     tagline: "Gmail for agents - messaging, threads, and file reservations",
-    icon: <KeyRound className="h-8 w-8 text-white" />,
-    accent: "from-violet-400 to-purple-500",
+    icon: <KeyRound className="h-8 w-8" />,
+    gradient: "from-violet-500/20 via-purple-500/20 to-violet-500/20",
+    glowColor: "rgba(139,92,246,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/mcp_agent_mail",
     docsLabel: "GitHub",
     relatedTools: ["ntm", "beads", "cass"],
@@ -118,8 +126,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "ubs",
     title: "Ultimate Bug Scanner",
     tagline: "Fast polyglot static analysis - your pre-commit quality gate",
-    icon: <ShieldCheck className="h-8 w-8 text-white" />,
-    accent: "from-rose-400 to-red-500",
+    icon: <ShieldCheck className="h-8 w-8" />,
+    gradient: "from-rose-500/20 via-red-500/20 to-rose-500/20",
+    glowColor: "rgba(244,63,94,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/ultimate_bug_scanner",
     docsLabel: "GitHub",
     quickCommand: "ubs .",
@@ -129,8 +138,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "cass",
     title: "CASS",
     tagline: "Search across all your agent sessions instantly",
-    icon: <Search className="h-8 w-8 text-white" />,
-    accent: "from-cyan-400 to-sky-500",
+    icon: <Search className="h-8 w-8" />,
+    gradient: "from-cyan-500/20 via-sky-500/20 to-cyan-500/20",
+    glowColor: "rgba(34,211,238,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/coding_agent_session_search",
     docsLabel: "GitHub",
     quickCommand: "cass search 'auth error' --robot",
@@ -140,8 +150,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "cm",
     title: "CASS Memory",
     tagline: "Procedural memory - playbooks and lessons from past sessions",
-    icon: <Wrench className="h-8 w-8 text-white" />,
-    accent: "from-fuchsia-400 to-pink-500",
+    icon: <Wrench className="h-8 w-8" />,
+    gradient: "from-fuchsia-500/20 via-pink-500/20 to-fuchsia-500/20",
+    glowColor: "rgba(217,70,239,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/cass_memory_system",
     docsLabel: "GitHub",
     quickCommand: "cm context 'my task' --json",
@@ -151,8 +162,9 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "caam",
     title: "CAAM",
     tagline: "Switch agent credentials safely without account confusion",
-    icon: <Wrench className="h-8 w-8 text-white" />,
-    accent: "from-amber-400 to-orange-500",
+    icon: <Wrench className="h-8 w-8" />,
+    gradient: "from-amber-500/20 via-orange-500/20 to-amber-500/20",
+    glowColor: "rgba(251,146,60,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/coding_agent_account_manager",
     docsLabel: "GitHub",
     relatedTools: ["claude-code", "codex-cli", "gemini-cli"],
@@ -161,13 +173,38 @@ const TOOLS: Record<ToolId, ToolCard> = {
     id: "slb",
     title: "SLB",
     tagline: "Two-person rule for dangerous commands - safety first",
-    icon: <ShieldCheck className="h-8 w-8 text-white" />,
-    accent: "from-yellow-400 to-orange-500",
+    icon: <ShieldCheck className="h-8 w-8" />,
+    gradient: "from-yellow-500/20 via-orange-500/20 to-yellow-500/20",
+    glowColor: "rgba(251,191,36,0.4)",
     docsUrl: "https://github.com/Dicklesworthstone/simultaneous_launch_button",
     docsLabel: "GitHub",
     relatedTools: ["ubs", "beads"],
   },
 };
+
+function FloatingOrb({
+  className,
+  delay = 0,
+}: {
+  className: string;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      className={`absolute rounded-full pointer-events-none ${className}`}
+      animate={{
+        y: [0, -20, 0],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{
+        duration: 8,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
 
 function RelatedToolCard({ toolId }: { toolId: ToolId }) {
   const tool = TOOLS[toolId];
@@ -176,17 +213,29 @@ function RelatedToolCard({ toolId }: { toolId: ToolId }) {
   return (
     <Link href={`/learn/tools/${toolId}`}>
       <motion.div
-        whileHover={{ y: -2 }}
-        className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 transition-all hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="group relative flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 backdrop-blur-md transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06]"
+        style={{
+          boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
+        }}
       >
+        {/* Subtle gradient overlay */}
         <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${tool.accent}`}
+          className={`absolute inset-0 rounded-xl bg-gradient-to-br ${tool.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+        />
+
+        <div
+          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${tool.gradient} border border-white/10`}
         >
-          <div className="scale-50">{tool.icon}</div>
+          <div className="text-white/90">{tool.icon}</div>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-medium text-sm">{tool.title}</div>
+        <div className="relative min-w-0 flex-1">
+          <div className="truncate font-medium text-sm text-white/90 group-hover:text-white transition-colors">
+            {tool.title}
+          </div>
         </div>
+        <ChevronRight className="relative h-4 w-4 text-white/40 group-hover:text-white/70 transition-colors" />
       </motion.div>
     </Link>
   );
@@ -196,8 +245,8 @@ interface Props {
   params: Promise<{ tool: string }>;
 }
 
-export default async function ToolCardPage({ params }: Props) {
-  const { tool } = await params;
+export default function ToolCardPage({ params }: Props) {
+  const { tool } = use(params);
   const doc = TOOLS[tool as ToolId];
 
   if (!doc) {
@@ -205,137 +254,234 @@ export default async function ToolCardPage({ params }: Props) {
   }
 
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* Background effects */}
-      <div className="pointer-events-none fixed inset-0 bg-gradient-cosmic opacity-50" />
-      <div className="pointer-events-none fixed inset-0 bg-grid-pattern opacity-20" />
+    <div className="min-h-screen bg-black relative overflow-x-hidden">
+      {/* Dramatic ambient background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <FloatingOrb
+          className="w-[700px] h-[700px] bg-primary/10 blur-[180px] -top-48 left-1/4"
+          delay={0}
+        />
+        <FloatingOrb
+          className="w-[500px] h-[500px] bg-violet-500/10 blur-[150px] top-1/3 -right-24"
+          delay={2}
+        />
+        <FloatingOrb
+          className="w-[400px] h-[400px] bg-emerald-500/8 blur-[120px] bottom-0 left-0"
+          delay={4}
+        />
 
-      {/* Floating orbs */}
-      <div className={backgrounds.orbCyan} />
-      <div className={backgrounds.orbPink} />
+        {/* Radial gradient overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(var(--primary-rgb),0.15),_transparent)]" />
 
-      <div className="relative mx-auto max-w-2xl px-6 py-8 md:px-12 md:py-12">
-        {/* Header */}
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px]" />
+      </div>
+
+      <div className="relative mx-auto max-w-2xl px-6 py-10 md:px-12 md:py-16">
+        {/* Navigation */}
         <motion.div
-          className="mb-8 flex items-center justify-between"
+          className="mb-10 flex items-center justify-between"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={springs.smooth}
+          transition={{ duration: 0.5 }}
         >
           <Link
             href="/learn"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="group flex items-center gap-2 text-white/50 transition-colors hover:text-white"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Learning Hub</span>
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-sm font-medium">Learning Hub</span>
           </Link>
           <Link
             href="/"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="group flex items-center gap-2 text-white/50 transition-colors hover:text-white"
           >
             <Home className="h-4 w-4" />
-            <span className="text-sm">Home</span>
+            <span className="text-sm font-medium">Home</span>
           </Link>
         </motion.div>
 
         {/* Main Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...springs.smooth, delay: 0.1 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="group relative"
         >
-          <Card className="group relative overflow-hidden border-border/50 bg-card/50 p-8 backdrop-blur-sm">
-            {/* Gradient glow on hover */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          {/* Glow effect behind card */}
+          <div
+            className="absolute -inset-4 rounded-3xl opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-60"
+            style={{ background: doc.glowColor }}
+          />
 
-            {/* Icon + Title */}
-            <div className="relative mb-6 flex items-start gap-4">
-              <motion.div
-                className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ${doc.accent}`}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ ...springs.bouncy, delay: 0.2 }}
-              >
-                {doc.icon}
-              </motion.div>
-              <div className="min-w-0 flex-1">
-                <h1 className="mb-1 font-mono text-2xl font-bold tracking-tight md:text-3xl">
-                  {doc.title}
-                </h1>
-                <p className="text-muted-foreground">{doc.tagline}</p>
+          <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+            {/* Top gradient bar */}
+            <div
+              className={`h-1 w-full bg-gradient-to-r ${doc.gradient}`}
+              style={{
+                boxShadow: `0 0 30px ${doc.glowColor}`,
+              }}
+            />
+
+            <div className="p-8 md:p-10">
+              {/* Icon + Title */}
+              <div className="relative mb-8 flex items-start gap-5">
+                <motion.div
+                  className={`relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${doc.gradient} border border-white/10`}
+                  initial={{ scale: 0.8, opacity: 0, rotate: -10 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
+                  style={{
+                    boxShadow: `0 0 40px ${doc.glowColor}`,
+                  }}
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+                  </div>
+                  <div className="text-white relative z-10">{doc.icon}</div>
+                </motion.div>
+
+                <div className="min-w-0 flex-1 pt-1">
+                  <motion.h1
+                    className="mb-2 font-mono text-3xl font-bold tracking-tight text-white md:text-4xl"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    {doc.title}
+                  </motion.h1>
+                  <motion.p
+                    className="text-lg text-white/60"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    {doc.tagline}
+                  </motion.p>
+                </div>
               </div>
-            </div>
 
-            {/* Docs Link - Primary CTA */}
-            <motion.div
-              className="relative mb-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...springs.smooth, delay: 0.3 }}
-            >
-              <Button asChild size="lg" className="w-full gap-2">
+              {/* Primary CTA - Documentation Link */}
+              <motion.div
+                className="mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
                 <a
                   href={doc.docsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="group/btn relative flex w-full items-center justify-center gap-3 rounded-xl bg-white/10 border border-white/10 py-4 px-6 font-semibold text-white transition-all duration-300 hover:bg-white/15 hover:border-white/20 hover:shadow-lg"
+                  style={{
+                    boxShadow: `0 4px 30px rgba(0,0,0,0.3)`,
+                  }}
                 >
-                  View Full Documentation on {doc.docsLabel}
-                  <ArrowUpRight className="h-4 w-4" />
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>View Full Documentation on {doc.docsLabel}</span>
+                  <ArrowUpRight className="h-5 w-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
                 </a>
-              </Button>
-            </motion.div>
-
-            {/* Quick Command */}
-            {doc.quickCommand && (
-              <motion.div
-                className="relative mb-6"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ ...springs.smooth, delay: 0.4 }}
-              >
-                <p className="mb-2 text-sm font-medium text-muted-foreground">
-                  Quick Start
-                </p>
-                <CommandCard command={doc.quickCommand} description="Command" />
               </motion.div>
-            )}
 
-            {/* Related Tools */}
-            {doc.relatedTools.length > 0 && (
-              <motion.div
-                className="relative"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ ...springs.smooth, delay: 0.5 }}
-              >
-                <p className="mb-3 text-sm font-medium text-muted-foreground">
-                  Related Tools
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {doc.relatedTools.slice(0, 4).map((relatedId) => (
-                    <RelatedToolCard key={relatedId} toolId={relatedId} />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </Card>
+              {/* Quick Command */}
+              {doc.quickCommand && (
+                <motion.div
+                  className="mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Terminal className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
+                      Quick Start
+                    </span>
+                  </div>
+                  <div className="relative group/cmd rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.05]">
+                      <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/70" />
+                      <span className="ml-2 text-xs text-white/30">
+                        terminal
+                      </span>
+                    </div>
+                    <div className="p-4 font-mono text-sm">
+                      <span className="text-emerald-400">$</span>
+                      <span className="text-white/90 ml-2">
+                        {doc.quickCommand}
+                      </span>
+                    </div>
+                    {/* Copy hint */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/cmd:opacity-100 transition-opacity">
+                      <span className="text-xs text-white/40">
+                        Click to copy
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Related Tools */}
+              {doc.relatedTools.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <LayoutGrid className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
+                      Related Tools
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {doc.relatedTools.slice(0, 4).map((relatedId, index) => (
+                      <motion.div
+                        key={relatedId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
+                      >
+                        <RelatedToolCard toolId={relatedId} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
         </motion.div>
 
-        {/* Footer link back */}
+        {/* Footer Links */}
         <motion.div
-          className="mt-8 text-center"
+          className="mt-10 flex flex-col items-center gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ ...springs.smooth, delay: 0.6 }}
+          transition={{ duration: 0.5, delay: 1 }}
         >
           <Link
             href="/learn/commands"
-            className="text-sm text-muted-foreground transition-colors hover:text-primary"
+            className="group flex items-center gap-2 text-white/50 transition-colors hover:text-primary"
           >
-            See all commands in the Command Reference →
+            <span className="text-sm">See all commands in the Command Reference</span>
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
       </div>
+
+      {/* Custom shimmer animation */}
+      <style jsx global>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+      `}</style>
     </div>
   );
 }
