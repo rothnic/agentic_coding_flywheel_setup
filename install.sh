@@ -1632,7 +1632,7 @@ ensure_ubuntu() {
 # ============================================================
 # Ubuntu Auto-Upgrade Phase (nb4)
 # Runs as "Phase -1" before all other installation phases.
-# Handles multi-reboot upgrade sequences (e.g., 24.04 → 24.10 → 25.04 → 25.10)
+# Handles multi-reboot upgrade sequences (e.g., 24.04 → 25.04 → 25.10; EOL releases like 24.10 may be skipped)
 # ============================================================
 run_ubuntu_upgrade_phase() {
     # Skip if user requested
@@ -1749,7 +1749,7 @@ run_ubuntu_upgrade_phase() {
     fi
 
     log_step "-1/9" "Ubuntu Auto-Upgrade"
-    # Format path for display (e.g., "24.10 → 25.04 → 25.10")
+    # Format path for display (e.g., "25.04 → 25.10")
     local upgrade_path_display
     upgrade_path_display=$(echo "$upgrade_path" | tr '\n' ' ' | sed 's/ $//; s/ / → /g')
     log_info "Upgrade path: $current_version_str → $upgrade_path_display"

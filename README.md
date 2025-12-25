@@ -522,7 +522,7 @@ ACFS automatically upgrades Ubuntu to version **25.10** before installation when
 
 **How it works:**
 1. Detects your current Ubuntu version
-2. Calculates the upgrade path (e.g., 24.04 → 24.10 → 25.04 → 25.10)
+2. Calculates the upgrade path (e.g., 24.04 → 25.04 → 25.10)
 3. Performs sequential `do-release-upgrade` operations
 4. Reboots after each upgrade (handled automatically)
 5. Resumes via systemd service after reboot
@@ -540,8 +540,8 @@ curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_f
 
 **To specify a different target version:**
 ```bash
-# Upgrade only to 24.10 instead of 25.10
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh" | bash -s -- --yes --mode vibe --target-ubuntu=24.10
+# Upgrade only to 25.04 instead of 25.10
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh" | bash -s -- --yes --mode vibe --target-ubuntu=25.04
 ```
 
 **Monitoring upgrade progress:**
@@ -560,6 +560,7 @@ tail -f /var/log/acfs/upgrade_resume.log
 - Create a VM snapshot before upgrading (recommended but not required)
 - Upgrades cannot be undone without restoring from snapshot
 - The system will reboot multiple times automatically
+- EOL interim releases (like 24.10) may be skipped automatically if they are no longer offered by `do-release-upgrade`
 - Reconnect via SSH after each reboot to monitor progress
 
 ---
@@ -1184,7 +1185,7 @@ jobs:
     - Lints all bash scripts with ShellCheck
 
   integration:
-    - Matrix tests across Ubuntu 24.04, 24.10, 25.04, 25.10
+    - Matrix tests across Ubuntu 24.04, 25.04, 25.10
     - Runs full installation in Docker
     - Verifies all tools installed correctly
     - Runs acfs doctor to confirm health

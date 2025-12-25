@@ -59,7 +59,7 @@ ACFS is a **multi-component project** consisting of:
 - **Language:** Bash (POSIX-compatible where possible)
 - **Target:** Ubuntu 25.10 (auto-upgrades from 22.04+ via sequential do-release-upgrade)
 - **Auto-Upgrade:** Older Ubuntu versions are automatically upgraded to 25.10 before ACFS install
-  - Upgrade path: 22.04 → 24.04 → 24.10 → 25.04 → 25.10
+  - Upgrade path: 22.04 → 24.04 → 25.04 → 25.10 (EOL interim releases like 24.10 may be skipped)
   - Takes 30-60 minutes per version hop; multiple reboots handled via systemd resume service
   - Skip with `--skip-ubuntu-upgrade` flag
 - **One-liner:** `curl -fsSL ... | bash -s -- --yes --mode vibe`
@@ -685,4 +685,3 @@ Parse: `file:line:col` → location | 💡 → how to fix | Exit 0/1 → pass/fa
 - ❌ Ignore findings → ✅ Investigate each
 - ❌ Full scan per edit → ✅ Scope to file
 - ❌ Fix symptom (`if (x) { x.y }`) → ✅ Root cause (`x?.y`)
-

@@ -1151,7 +1151,7 @@ ubuntu_start_upgrade_sequence() {
     log_step "Target:  Ubuntu $UBUNTU_TARGET_VERSION"
 
     # Ensure non-LTS upgrades are permitted (LTS defaults to Prompt=lts).
-    # ACFS targets interim releases (e.g. 24.10, 25.04, 25.10) on the path to 25.10.
+    # ACFS targets interim releases (e.g. 25.04, 25.10) on the path to 25.10, skipping EOL releases when needed.
     ubuntu_enable_normal_releases || true
 
     # Calculate upgrade path
