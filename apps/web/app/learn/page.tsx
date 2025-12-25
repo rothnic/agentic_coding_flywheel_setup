@@ -1,6 +1,8 @@
 "use client";
 
+import React, { useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Book,
   BookOpen,
@@ -13,7 +15,9 @@ import {
   Lock,
   Play,
   Terminal,
+  Sparkles,
 } from "lucide-react";
+import { motion } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -23,6 +27,7 @@ import {
   getCompletionPercentage,
   getNextUncompletedLesson,
 } from "@/lib/lessonProgress";
+import { backgrounds, springs, motionVariants } from "@/lib/design-tokens";
 
 type LessonStatus = "completed" | "current" | "locked";
 
@@ -46,65 +51,93 @@ function getLessonStatus(
 function LessonCard({
   lesson,
   status,
+  index,
+  isSelected,
 }: {
   lesson: (typeof LESSONS)[0];
   status: LessonStatus;
+  index: number;
+  isSelected?: boolean;
 }) {
   const isAccessible = status !== "locked";
 
   const cardContent = (
-    <Card
-      className={`group relative overflow-hidden p-5 transition-all ${
-        status === "completed"
-          ? "border-[oklch(0.72_0.19_145/0.3)] bg-[oklch(0.72_0.19_145/0.05)]"
-          : status === "current"
-            ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20"
-            : "border-border/50 bg-muted/30 opacity-60"
-      } ${isAccessible ? "cursor-pointer hover:border-primary/40 hover:shadow-md" : "cursor-not-allowed"}`}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...springs.smooth, delay: index * 0.05 }}
+      whileHover={isAccessible ? { y: -4, scale: 1.02 } : undefined}
+      whileTap={isAccessible ? { scale: 0.98 } : undefined}
     >
-      {/* Status indicator */}
-      <div className="absolute right-3 top-3">
-        {status === "completed" ? (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.19_145)]">
-            <Check className="h-4 w-4 text-white" />
-          </div>
-        ) : status === "current" ? (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
-            <Play className="h-3 w-3 text-primary-foreground" />
-          </div>
-        ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-            <Lock className="h-3 w-3 text-muted-foreground" />
-          </div>
-        )}
-      </div>
-
-      {/* Lesson number */}
-      <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-mono text-sm font-bold text-muted-foreground">
-        {lesson.id + 1}
-      </div>
-
-      {/* Title */}
-      <h3
-        className={`mb-1 font-semibold ${status === "locked" ? "text-muted-foreground" : "text-foreground"}`}
+      <Card
+        className={`group relative overflow-hidden p-5 transition-all duration-300 ${
+          status === "completed"
+            ? "border-[oklch(0.72_0.19_145/0.3)] bg-[oklch(0.72_0.19_145/0.05)]"
+            : status === "current"
+              ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20"
+              : "border-border/50 bg-muted/30 opacity-60"
+        } ${isAccessible ? "cursor-pointer hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10" : "cursor-not-allowed"} ${
+          isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+        }`}
       >
-        {lesson.title}
-      </h3>
+        {/* Hover glow effect */}
+        {isAccessible && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        )}
 
-      {/* Description */}
-      <p className="mb-3 text-sm text-muted-foreground">{lesson.description}</p>
+        {/* Status indicator */}
+        <div className="absolute right-3 top-3">
+          {status === "completed" ? (
+            <motion.div
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.72_0.19_145)]"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={springs.bouncy}
+            >
+              <Check className="h-4 w-4 text-white" />
+            </motion.div>
+          ) : status === "current" ? (
+            <motion.div
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Play className="h-3 w-3 text-primary-foreground" />
+            </motion.div>
+          ) : (
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+            </div>
+          )}
+        </div>
 
-      {/* Duration */}
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        <span>{lesson.duration}</span>
-      </div>
+        {/* Lesson number */}
+        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-mono text-sm font-bold text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+          {lesson.id + 1}
+        </div>
 
-      {/* Hover arrow */}
-      {isAccessible && (
-        <ChevronRight className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-      )}
-    </Card>
+        {/* Title */}
+        <h3
+          className={`mb-1 font-semibold transition-colors ${status === "locked" ? "text-muted-foreground" : "text-foreground group-hover:text-primary"}`}
+        >
+          {lesson.title}
+        </h3>
+
+        {/* Description */}
+        <p className="mb-3 text-sm text-muted-foreground">{lesson.description}</p>
+
+        {/* Duration */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{lesson.duration}</span>
+        </div>
+
+        {/* Hover arrow */}
+        {isAccessible && (
+          <ChevronRight className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
+        )}
+      </Card>
+    </motion.div>
   );
 
   if (isAccessible) {
@@ -118,6 +151,53 @@ export default function LearnDashboard() {
   const [completedLessons] = useCompletedLessons();
   const completionPercentage = getCompletionPercentage(completedLessons);
   const nextLesson = getNextUncompletedLesson(completedLessons);
+  const router = useRouter();
+
+  // Keyboard navigation state
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const accessibleLessons = LESSONS.filter((_, i) => {
+    const status = getLessonStatus(i, completedLessons);
+    return status !== "locked";
+  });
+
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key) {
+        case "j":
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedIndex((prev) =>
+            prev < accessibleLessons.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case "k":
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+          break;
+        case "Enter":
+          if (selectedIndex >= 0 && selectedIndex < accessibleLessons.length) {
+            const lesson = accessibleLessons[selectedIndex];
+            router.push(`/learn/${lesson.slug}`);
+          }
+          break;
+        case "Escape":
+          setSelectedIndex(-1);
+          break;
+      }
+    },
+    [accessibleLessons, selectedIndex, router]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -125,9 +205,18 @@ export default function LearnDashboard() {
       <div className="pointer-events-none fixed inset-0 bg-gradient-cosmic opacity-50" />
       <div className="pointer-events-none fixed inset-0 bg-grid-pattern opacity-20" />
 
+      {/* Floating orbs - hidden on mobile for performance */}
+      <div className={backgrounds.orbCyan} />
+      <div className={backgrounds.orbPink} />
+
       <div className="relative mx-auto max-w-5xl px-6 py-8 md:px-12 md:py-12">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <motion.div
+          className="mb-8 flex items-center justify-between"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={springs.smooth}
+        >
           <Link
             href="/"
             className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -135,23 +224,40 @@ export default function LearnDashboard() {
             <Home className="h-4 w-4" />
             <span className="text-sm">Home</span>
           </Link>
-          <Link
-            href="/wizard/os-selection"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Terminal className="h-4 w-4" />
-            <span className="text-sm">Setup Wizard</span>
-          </Link>
-        </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden text-xs text-muted-foreground sm:block">
+              Press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">j</kbd>/<kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">k</kbd> to navigate
+            </span>
+            <Link
+              href="/wizard/os-selection"
+              className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Terminal className="h-4 w-4" />
+              <span className="text-sm">Setup Wizard</span>
+            </Link>
+          </div>
+        </motion.div>
 
         {/* Hero section */}
-        <div className="mb-12 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg shadow-primary/20">
+        <motion.div
+          className="mb-12 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...springs.smooth, delay: 0.1 }}
+        >
+          <motion.div
+            className="mb-4 flex justify-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ ...springs.bouncy, delay: 0.2 }}
+          >
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg shadow-primary/20">
               <GraduationCap className="h-8 w-8 text-primary" />
+              {/* Sparkle effect */}
+              <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-primary animate-pulse" />
             </div>
-          </div>
-          <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">
+          </motion.div>
+          <h1 className="mb-3 font-mono text-3xl font-bold tracking-tight md:text-4xl">
             Learning Hub
           </h1>
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
@@ -159,163 +265,241 @@ export default function LearnDashboard() {
             lessons. Start from the basics and work your way to advanced
             workflows.
           </p>
-        </div>
+        </motion.div>
 
         {/* Progress card */}
-        <Card className="mb-10 border-primary/20 bg-primary/5 p-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Your Progress</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {completedLessons.length === TOTAL_LESSONS
-                  ? "Congratulations! You've completed all lessons."
-                  : nextLesson
-                    ? `Up next: ${nextLesson.title}`
-                    : "Start your learning journey"}
-              </p>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...springs.smooth, delay: 0.2 }}
+        >
+          <Card className="group relative mb-10 overflow-hidden border-primary/20 bg-primary/5 p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10">
+            {/* Subtle gradient glow on hover */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[oklch(0.7_0.2_330/0.05)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-            <div className="flex items-center gap-4">
-              {/* Circular progress */}
-              <div className="relative h-16 w-16">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    className="stroke-primary"
-                    strokeWidth="3"
-                    strokeDasharray={`${completionPercentage}, 100`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-mono text-sm font-bold">
-                    {completionPercentage}%
-                  </span>
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  <h2 className="font-semibold">Your Progress</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {completedLessons.length === TOTAL_LESSONS
+                    ? "Congratulations! You've completed all lessons."
+                    : nextLesson
+                      ? `Up next: ${nextLesson.title}`
+                      : "Start your learning journey"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Circular progress with animation */}
+                <motion.div
+                  className="relative h-16 w-16"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ ...springs.bouncy, delay: 0.3 }}
+                >
+                  <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      className="stroke-muted"
+                      strokeWidth="3"
+                    />
+                    <motion.path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      className="stroke-primary"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      initial={{ strokeDasharray: "0, 100" }}
+                      animate={{ strokeDasharray: `${completionPercentage}, 100` }}
+                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-mono text-sm font-bold">
+                      {completionPercentage}%
+                    </span>
+                  </div>
+                </motion.div>
+
+                {/* Stats */}
+                <div className="text-sm">
+                  <motion.div
+                    className="font-mono text-2xl font-bold text-primary"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ ...springs.smooth, delay: 0.4 }}
+                  >
+                    {completedLessons.length}/{TOTAL_LESSONS}
+                  </motion.div>
+                  <div className="text-muted-foreground">lessons complete</div>
                 </div>
               </div>
+            </div>
 
-              {/* Stats */}
-              <div className="text-sm">
-                <div className="font-mono text-2xl font-bold text-primary">
-                  {completedLessons.length}/{TOTAL_LESSONS}
-                </div>
-                <div className="text-muted-foreground">lessons complete</div>
+            {/* Progress bar */}
+            <div className="relative mt-4">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-primary to-[oklch(0.7_0.2_330)]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${completionPercentage}%` }}
+                  transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-[oklch(0.7_0.2_330)] transition-all duration-500"
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Continue button */}
-          {nextLesson && (
-            <div className="mt-4">
-              <Button asChild className="w-full sm:w-auto">
-                <Link href={`/learn/${nextLesson.slug}`}>
-                  Continue Learning
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </Card>
+            {/* Continue button */}
+            {nextLesson && (
+              <motion.div
+                className="mt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...springs.smooth, delay: 0.6 }}
+              >
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href={`/learn/${nextLesson.slug}`}>
+                    Continue Learning
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </motion.div>
+            )}
+          </Card>
+        </motion.div>
 
         {/* Lessons grid */}
-        <div className="mb-8">
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ ...springs.smooth, delay: 0.3 }}
+        >
           <h2 className="mb-4 text-xl font-semibold">All Lessons</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {LESSONS.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                status={getLessonStatus(lesson.id, completedLessons)}
-              />
-            ))}
+            {LESSONS.map((lesson, index) => {
+              const status = getLessonStatus(lesson.id, completedLessons);
+              // Find the accessible index for keyboard navigation
+              const accessibleIndex = accessibleLessons.findIndex(
+                (l) => l.id === lesson.id
+              );
+              return (
+                <LessonCard
+                  key={lesson.id}
+                  lesson={lesson}
+                  status={status}
+                  index={index}
+                  isSelected={accessibleIndex === selectedIndex}
+                />
+              );
+            })}
           </div>
-        </div>
+        </motion.div>
 
         {/* Quick reference links */}
-        <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold">Quick Reference</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/learn/agent-commands"
-              className="flex items-center gap-3 rounded-lg border border-border/50 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
-            >
-              <Terminal className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Agent Commands</div>
-                <div className="text-sm text-muted-foreground">
-                  Claude, Codex, Gemini shortcuts
-                </div>
-              </div>
-            </Link>
-            <Link
-              href="/learn/ntm-palette"
-              className="flex items-center gap-3 rounded-lg border border-border/50 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
-            >
-              <BookOpen className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">NTM Commands</div>
-                <div className="text-sm text-muted-foreground">
-                  Session management reference
-                </div>
-              </div>
-            </Link>
-            <Link
-              href="/learn/commands"
-              className="flex items-center gap-3 rounded-lg border border-border/50 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
-            >
-              <List className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Command Reference</div>
-                <div className="text-sm text-muted-foreground">
-                  Searchable list of key commands
-                </div>
-              </div>
-            </Link>
-            <Link
-              href="/learn/glossary"
-              className="flex items-center gap-3 rounded-lg border border-border/50 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
-            >
-              <Book className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Glossary</div>
-                <div className="text-sm text-muted-foreground">
-                  Definitions for all jargon terms
-                </div>
-              </div>
-            </Link>
-          </div>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...springs.smooth, delay: 0.5 }}
+        >
+          <Card className="group relative overflow-hidden p-6 transition-all duration-300 hover:border-primary/30">
+            {/* Subtle hover glow */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+            <h2 className="relative mb-4 text-lg font-semibold">Quick Reference</h2>
+            <div className="relative grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  href: "/learn/agent-commands",
+                  icon: Terminal,
+                  title: "Agent Commands",
+                  desc: "Claude, Codex, Gemini shortcuts",
+                },
+                {
+                  href: "/learn/ntm-palette",
+                  icon: BookOpen,
+                  title: "NTM Commands",
+                  desc: "Session management reference",
+                },
+                {
+                  href: "/learn/commands",
+                  icon: List,
+                  title: "Command Reference",
+                  desc: "Searchable list of key commands",
+                },
+                {
+                  href: "/learn/glossary",
+                  icon: Book,
+                  title: "Glossary",
+                  desc: "Definitions for all jargon terms",
+                },
+              ].map((item, index) => (
+                <motion.div
+                  key={item.href}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...springs.smooth, delay: 0.6 + index * 0.05 }}
+                  whileHover={{ y: -2 }}
+                >
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3 rounded-lg border border-border/50 p-4 transition-all duration-300 hover:border-primary/40 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/5"
+                  >
+                    <item.icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+                    <div>
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.desc}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
 
         {/* Footer */}
-        <div className="mt-12 text-center text-sm text-muted-foreground">
+        <motion.div
+          className="mt-12 pb-24 text-center text-sm text-muted-foreground sm:pb-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ ...springs.smooth, delay: 0.8 }}
+        >
           <p>
             Need to set up your VPS first?{" "}
-            <Link href="/wizard/os-selection" className="text-primary hover:underline">
+            <Link href="/wizard/os-selection" className="text-primary transition-colors hover:text-primary/80 hover:underline">
               Start the setup wizard →
             </Link>
           </p>
-        </div>
+        </motion.div>
       </div>
+
+      {/* Mobile fixed bottom bar - thumb-zone friendly */}
+      {nextLesson && (
+        <motion.div
+          className="fixed inset-x-0 bottom-0 z-50 border-t border-border/50 bg-background/95 p-4 backdrop-blur-lg sm:hidden"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ ...springs.smooth, delay: 0.5 }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-muted-foreground">Up next</p>
+              <p className="truncate text-sm font-medium">{nextLesson.title}</p>
+            </div>
+            <Button asChild size="lg" className="shrink-0">
+              <Link href={`/learn/${nextLesson.slug}`}>
+                Continue
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
