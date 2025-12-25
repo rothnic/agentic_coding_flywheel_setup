@@ -175,7 +175,7 @@ export function BeadsLesson() {
           <RobotCommand
             command="bv --robot-insights"
             description="Full graph metrics"
-            output={["PageRank", "betweenness", "HITS", "cycles", "k-core"]}
+            output={["PageRank", "betweenness", "HITS", "eigenvector", "critical_path", "cycles", "k-core"]}
           />
         </div>
       </Section>

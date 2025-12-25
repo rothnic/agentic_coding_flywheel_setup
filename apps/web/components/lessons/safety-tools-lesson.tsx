@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { motion } from "@/components/motion";
 import {
   Shield,
@@ -233,7 +234,7 @@ export function SafetyToolsLesson() {
               description: "Save current auth as a named profile",
             },
             {
-              command: "caam switch <tool> <email>",
+              command: "caam activate <tool> <email>",
               description: "Activate a saved profile",
             },
             {
@@ -269,7 +270,7 @@ $ claude "delete all test files"
 > Run 'slb approve req-123 --session-id <sid>' from another session
 
 # Example: Switch Claude accounts for a project
-$ caam switch claude work@company.com
+$ caam activate claude work@company.com
 > Activated profile 'work@company.com' for claude
 > Symlink updated in 47ms
 
@@ -343,7 +344,7 @@ $ claude "continue the project"
             commands={[
               "caam ls [tool]",
               "caam backup <tool> <email>",
-              "caam switch <tool> <email>",
+              "caam activate <tool> <email>",
               "caam status [tool]",
             ]}
             color="from-primary/20 to-violet-500/20"
