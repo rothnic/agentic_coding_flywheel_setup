@@ -230,24 +230,25 @@ export function CassLesson() {
             code={`$ cass search "PostgreSQL connection" --robot --limit 2
 
 {
-  "results": [
+  "hits": [
     {
-      "session": "/home/ubuntu/.claude-code/sessions/2025-01-14.jsonl",
-      "message_number": 87,
-      "agent": "claude-code",
-      "timestamp": "2025-01-14T15:30:00Z",
+      "source_path": "/home/ubuntu/.claude/projects/.../session.jsonl",
+      "line_number": 87,
+      "agent": "claude_code",
+      "workspace": "/projects/myapp",
       "snippet": "...fixed the PostgreSQL connection by setting pool_size=20...",
       "score": 0.92
     },
     {
-      "session": "/home/ubuntu/.codex/sessions/2025-01-12.jsonl",
-      "message_number": 45,
+      "source_path": "/home/ubuntu/.codex/sessions/2025-01-12.jsonl",
+      "line_number": 45,
       "agent": "codex",
-      "timestamp": "2025-01-12T10:15:00Z",
+      "workspace": "/projects/backend",
       "snippet": "...PostgreSQL connection string format: postgres://user:pass...",
       "score": 0.85
     }
-  ]
+  ],
+  "_meta": { "query": "PostgreSQL connection", "took_ms": 42 }
 }`}
             language="json"
           />
@@ -255,7 +256,7 @@ export function CassLesson() {
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Use <code>cass expand</code> with the session path and message
+            Use <code>cass expand</code> with the source path and line
             number to see the full conversation context!
           </TipBox>
         </div>
@@ -327,15 +328,23 @@ function UseCaseCard({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5"
+      whileHover={{ y: -4, scale: 1.02 }}
+      className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.15]"
     >
-      <div className="flex items-start gap-3 mb-3">
-        <span className="text-red-400">✗</span>
-        <p className="text-white/60">{problem}</p>
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative flex items-start gap-4 mb-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400">
+          ✗
+        </div>
+        <p className="text-white/60 pt-1">{problem}</p>
       </div>
-      <div className="flex items-start gap-3">
-        <span className="text-emerald-400">✓</span>
-        <p className="text-white/80">{solution}</p>
+      <div className="relative flex items-start gap-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+          ✓
+        </div>
+        <p className="text-white/80 font-medium pt-1">{solution}</p>
       </div>
     </motion.div>
   );
@@ -354,13 +363,18 @@ function SearchPattern({
   code: string;
 }) {
   return (
-    <div className="space-y-3">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      className="group space-y-3 p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
+    >
       <div>
-        <h4 className="font-semibold text-white">{title}</h4>
+        <h4 className="font-semibold text-white group-hover:text-primary transition-colors">{title}</h4>
         <p className="text-sm text-white/50">{description}</p>
       </div>
       <CodeBlock code={code} />
-    </div>
+    </motion.div>
   );
 }
 
@@ -392,26 +406,33 @@ function SearchWorkflow() {
   ];
 
   return (
-    <div className="relative space-y-4">
-      <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
+    <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Decorative glow */}
+      <div className="absolute top-0 left-1/4 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
 
-      {steps.map((step, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="relative flex items-start gap-4 pl-2"
-        >
-          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-white shadow-lg shadow-primary/30">
-            {step.icon}
-          </div>
-          <div className="pt-1">
-            <h4 className="font-semibold text-white">{step.title}</h4>
-            <p className="text-sm text-white/50">{step.desc}</p>
-          </div>
-        </motion.div>
-      ))}
+      <div className="relative space-y-5">
+        <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
+
+        {steps.map((step, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            whileHover={{ x: 4 }}
+            className="relative flex items-start gap-4 pl-2 group"
+          >
+            <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white shadow-lg shadow-primary/30 group-hover:shadow-xl group-hover:shadow-primary/40 transition-shadow duration-300">
+              {step.icon}
+            </div>
+            <div className="pt-1">
+              <h4 className="font-semibold text-white group-hover:text-primary transition-colors duration-300">{step.title}</h4>
+              <p className="text-sm text-white/50">{step.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -430,12 +451,15 @@ function BestPractice({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-primary/20 bg-primary/5 backdrop-blur-xl transition-all duration-300 hover:border-primary/40 hover:bg-primary/10"
     >
-      <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-shadow">
+        <Sparkles className="h-5 w-5" />
+      </div>
       <div>
-        <p className="font-medium text-white">{title}</p>
-        <p className="text-sm text-white/50">{description}</p>
+        <p className="font-semibold text-white group-hover:text-primary transition-colors">{title}</p>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
     </motion.div>
   );

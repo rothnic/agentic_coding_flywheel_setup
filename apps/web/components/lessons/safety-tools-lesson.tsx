@@ -359,13 +359,18 @@ $ claude "continue the project"
 // =============================================================================
 function SlbDiagram() {
   return (
-    <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent">
-      <div className="flex flex-col items-center gap-6">
+    <div className="relative p-8 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Decorative glows */}
+      <div className="absolute top-0 left-1/3 w-48 h-48 bg-red-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/3 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl" />
+
+      <div className="relative flex flex-col items-center gap-6">
         {/* Command */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30"
+          whileHover={{ scale: 1.02 }}
+          className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30 shadow-lg shadow-red-500/10 transition-shadow hover:shadow-xl hover:shadow-red-500/20"
         >
           <AlertTriangle className="h-6 w-6 text-red-400" />
           <div>
@@ -375,46 +380,63 @@ function SlbDiagram() {
         </motion.div>
 
         {/* Arrow down */}
-        <div className="text-white/30">↓</div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="text-white/30 text-xl"
+        >
+          ↓
+        </motion.div>
 
         {/* Two approvals */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col items-center gap-2"
+            whileHover={{ y: -4, scale: 1.05 }}
+            className="group flex flex-col items-center gap-3 cursor-pointer"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30">
-              <CheckCircle className="h-6 w-6 text-emerald-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
+              <CheckCircle className="h-7 w-7 text-emerald-400" />
             </div>
-            <span className="text-xs text-white/50">Agent 1</span>
+            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">Agent 1</span>
           </motion.div>
 
-          <span className="text-white/30">+</span>
+          <span className="text-white/30 text-xl">+</span>
 
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col items-center gap-2"
+            whileHover={{ y: -4, scale: 1.05 }}
+            className="group flex flex-col items-center gap-3 cursor-pointer"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30">
-              <CheckCircle className="h-6 w-6 text-emerald-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
+              <CheckCircle className="h-7 w-7 text-emerald-400" />
             </div>
-            <span className="text-xs text-white/50">Agent 2</span>
+            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">Agent 2</span>
           </motion.div>
         </div>
 
         {/* Arrow down */}
-        <div className="text-white/30">↓</div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+          className="text-white/30 text-xl"
+        >
+          ↓
+        </motion.div>
 
         {/* Execute */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30"
+          whileHover={{ scale: 1.02 }}
+          className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 transition-shadow hover:shadow-xl hover:shadow-emerald-500/20"
         >
           <Shield className="h-6 w-6 text-emerald-400" />
           <div>
@@ -443,16 +465,21 @@ function DangerCard({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="rounded-xl border border-red-500/20 bg-red-500/5 p-4"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group rounded-2xl border border-red-500/20 bg-red-500/5 p-5 backdrop-blur-xl transition-all duration-300 hover:border-red-500/40 hover:bg-red-500/10"
     >
-      <code className="text-sm text-red-400 font-mono">{command}</code>
-      <div className="flex items-start gap-2 mt-2">
-        <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+      <code className="text-sm text-red-400 font-mono font-medium">{command}</code>
+      <div className="flex items-start gap-3 mt-3">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/20">
+          <XCircle className="h-4 w-4 text-red-400" />
+        </div>
         <span className="text-sm text-white/60">{risk}</span>
       </div>
-      <div className="flex items-start gap-2 mt-1">
-        <Shield className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-        <span className="text-sm text-emerald-400/80">{slb}</span>
+      <div className="flex items-start gap-3 mt-2">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
+          <Shield className="h-4 w-4 text-emerald-400" />
+        </div>
+        <span className="text-sm text-emerald-400/80 font-medium">{slb}</span>
       </div>
     </motion.div>
   );
@@ -474,14 +501,15 @@ function CaamFeature({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-start gap-4 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-primary/30 hover:bg-white/[0.04]"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 text-primary shrink-0 shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-shadow">
         {icon}
       </div>
       <div>
-        <h4 className="font-semibold text-white">{title}</h4>
-        <p className="text-sm text-white/50">{description}</p>
+        <h4 className="font-semibold text-white group-hover:text-primary transition-colors">{title}</h4>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
     </motion.div>
   );
@@ -501,11 +529,14 @@ function UseCase({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-4 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-center gap-4 p-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.04]"
     >
-      <UserCheck className="h-5 w-5 text-primary shrink-0" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-shadow">
+        <UserCheck className="h-5 w-5" />
+      </div>
       <div>
-        <span className="font-medium text-white">{scenario}</span>
+        <span className="font-medium text-white group-hover:text-primary transition-colors">{scenario}</span>
         <span className="text-white/40 mx-2">—</span>
         <span className="text-sm text-white/50">{description}</span>
       </div>
@@ -518,10 +549,17 @@ function UseCase({
 // =============================================================================
 function BestPractice({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
-      <span className="text-sm text-white/70">{text}</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -5 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 4 }}
+      className="group flex items-center gap-3 p-2 -mx-2 rounded-lg transition-colors hover:bg-white/[0.03]"
+    >
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+      </div>
+      <span className="text-sm text-white/70 group-hover:text-white transition-colors">{text}</span>
+    </motion.div>
   );
 }
 
@@ -541,12 +579,19 @@ function QuickRefCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`rounded-2xl border border-white/[0.08] bg-gradient-to-br ${color} p-5`}
+      whileHover={{ y: -4, scale: 1.02 }}
+      className={`group relative rounded-2xl border border-white/[0.08] bg-gradient-to-br ${color} p-6 backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.2]`}
     >
-      <h4 className="font-bold text-white mb-4">{title}</h4>
-      <div className="space-y-2">
+      {/* Decorative glow */}
+      <div className="absolute -top-8 -right-8 w-24 h-24 bg-white/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <h4 className="relative font-bold text-white mb-4 text-lg">{title}</h4>
+      <div className="relative space-y-2">
         {commands.map((cmd) => (
-          <code key={cmd} className="block text-sm text-white/80 font-mono">
+          <code
+            key={cmd}
+            className="block text-sm text-white/80 font-mono py-1 px-2 -mx-2 rounded-lg transition-colors group-hover:text-white hover:bg-white/[0.05]"
+          >
             $ {cmd}
           </code>
         ))}

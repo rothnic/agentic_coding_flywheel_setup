@@ -332,11 +332,16 @@ function OutputExplainer({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-      <code className={`font-mono text-sm ${color}`}>{pattern}</code>
-      <span className="text-white/60">→</span>
-      <span className="text-white/70">{meaning}</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 4 }}
+      className="group flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
+    >
+      <code className={`font-mono text-sm font-medium ${color}`}>{pattern}</code>
+      <span className="text-white/40 group-hover:text-white/60 transition-colors">→</span>
+      <span className="text-white/60 group-hover:text-white/80 transition-colors">{meaning}</span>
+    </motion.div>
   );
 }
 
@@ -362,21 +367,30 @@ function SeverityCard({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`rounded-2xl border ${border} bg-gradient-to-br ${color} p-5`}
+      whileHover={{ y: -4, scale: 1.02 }}
+      className={`group relative rounded-2xl border ${border} bg-gradient-to-br ${color} p-6 backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.2]`}
     >
-      <div className="flex items-start gap-4">
-        <div className="shrink-0 text-white">{icon}</div>
+      {/* Decorative glow */}
+      <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white shadow-lg">
+          {icon}
+        </div>
         <div className="flex-1">
-          <h4 className="font-bold text-white mb-2">{level}</h4>
-          <ul className="space-y-1 mb-3">
+          <h4 className="font-bold text-white text-lg mb-3">{level}</h4>
+          <ul className="space-y-2 mb-4">
             {examples.map((ex, i) => (
-              <li key={i} className="text-sm text-white/60 flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-white/40" />
+              <li key={i} className="text-sm text-white/70 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
                 {ex}
               </li>
             ))}
           </ul>
-          <p className="text-sm font-medium text-white/80">{action}</p>
+          <p className="text-sm font-semibold text-white/90 flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            {action}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -397,26 +411,33 @@ function FixWorkflow() {
   ];
 
   return (
-    <div className="relative space-y-4">
-      <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-red-500/50 via-amber-500/50 to-emerald-500/50" />
+    <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Decorative glow */}
+      <div className="absolute top-0 left-1/4 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
 
-      {steps.map((step, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="relative flex items-start gap-4 pl-2"
-        >
-          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-white text-sm font-bold shadow-lg shadow-primary/30">
-            {i + 1}
-          </div>
-          <div className="pt-1">
-            <h4 className="font-semibold text-white">{step.title}</h4>
-            <p className="text-sm text-white/50">{step.desc}</p>
-          </div>
-        </motion.div>
-      ))}
+      <div className="relative space-y-5">
+        <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-red-500/50 via-amber-500/50 to-emerald-500/50" />
+
+        {steps.map((step, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            whileHover={{ x: 4 }}
+            className="relative flex items-start gap-4 pl-2 group"
+          >
+            <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-white text-sm font-bold shadow-lg shadow-primary/30 group-hover:shadow-xl group-hover:shadow-primary/40 transition-shadow duration-300">
+              {i + 1}
+            </div>
+            <div className="pt-1">
+              <h4 className="font-semibold text-white group-hover:text-primary transition-colors duration-300">{step.title}</h4>
+              <p className="text-sm text-white/50">{step.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }

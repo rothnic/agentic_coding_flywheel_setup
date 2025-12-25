@@ -359,27 +359,40 @@ $ cm onboard sample --fill-gaps`}
 // =============================================================================
 function MemoryDiagram() {
   return (
-    <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+    <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-0 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl" />
+
+      <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
         {/* Past Sessions */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex flex-col items-center gap-3"
+          whileHover={{ y: -4, scale: 1.05 }}
+          className="group flex flex-col items-center gap-3 cursor-pointer"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30">
-            <Database className="h-8 w-8 text-blue-400" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 shadow-lg shadow-blue-500/10 group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all duration-300">
+            <Database className="h-10 w-10 text-blue-400" />
           </div>
-          <span className="text-sm font-medium text-white">Past Sessions</span>
+          <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">Past Sessions</span>
           <span className="text-xs text-white/40">Raw conversations</span>
         </motion.div>
 
         {/* Arrow */}
         <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-white/30 text-2xl hidden md:block"
+        >
+          →
+        </motion.div>
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-white/30"
+          className="text-white/30 text-2xl md:hidden rotate-90"
         >
           →
         </motion.div>
@@ -389,21 +402,30 @@ function MemoryDiagram() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col items-center gap-3"
+          whileHover={{ y: -4, scale: 1.05 }}
+          className="group flex flex-col items-center gap-3 cursor-pointer"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 border border-primary/30">
-            <Brain className="h-8 w-8 text-primary" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 border border-primary/30 shadow-lg shadow-primary/10 group-hover:shadow-xl group-hover:shadow-primary/20 transition-all duration-300">
+            <Brain className="h-10 w-10 text-primary" />
           </div>
-          <span className="text-sm font-medium text-white">CM Analysis</span>
+          <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">CM Analysis</span>
           <span className="text-xs text-white/40">Extract lessons</span>
         </motion.div>
 
         {/* Arrow */}
         <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-white/30 text-2xl hidden md:block"
+        >
+          →
+        </motion.div>
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-white/30"
+          className="text-white/30 text-2xl md:hidden rotate-90"
         >
           →
         </motion.div>
@@ -413,12 +435,13 @@ function MemoryDiagram() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex flex-col items-center gap-3"
+          whileHover={{ y: -4, scale: 1.05 }}
+          className="group flex flex-col items-center gap-3 cursor-pointer"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
-            <BookOpen className="h-8 w-8 text-emerald-400" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
+            <BookOpen className="h-10 w-10 text-emerald-400" />
           </div>
-          <span className="text-sm font-medium text-white">Playbook</span>
+          <span className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Playbook</span>
           <span className="text-xs text-white/40">Actionable rules</span>
         </motion.div>
       </div>
@@ -461,13 +484,14 @@ function OnboardingSteps() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: i * 0.1 }}
-          className="flex items-start gap-4 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+          whileHover={{ x: 4, scale: 1.01 }}
+          className="group flex items-start gap-4 p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.04]"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-bold">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white text-sm font-bold shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-shadow">
             {i + 1}
           </div>
           <div className="flex-1 min-w-0">
-            <code className="text-sm text-primary break-all">{step.cmd}</code>
+            <code className="text-sm text-primary break-all font-medium">{step.cmd}</code>
             <p className="text-sm text-white/50 mt-1">{step.desc}</p>
           </div>
         </motion.div>
@@ -492,14 +516,15 @@ function ProtocolStep({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-4 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.04]"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white font-bold">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white font-bold text-lg shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-shadow">
         {number}
       </div>
-      <div>
-        <h4 className="font-bold text-white">{title}</h4>
-        <p className="text-sm text-white/60">{description}</p>
+      <div className="pt-1">
+        <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{title}</h4>
+        <p className="text-sm text-white/60 mt-1">{description}</p>
       </div>
     </motion.div>
   );
@@ -521,10 +546,14 @@ function CategoryCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`rounded-xl border border-white/[0.08] bg-gradient-to-br ${color} p-4`}
+      whileHover={{ y: -4, scale: 1.03 }}
+      className={`group relative rounded-2xl border border-white/[0.08] bg-gradient-to-br ${color} p-5 backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.2]`}
     >
-      <code className="text-sm text-white font-mono">{name}</code>
-      <p className="text-xs text-white/50 mt-1">{description}</p>
+      {/* Decorative glow */}
+      <div className="absolute -top-8 -right-8 w-24 h-24 bg-white/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <code className="relative text-sm text-white font-mono font-medium">{name}</code>
+      <p className="relative text-xs text-white/60 mt-2">{description}</p>
     </motion.div>
   );
 }
@@ -543,12 +572,15 @@ function BestPractice({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-start gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10"
     >
-      <Lightbulb className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10 group-hover:shadow-emerald-500/20 transition-shadow">
+        <Lightbulb className="h-5 w-5" />
+      </div>
       <div>
-        <p className="font-medium text-white">{title}</p>
-        <p className="text-sm text-white/50">{description}</p>
+        <p className="font-semibold text-white group-hover:text-emerald-300 transition-colors">{title}</p>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
     </motion.div>
   );

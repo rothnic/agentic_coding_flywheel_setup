@@ -344,10 +344,15 @@ function TypeRow({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <code className={`text-sm font-mono ${color}`}>{type}</code>
-      <span className="text-sm text-white/50">{description}</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 4 }}
+      className="group flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-white/[0.04]"
+    >
+      <code className={`text-sm font-mono font-medium px-2 py-1 rounded bg-white/5 ${color}`}>{type}</code>
+      <span className="text-sm text-white/50 group-hover:text-white/70 transition-colors">{description}</span>
+    </motion.div>
   );
 }
 
@@ -366,12 +371,17 @@ function PriorityRow({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className={`text-sm font-mono font-bold ${color}`}>{priority}</span>
-      <span className={`text-sm ${color}`}>{label}</span>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 4 }}
+      className="group flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-white/[0.04]"
+    >
+      <span className={`text-sm font-mono font-bold w-6 text-center ${color}`}>{priority}</span>
+      <span className={`text-sm font-medium ${color}`}>{label}</span>
       <span className="text-xs text-white/40">—</span>
-      <span className="text-xs text-white/40">{description}</span>
-    </div>
+      <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors">{description}</span>
+    </motion.div>
   );
 }
 
@@ -393,17 +403,21 @@ function RobotCommand({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl border ${primary ? "border-primary/30 bg-primary/5" : "border-white/[0.08] bg-white/[0.02]"} p-5`}
+      whileHover={{ y: -2, scale: 1.01 }}
+      className={`group relative rounded-2xl border ${primary ? "border-primary/30 bg-primary/5" : "border-white/[0.08] bg-white/[0.02]"} p-5 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-white/[0.15]`}
     >
-      <code className={`text-sm ${primary ? "text-primary" : "text-emerald-400"}`}>
+      {/* Subtle glow on hover */}
+      <div className={`absolute inset-0 ${primary ? "bg-primary/5" : "bg-white/[0.02]"} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+
+      <code className={`relative text-sm font-medium ${primary ? "text-primary" : "text-emerald-400"}`}>
         {command}
       </code>
-      <p className="text-sm text-white/60 mt-2">{description}</p>
-      <div className="flex flex-wrap gap-2 mt-3">
+      <p className="relative text-sm text-white/60 mt-2">{description}</p>
+      <div className="relative flex flex-wrap gap-2 mt-3">
         {output.map((field) => (
           <span
             key={field}
-            className="px-2 py-1 rounded bg-white/[0.05] text-xs text-white/40 font-mono"
+            className="px-2 py-1 rounded bg-white/[0.05] text-xs text-white/50 font-mono group-hover:bg-white/[0.08] group-hover:text-white/70 transition-all"
           >
             {field}
           </span>
@@ -427,26 +441,33 @@ function AgentWorkflow() {
   ];
 
   return (
-    <div className="relative space-y-4">
-      <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
+    <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Decorative glow */}
+      <div className="absolute top-0 left-1/4 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
 
-      {steps.map((step, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.08 }}
-          className="relative flex items-start gap-4 pl-2"
-        >
-          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-white shadow-lg shadow-primary/30">
-            {step.icon}
-          </div>
-          <div className="pt-1">
-            <code className="text-sm text-primary">{step.title}</code>
-            <p className="text-sm text-white/50">{step.desc}</p>
-          </div>
-        </motion.div>
-      ))}
+      <div className="relative space-y-5">
+        <div className="absolute left-5 top-5 bottom-5 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
+
+        {steps.map((step, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.08 }}
+            whileHover={{ x: 4 }}
+            className="relative flex items-start gap-4 pl-2 group"
+          >
+            <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white shadow-lg shadow-primary/30 group-hover:shadow-xl group-hover:shadow-primary/40 transition-shadow duration-300">
+              {step.icon}
+            </div>
+            <div className="pt-1.5">
+              <code className="text-sm text-primary font-medium group-hover:text-white transition-colors">{step.title}</code>
+              <p className="text-sm text-white/50">{step.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -467,14 +488,20 @@ function MetricCard({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4"
+      whileHover={{ y: -4, scale: 1.02 }}
+      className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-primary/30"
     >
-      <h4 className="font-bold text-white flex items-center gap-2">
-        <BarChart className="h-4 w-4 text-primary" />
-        {name}
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <h4 className="relative font-bold text-white flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-shadow">
+          <BarChart className="h-4 w-4" />
+        </div>
+        <span className="group-hover:text-primary transition-colors">{name}</span>
       </h4>
-      <p className="text-sm text-white/60 mt-1">{description}</p>
-      <p className="text-sm text-primary/80 mt-2">→ {usage}</p>
+      <p className="relative text-sm text-white/60 mt-3">{description}</p>
+      <p className="relative text-sm text-primary/80 mt-3 font-medium">→ {usage}</p>
     </motion.div>
   );
 }
@@ -493,12 +520,15 @@ function BestPractice({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-start gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10"
     >
-      <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10 group-hover:shadow-emerald-500/20 transition-shadow">
+        <CheckCircle className="h-5 w-5" />
+      </div>
       <div>
-        <p className="font-medium text-white">{title}</p>
-        <p className="text-sm text-white/50">{description}</p>
+        <p className="font-semibold text-white group-hover:text-emerald-300 transition-colors">{title}</p>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
     </motion.div>
   );

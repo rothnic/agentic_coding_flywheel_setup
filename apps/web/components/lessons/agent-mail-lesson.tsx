@@ -319,9 +319,9 @@ acknowledge_message(
         icon={<FileText className="h-5 w-5" />}
         delay={0.4}
       >
-        <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
-          <div className="p-4 border-b border-white/[0.06] bg-white/[0.02]">
-            <span className="font-bold text-white">Key Functions</span>
+        <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+          <div className="p-5 border-b border-white/[0.06] bg-gradient-to-r from-primary/10 to-violet-500/10">
+            <span className="font-bold text-white text-lg">Key Functions</span>
           </div>
           <div className="divide-y divide-white/[0.06]">
             <FunctionRow name="ensure_project" purpose="Initialize a project" />
@@ -355,15 +355,21 @@ function ProblemCard({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-center gap-4 p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.04]"
     >
-      <div className="shrink-0 text-red-400">✗</div>
-      <div className="flex-1">
-        <span className="text-white/60 line-through">{problem}</span>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400 group-hover:bg-red-500/30 transition-colors">
+        ✗
       </div>
-      <div className="shrink-0 text-emerald-400">✓</div>
       <div className="flex-1">
-        <span className="text-white/80">{solution}</span>
+        <span className="text-white/50 line-through">{problem}</span>
+      </div>
+      <div className="text-white/30 group-hover:text-white/50 transition-colors">→</div>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 transition-colors">
+        ✓
+      </div>
+      <div className="flex-1">
+        <span className="text-white/80 font-medium">{solution}</span>
       </div>
     </motion.div>
   );
@@ -384,18 +390,25 @@ function ConceptCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group relative space-y-4 p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.12]"
+    >
+      {/* Subtle gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-violet-500/20 border border-primary/30 text-primary shadow-lg shadow-primary/10">
           {icon}
         </div>
         <div>
-          <h4 className="font-bold text-white">{title}</h4>
+          <h4 className="font-bold text-white text-lg">{title}</h4>
           <p className="text-sm text-white/50">{description}</p>
         </div>
       </div>
-      {children}
-    </div>
+      <div className="relative">{children}</div>
+    </motion.div>
   );
 }
 
@@ -415,13 +428,17 @@ function PatternCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden"
+      whileHover={{ y: -4, scale: 1.01 }}
+      className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl overflow-hidden transition-all duration-500 hover:border-white/[0.15]"
     >
-      <div className="p-4 border-b border-white/[0.06]">
-        <h4 className="font-bold text-white">{title}</h4>
-        <p className="text-sm text-white/50">{description}</p>
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative p-5 border-b border-white/[0.06] bg-white/[0.02]">
+        <h4 className="font-bold text-white text-lg">{title}</h4>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
-      <div className="p-4">
+      <div className="relative p-4">
         <CodeBlock code={code} language="python" />
       </div>
     </motion.div>
@@ -437,52 +454,76 @@ function CoordinationFlow() {
       icon: <Bot className="h-5 w-5" />,
       title: "Register",
       desc: "Agent joins the project with a unique name",
+      color: "from-blue-500/20 to-indigo-500/20",
+      borderColor: "border-blue-500/30",
     },
     {
       icon: <Lock className="h-5 w-5" />,
       title: "Reserve",
       desc: "Claim files before editing",
+      color: "from-amber-500/20 to-orange-500/20",
+      borderColor: "border-amber-500/30",
     },
     {
       icon: <Send className="h-5 w-5" />,
       title: "Communicate",
       desc: "Send messages to coordinate",
+      color: "from-primary/20 to-violet-500/20",
+      borderColor: "border-primary/30",
     },
     {
       icon: <Clock className="h-5 w-5" />,
       title: "Work",
       desc: "Make changes within your reservation",
+      color: "from-sky-500/20 to-cyan-500/20",
+      borderColor: "border-sky-500/30",
     },
     {
       icon: <CheckCircle className="h-5 w-5" />,
       title: "Release",
       desc: "Free files for other agents",
+      color: "from-emerald-500/20 to-teal-500/20",
+      borderColor: "border-emerald-500/30",
     },
   ];
 
   return (
-    <div className="flex flex-wrap justify-center items-start gap-2 sm:gap-4">
-      {steps.map((step, i) => (
-        <div key={i} className="flex items-center gap-2 sm:gap-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.1 }}
-            className="flex flex-col items-center gap-3"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 border border-primary/30 text-primary">
-              {step.icon}
-            </div>
-            <div className="text-center">
-              <p className="font-bold text-white text-sm">{step.title}</p>
-              <p className="text-xs text-white/50 max-w-[100px]">{step.desc}</p>
-            </div>
-          </motion.div>
-          {i < steps.length - 1 && (
-            <span className="hidden sm:block text-white/30 text-lg">→</span>
-          )}
-        </div>
-      ))}
+    <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
+      {/* Background glows */}
+      <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl" />
+
+      <div className="relative flex flex-wrap justify-center items-start gap-3 sm:gap-6">
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-center gap-3 sm:gap-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ y: -4, scale: 1.05 }}
+              className="group flex flex-col items-center gap-3 cursor-pointer"
+            >
+              <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${step.color} border ${step.borderColor} text-white shadow-lg group-hover:shadow-xl transition-all duration-300`}>
+                {step.icon}
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-white text-sm group-hover:text-primary transition-colors duration-300">{step.title}</p>
+                <p className="text-xs text-white/50 max-w-[100px]">{step.desc}</p>
+              </div>
+            </motion.div>
+            {i < steps.length - 1 && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.1 + 0.2 }}
+                className="hidden sm:block text-white/30 text-xl font-light"
+              >
+                →
+              </motion.span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -501,12 +542,15 @@ function BestPractice({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-start gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5"
+      whileHover={{ x: 4, scale: 1.01 }}
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10"
     >
-      <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10 group-hover:shadow-emerald-500/20 transition-shadow">
+        <CheckCircle className="h-5 w-5" />
+      </div>
       <div>
-        <p className="font-medium text-white">{title}</p>
-        <p className="text-sm text-white/50">{description}</p>
+        <p className="font-semibold text-white group-hover:text-emerald-300 transition-colors">{title}</p>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
     </motion.div>
   );
@@ -517,9 +561,16 @@ function BestPractice({
 // =============================================================================
 function FunctionRow({ name, purpose }: { name: string; purpose: string }) {
   return (
-    <div className="flex items-center gap-4 p-3">
-      <code className="text-sm text-primary font-mono">{name}</code>
-      <span className="text-white/50 text-sm">{purpose}</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 4 }}
+      className="group flex items-center gap-4 p-4 transition-all duration-200 hover:bg-white/[0.02]"
+    >
+      <code className="text-sm text-primary font-mono font-medium px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/15 transition-colors">
+        {name}
+      </code>
+      <span className="text-white/50 text-sm group-hover:text-white/70 transition-colors">{purpose}</span>
+    </motion.div>
   );
 }
