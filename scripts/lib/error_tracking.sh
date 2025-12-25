@@ -150,8 +150,11 @@ try_step() {
     else
         # If we cannot safely create a temp file, run without capture rather than
         # falling back to predictable /tmp paths (symlink attack risk under sudo/root).
-        "$@"
-        exit_code=$?
+        if "$@"; then
+            exit_code=0
+        else
+            exit_code=$?
+        fi
     fi
 
     if [[ $exit_code -eq 0 ]]; then
@@ -565,8 +568,11 @@ retry_with_backoff() {
         stderr_content=""
         if [[ "$use_temp_files" == "true" ]]; then
             # Execute command, capturing stdout and stderr separately
-            "$@" > "$stdout_file" 2> "$stderr_file"
-            exit_code=$?
+            if "$@" > "$stdout_file" 2> "$stderr_file"; then
+                exit_code=0
+            else
+                exit_code=$?
+            fi
             stderr_content=$(cat "$stderr_file" 2>/dev/null || echo "")
         else
             # Fallback: capture combined output in-memory.
@@ -574,8 +580,8 @@ retry_with_backoff() {
             # This is only used if mktemp fails; we avoid predictable /tmp paths.
             # Output is only emitted on success to preserve the usual quiet-on-failure behavior.
             local combined_output=""
-            combined_output="$("$@" 2>&1)"
-            exit_code=$?
+            exit_code=0
+            combined_output="$("$@" 2>&1)" || exit_code=$?
             stderr_content="$combined_output"
 
             if [[ $exit_code -eq 0 ]]; then
