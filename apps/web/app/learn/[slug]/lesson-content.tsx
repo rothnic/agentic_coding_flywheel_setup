@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { markdownComponents } from "@/lib/markdown-components";
 import {
   ArrowLeft,
   ArrowRight,
@@ -398,25 +399,11 @@ export function LessonContent({ lesson, content }: Props) {
 
               {/* Markdown content - premium typography */}
               {/* Note: headings are demoted by 1 level (h1->h2, h2->h3, etc.) since lesson.title is the page h1 */}
-              <article className="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-2xl prose-h1:mb-6 prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-lg prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-5 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-xl prose-pre:border prose-pre:border-border/50 prose-pre:bg-muted/50 prose-pre:my-6 prose-li:text-muted-foreground prose-li:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-blockquote:border-l-primary/50 prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:italic">
+              <article className="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-xl prose-h4:mt-6 prose-h4:mb-2 prose-h4:text-lg prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-5 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-li:text-muted-foreground prose-li:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-blockquote:border-l-primary/50 prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-strong:text-foreground prose-strong:font-semibold">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
-                  components={{
-                    // Demote all headings by 1 level since lesson.title is the page h1
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h1: ({ children, node, ...props }) => <h2 {...props}>{children}</h2>,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h2: ({ children, node, ...props }) => <h3 {...props}>{children}</h3>,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h3: ({ children, node, ...props }) => <h4 {...props}>{children}</h4>,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h4: ({ children, node, ...props }) => <h5 {...props}>{children}</h5>,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h5: ({ children, node, ...props }) => <h6 {...props}>{children}</h6>,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    h6: ({ children, node, ...props }) => <h6 {...props}>{children}</h6>,
-                  }}
+                  components={markdownComponents}
                 >
                   {content}
                 </ReactMarkdown>
