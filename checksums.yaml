@@ -56,7 +56,7 @@ installers:
 
   rust:
     url: "https://sh.rustup.rs"
-    sha256: "17247e4bcacf6027ec2e11c79a72c494c9af69ac8d1abcc1b271fa4375a106c2"
+    sha256: "16571f4c95d8ca37f72c3f907b73d829359021d99f44d9f4bfa4dce38ab0768e"
 
   bv:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
