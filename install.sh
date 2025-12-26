@@ -66,6 +66,10 @@ if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+# Early PATH setup: ensure ~/.local/bin is available for native installers (e.g., Claude Code)
+# This is critical because the Claude native installer puts the binary at ~/.local/bin/claude
+export PATH="$HOME/.local/bin:$PATH"
+
 # Default options
 YES_MODE=false
 DRY_RUN=false
