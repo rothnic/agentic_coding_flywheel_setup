@@ -65,3 +65,7 @@ installers:
   ohmyzsh:
     url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
     sha256: "ce0b7c94aa04d8c7a8137e45fe5c4744e3947871f785fd58117c480c1bf49352"
+
+  opencode:
+    url: "https://opencode.ai/install"
+    sha256: "cc9c39932bc52130653cf55e4c6ee30a83e6a948aece26787e8fe53876aa1e17"
