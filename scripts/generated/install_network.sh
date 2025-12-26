@@ -78,7 +78,11 @@ DISTRO_CODENAME=$(lsb_release -cs 2>/dev/null || echo "jammy")
 case "$DISTRO_CODENAME" in
   oracular|plucky|questing) DISTRO_CODENAME="noble" ;;
 esac
-curl -fsSL "https://pkgs.tailscale.com/stable/ubuntu/${DISTRO_CODENAME}.noarmor.gpg" \
+CURL_ARGS=(-fsSL)
+if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+fi
+curl "${CURL_ARGS[@]}" "https://pkgs.tailscale.com/stable/ubuntu/${DISTRO_CODENAME}.noarmor.gpg" \
   | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
 echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu ${DISTRO_CODENAME} main" \
   | tee /etc/apt/sources.list.d/tailscale.list

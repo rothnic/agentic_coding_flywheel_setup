@@ -73,13 +73,13 @@ test_default_selection() {
 test_only_modules() {
     local name="--only selects specific modules with deps"
     reset_selection
-    ONLY_MODULES=("agents.claude")
+    ONLY_MODULES=("agents.codex")
 
     if acfs_resolve_selection; then
-        # Should include agents.claude and its deps (lang.bun, base.system)
-        if should_run_module "agents.claude" && should_run_module "lang.bun" && should_run_module "base.system"; then
+        # Should include agents.codex and its deps (lang.bun -> base.system)
+        if should_run_module "agents.codex" && should_run_module "lang.bun" && should_run_module "base.system"; then
             # Should NOT include unrelated modules
-            if ! should_run_module "lang.rust" && ! should_run_module "agents.codex"; then
+            if ! should_run_module "lang.rust" && ! should_run_module "agents.claude"; then
                 test_pass "$name"
                 return
             fi
@@ -91,14 +91,14 @@ test_only_modules() {
 test_only_modules_no_deps() {
     local name="--only with --no-deps excludes dependencies"
     reset_selection
-    ONLY_MODULES=("agents.claude")
+    ONLY_MODULES=("agents.codex")
     NO_DEPS=true
 
     if acfs_resolve_selection 2>/dev/null; then
-        # Should include only agents.claude
-        if should_run_module "agents.claude"; then
+        # Should include only agents.codex
+        if should_run_module "agents.codex"; then
             # Should NOT include deps
-            if ! should_run_module "lang.bun"; then
+            if ! should_run_module "lang.bun" && ! should_run_module "base.system"; then
                 test_pass "$name"
                 return
             fi
@@ -128,10 +128,10 @@ test_skip_modules() {
 test_skip_safety_violation() {
     local name="--skip fails when breaking dependencies"
     reset_selection
-    ONLY_MODULES=("agents.claude")
-    SKIP_MODULES=("lang.bun")  # agents.claude depends on lang.bun
+    ONLY_MODULES=("agents.codex")
+    SKIP_MODULES=("lang.bun")  # agents.codex depends on lang.bun
 
-    # This should fail because skipping lang.bun breaks agents.claude
+    # This should fail because skipping lang.bun breaks agents.codex
     if ! acfs_resolve_selection 2>/dev/null; then
         test_pass "$name"
     else

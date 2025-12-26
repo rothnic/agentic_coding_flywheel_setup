@@ -121,11 +121,11 @@ test_only_single_module() {
 test_only_module_includes_deps() {
     local name="--only includes module dependencies"
     reset_selection
-    ONLY_MODULES=("agents.claude")
+    ONLY_MODULES=("agents.codex")
 
     if acfs_resolve_selection 2>/dev/null; then
-        # agents.claude depends on lang.bun which depends on base.system
-        if should_run_module "lang.bun" && should_run_module "base.system"; then
+        # agents.codex depends on lang.bun which depends on base.system
+        if should_run_module "agents.codex" && should_run_module "lang.bun" && should_run_module "base.system"; then
             test_pass "$name"
             return
         fi
@@ -239,14 +239,30 @@ test_skip_leaves_others() {
 test_skip_dependency_fails() {
     local name="--skip on required dependency fails"
     reset_selection
-    ONLY_MODULES=("agents.claude")
-    SKIP_MODULES=("lang.bun")  # agents.claude requires lang.bun
+    ONLY_MODULES=("agents.codex")
+    SKIP_MODULES=("lang.bun")  # agents.codex requires lang.bun
 
     if ! acfs_resolve_selection 2>/dev/null; then
         test_pass "$name"
     else
         test_fail "$name" "Should fail when skipping a required dependency"
     fi
+}
+
+test_skip_dependency_with_no_deps_allowed() {
+    local name="--skip dependency allowed with --no-deps"
+    reset_selection
+    ONLY_MODULES=("agents.codex")
+    SKIP_MODULES=("lang.bun")  # redundant when --no-deps, but should not error
+    NO_DEPS=true
+
+    if acfs_resolve_selection 2>/dev/null; then
+        if should_run_module "agents.codex" && ! should_run_module "lang.bun" && ! should_run_module "base.system"; then
+            test_pass "$name"
+            return
+        fi
+    fi
+    test_fail "$name"
 }
 
 test_skip_unknown_module_fails() {
@@ -268,12 +284,12 @@ test_skip_unknown_module_fails() {
 test_no_deps_excludes_dependencies() {
     local name="--no-deps excludes dependencies"
     reset_selection
-    ONLY_MODULES=("agents.claude")
+    ONLY_MODULES=("agents.codex")
     NO_DEPS=true
 
     if acfs_resolve_selection 2>/dev/null; then
-        # With no-deps, should only have agents.claude, not its deps
-        if should_run_module "agents.claude" && ! should_run_module "lang.bun"; then
+        # With no-deps, should only have agents.codex, not its deps
+        if should_run_module "agents.codex" && ! should_run_module "lang.bun" && ! should_run_module "base.system"; then
             test_pass "$name"
             return
         fi
@@ -284,7 +300,7 @@ test_no_deps_excludes_dependencies() {
 test_no_deps_prints_warning() {
     local name="--no-deps prints prominent warning"
     reset_selection
-    ONLY_MODULES=("agents.claude")
+    ONLY_MODULES=("agents.codex")
     NO_DEPS=true
 
     # Capture stderr to check for warning
@@ -654,6 +670,7 @@ test_only_phase_unknown_fails
 test_skip_removes_module
 test_skip_leaves_others
 test_skip_dependency_fails
+test_skip_dependency_with_no_deps_allowed
 test_skip_unknown_module_fails
 
 # --no-deps tests

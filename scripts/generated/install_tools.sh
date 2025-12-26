@@ -255,47 +255,34 @@ install_tools_vault() {
     log_step "Installing tools.vault"
 
     if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg (root)"
+        log_info "dry-run: install: # HashiCorp doesn't always publish packages for newest Ubuntu versions. (root)"
     else
         if ! run_as_root_shell <<'INSTALL_TOOLS_VAULT'
-curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-INSTALL_TOOLS_VAULT
-        then
-            log_warn "tools.vault: install command failed: curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg"
-            if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "tools.vault" "install command failed: curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg"
-            elif type -t state_tool_skip >/dev/null 2>&1; then
-              state_tool_skip "tools.vault"
-            fi
-            return 0
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: echo \"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main\" > /etc/apt/sources.list.d/hashicorp.list (root)"
-    else
-        if ! run_as_root_shell <<'INSTALL_TOOLS_VAULT'
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list
-INSTALL_TOOLS_VAULT
-        then
-            log_warn "tools.vault: install command failed: echo \"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main\" > /etc/apt/sources.list.d/hashicorp.list"
-            if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "tools.vault" "install command failed: echo \"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main\" > /etc/apt/sources.list.d/hashicorp.list"
-            elif type -t state_tool_skip >/dev/null 2>&1; then
-              state_tool_skip "tools.vault"
-            fi
-            return 0
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: apt-get update && apt-get install -y vault (root)"
-    else
-        if ! run_as_root_shell <<'INSTALL_TOOLS_VAULT'
+# HashiCorp doesn't always publish packages for newest Ubuntu versions.
+# Fall back to noble (24.04 LTS) if the current codename isn't supported.
+CODENAME=$(lsb_release -cs 2>/dev/null || echo "noble")
+
+CURL_ARGS=(-fsSL)
+CURL_CHECK_ARGS=(-fsSI)
+if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+  CURL_CHECK_ARGS=(--proto '=https' --proto-redir '=https' -fsSI)
+fi
+
+if ! curl "${CURL_CHECK_ARGS[@]}" "https://apt.releases.hashicorp.com/dists/${CODENAME}/main/binary-amd64/Packages" >/dev/null 2>&1; then
+  CODENAME="noble"
+fi
+
+curl "${CURL_ARGS[@]}" https://apt.releases.hashicorp.com/gpg \
+  | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${CODENAME} main" \
+  > /etc/apt/sources.list.d/hashicorp.list
 apt-get update && apt-get install -y vault
 INSTALL_TOOLS_VAULT
         then
-            log_warn "tools.vault: install command failed: apt-get update && apt-get install -y vault"
+            log_warn "tools.vault: install command failed: # HashiCorp doesn't always publish packages for newest Ubuntu versions."
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "tools.vault" "install command failed: apt-get update && apt-get install -y vault"
+              record_skipped_tool "tools.vault" "install command failed: # HashiCorp doesn't always publish packages for newest Ubuntu versions."
             elif type -t state_tool_skip >/dev/null 2>&1; then
               state_tool_skip "tools.vault"
             fi

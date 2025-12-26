@@ -137,35 +137,35 @@ fi
 
 harness_section "Test: --only module"
 
-output=$(run_install --print-plan --only agents.claude) || {
-    harness_fail "--only agents.claude execution failed"
-    harness_capture_output "only-claude-output" "$output"
+output=$(run_install --print-plan --only agents.codex) || {
+    harness_fail "--only agents.codex execution failed"
+    harness_capture_output "only-codex-output" "$output"
 }
 
-if echo "$output" | grep -q "agents.claude"; then
-    harness_pass "--only agents.claude includes agents.claude"
+if echo "$output" | grep -q "agents.codex"; then
+    harness_pass "--only agents.codex includes agents.codex"
 else
-    harness_fail "--only agents.claude missing agents.claude"
+    harness_fail "--only agents.codex missing agents.codex"
 fi
 
 # Should include dependencies
 if echo "$output" | grep -q "lang.bun"; then
-    harness_pass "--only agents.claude includes lang.bun (dependency)"
+    harness_pass "--only agents.codex includes lang.bun (dependency)"
 else
-    harness_fail "--only agents.claude missing lang.bun" "lang.bun is a dependency"
+    harness_fail "--only agents.codex missing lang.bun" "lang.bun is a dependency"
 fi
 
 if echo "$output" | grep -q "base.system"; then
-    harness_pass "--only agents.claude includes base.system (transitive dep)"
+    harness_pass "--only agents.codex includes base.system (transitive dep)"
 else
-    harness_fail "--only agents.claude missing base.system" "base.system is a transitive dependency"
+    harness_fail "--only agents.codex missing base.system" "base.system is a transitive dependency"
 fi
 
 # Should NOT include unrelated modules
 if echo "$output" | grep -q "lang.rust"; then
-    harness_fail "--only agents.claude includes lang.rust" "lang.rust should not be included"
+    harness_fail "--only agents.codex includes lang.rust" "lang.rust should not be included"
 else
-    harness_pass "--only agents.claude excludes lang.rust"
+    harness_pass "--only agents.codex excludes lang.rust"
 fi
 
 # ============================================================
@@ -174,12 +174,12 @@ fi
 
 harness_section "Test: --only with --no-deps"
 
-output=$(run_install --print-plan --only agents.claude --no-deps 2>&1) || true
+output=$(run_install --print-plan --only agents.codex --no-deps 2>&1) || true
 
-if echo "$output" | grep -q "agents.claude"; then
-    harness_pass "--only --no-deps includes agents.claude"
+if echo "$output" | grep -q "agents.codex"; then
+    harness_pass "--only --no-deps includes agents.codex"
 else
-    harness_fail "--only --no-deps missing agents.claude"
+    harness_fail "--only --no-deps missing agents.codex"
 fi
 
 # --no-deps should exclude dependencies
@@ -276,7 +276,7 @@ fi
 harness_section "Test: Skip dependency violation"
 
 # Skipping a required dependency should fail
-output=$(run_install --print-plan --only agents.claude --skip lang.bun 2>&1) || true
+output=$(run_install --print-plan --only agents.codex --skip lang.bun 2>&1) || true
 
 if echo "$output" | grep -qiE "error|dependency|required|violation|cannot skip"; then
     harness_pass "--skip required dependency produces error"

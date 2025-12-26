@@ -837,7 +837,7 @@ check_cloud() {
         if [[ "$doctor_ci" == "true" ]]; then
             check "network.tailscale" "Tailscale (not installed)" "pass" "ok in CI"
         else
-            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl -fsSL https://tailscale.com/install.sh | sh"
+            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.tailscale"
         fi
     fi
 

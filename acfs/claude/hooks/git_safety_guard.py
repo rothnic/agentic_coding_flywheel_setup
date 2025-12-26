@@ -27,23 +27,11 @@ Installation:
 
 import json
 import re
+import shlex
 import sys
 
-# Patterns that are ALWAYS safe (checked first)
-SAFE_PATTERNS = [
-    r"git checkout -b",           # Create new branch
-    r"git checkout --orphan",     # Create orphan branch
-    r"git restore --staged",      # Unstage without discarding
-    r"git clean -n",              # Dry-run clean
-    r"git clean --dry-run",       # Dry-run clean
-    r"git push\b.*--force-with-lease",  # Safer force push variant
-    # Allow rm -rf on temp directories (ephemeral by design). This includes quoted paths,
-    # flag variations (e.g., -fr), and optional `--` before the path.
-    r"rm\s+-[a-z]*r[a-z]*f[a-z]*(?:\s+--)?\s+['\"]?/tmp/",
-    r"rm\s+-[a-z]*r[a-z]*f[a-z]*(?:\s+--)?\s+['\"]?/var/tmp/",
-    r"rm\s+-[a-z]*r[a-z]*f[a-z]*(?:\s+--)?\s+['\"]?\$TMPDIR/",
-    r"rm\s+-[a-z]*r[a-z]*f[a-z]*(?:\s+--)?\s+['\"]?\${TMPDIR",
-]
+# Shell wrappers we may need to unwrap to analyze the underlying command.
+SHELL_WRAPPERS = ("bash", "sh", "zsh", "dash")
 
 # Patterns that should be BLOCKED
 DESTRUCTIVE_PATTERNS = [
@@ -58,12 +46,8 @@ DESTRUCTIVE_PATTERNS = [
 
     # Git: Clean untracked files
     # Matches -f, -xf, -df, -fd, --force, etc.
-    # Note: Dry runs (-n) are whitelisted in SAFE_PATTERNS first.
+    # Note: Dry runs (-n) are not matched by this pattern.
     (r"git clean\b.*(?:-[a-z]*f|--force)", "Permanently removes untracked files"),
-
-    # Git: Force push
-    # Matches --force, -f, --force-with-lease, and refspec with + (e.g. +main)
-    (r"git push\b.*(?:--force|-f\b|\+\w+)", "Rewrites remote history, potentially destroying work"),
 
     # Git: Dangerous branch operations
     (r"git branch -D", "Force-deletes branch bypassing merge safety checks"),
@@ -71,19 +55,281 @@ DESTRUCTIVE_PATTERNS = [
     # Git: Stash destruction
     (r"git stash drop", "Permanently loses stashed changes"),
     (r"git stash clear", "Permanently loses ALL stashed changes"),
-
-    # Filesystem: Recursive deletion (except temp dirs - checked in SAFE_PATTERNS)
-    (r"rm -rf\s+[^/\$]", "Recursive forced deletion - extremely dangerous"),
-    (r"rm -rf\s+/(?!tmp|var/tmp)", "Recursive forced deletion outside temp directories"),
 ]
 
 
-def is_safe(command: str) -> bool:
-    """Check if command matches a known-safe pattern."""
-    for pattern in SAFE_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
-            return True
-    return False
+SHELL_OPERATORS = ("&&", "||", ";", "|", "\n")
+
+
+def _basename(token: str) -> str:
+    return token.rsplit("/", 1)[-1]
+
+
+def _has_shell_operators(command: str) -> bool:
+    # Compound commands are difficult to analyze safely with lightweight checks.
+    # We refuse to auto-approve "dangerous-looking" operations in that case.
+    return any(op in command for op in SHELL_OPERATORS)
+
+
+def _try_shlex_split(command: str) -> list[str] | None:
+    try:
+        return shlex.split(command, posix=True)
+    except ValueError:
+        return None
+
+
+def _strip_common_wrappers(tokens: list[str]) -> list[str]:
+    """
+    Strip common wrappers like `sudo` and `env` to reach the underlying command.
+
+    This is intentionally conservative and only handles the most common cases.
+    If parsing gets ambiguous, we fall back to regex-based blocking.
+    """
+    i = 0
+
+    # Strip leading inline environment assignments (e.g., FOO=1 BAR=2 cmd ...).
+    # This is common in agent-run commands and would otherwise bypass checks.
+    while i < len(tokens) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tokens[i]):
+        i += 1
+
+    # Strip leading `env VAR=...` assignments.
+    if i < len(tokens) and _basename(tokens[i]) == "env":
+        i += 1
+        while i < len(tokens):
+            t = tokens[i]
+            if t == "--":
+                i += 1
+                break
+            if t.startswith("-"):
+                i += 1
+                continue
+            if "=" in t and not t.startswith("="):
+                i += 1
+                continue
+            break
+
+    # Strip a single leading `sudo ...` wrapper.
+    if i < len(tokens) and _basename(tokens[i]) == "sudo":
+        i += 1
+        while i < len(tokens):
+            t = tokens[i]
+            if t == "--":
+                i += 1
+                break
+            if not t.startswith("-"):
+                break
+            i += 1
+            # Options that take a parameter.
+            if t in ("-u", "-g", "-h", "-p", "-r", "-t", "-C"):
+                if i < len(tokens):
+                    i += 1
+
+    # Strip a single leading `command ...` / `builtin ...` wrapper.
+    # These are common ways to bypass simplistic checks.
+    if i < len(tokens) and _basename(tokens[i]) in ("command", "builtin"):
+        i += 1
+        while i < len(tokens):
+            t = tokens[i]
+            if t == "--":
+                i += 1
+                break
+            if not t.startswith("-"):
+                break
+            i += 1
+
+    return tokens[i:]
+
+
+def _unwrap_shell_c_command(command: str) -> str | None:
+    """
+    If the command is wrapped in a shell invocation like `bash -c '...'`, return
+    the inner command string. Otherwise return None.
+
+    This blocks trivial bypasses like:
+      bash -c "rm -rf /"
+      sudo bash -lc "git push --force"
+    """
+    tokens = _try_shlex_split(command)
+    if not tokens:
+        return None
+
+    core = _strip_common_wrappers(tokens)
+    if not core:
+        return None
+
+    shell = _basename(core[0])
+    if shell not in SHELL_WRAPPERS:
+        return None
+
+    # Find an option token that includes `c` (e.g., -c, -lc, -xec).
+    i = 1
+    while i < len(core):
+        t = core[i]
+        if t == "--":
+            i += 1
+            break
+        if not t.startswith("-") or t == "-":
+            break
+        if t.startswith("--"):
+            i += 1
+            continue
+        if "c" in t[1:]:
+            return core[i + 1] if i + 1 < len(core) else None
+        i += 1
+
+    return None
+
+
+def _check_rm_recursive_force(command: str) -> tuple[bool, str]:
+    """
+    Block `rm` with recursive+force flags unless every target is in temp dirs.
+
+    Allowed prefixes:
+    - /tmp/
+    - /var/tmp/
+    - $TMPDIR/
+    - ${TMPDIR}/
+    """
+    # For compound commands we can't reliably prove safety, so we conservatively
+    # block any recursive+force deletion.
+    if _has_shell_operators(command):
+        if re.search(
+            r"\brm\b[^\n]*(?:\s--recursive\b|\s-[^\n]*r)[^\n]*(?:\s--force\b|\s-[^\n]*f)",
+            command,
+            re.IGNORECASE,
+        ):
+            return True, "Recursive forced deletion (rm -rf) in a compound command is blocked"
+        return False, ""
+
+    tokens = _try_shlex_split(command)
+    if not tokens:
+        if re.search(
+            r"\brm\b[^\n]*(?:\s--recursive\b|\s-[^\n]*r)[^\n]*(?:\s--force\b|\s-[^\n]*f)",
+            command,
+            re.IGNORECASE,
+        ):
+            return True, "Recursive forced deletion (rm -rf) could not be parsed safely"
+        return False, ""
+
+    core = _strip_common_wrappers(tokens)
+    if not core:
+        return False, ""
+
+    cmd = core[0]
+    if cmd.endswith("/rm"):
+        cmd = "rm"
+    if cmd != "rm":
+        return False, ""
+
+    recursive = False
+    force = False
+    args: list[str] = []
+    end_of_options = False
+
+    for t in core[1:]:
+        # After an explicit `--`, everything is an operand (even if it starts with '-').
+        if end_of_options:
+            args.append(t)
+            continue
+
+        if t == "--":
+            end_of_options = True
+            continue
+
+        # `rm` accepts options interspersed with operands, so we keep parsing options
+        # until an explicit `--` is seen.
+        if t.startswith("--"):
+            if t == "--recursive":
+                recursive = True
+            elif t == "--force":
+                force = True
+            continue
+
+        if t.startswith("-") and t != "-":
+            flags = t[1:].lower()
+            recursive = recursive or ("r" in flags)
+            force = force or ("f" in flags)
+            continue
+
+        args.append(t)
+
+    if not (recursive and force):
+        return False, ""
+
+    if not args:
+        return True, "Recursive forced deletion (rm with -r/-f) without any target path"
+
+    safe_prefixes = ("/tmp/", "/var/tmp/", "$TMPDIR/", "${TMPDIR}/")
+    for path in args:
+        if not any(path.startswith(prefix) for prefix in safe_prefixes):
+            return True, "Recursive forced deletion (rm -rf) outside temporary directories"
+        if any(seg == ".." for seg in path.split("/")):
+            return True, "Recursive forced deletion (rm -rf) with path traversal ('..') is not allowed"
+
+    return False, ""
+
+
+def _check_git_force_push(command: str) -> tuple[bool, str]:
+    """Block force pushes unless explicitly using --force-with-lease."""
+    if _has_shell_operators(command):
+        if re.search(r"\bgit\b[^\n]*\bpush\b", command, re.IGNORECASE) and re.search(
+            r"(?:--force(?!-with-lease)\b|\b-f\b|\+\w+|--force-with-lease\b)",
+            command,
+            re.IGNORECASE,
+        ):
+            return True, "Force push flags in a compound command are blocked"
+        return False, ""
+
+    tokens = _try_shlex_split(command)
+    if not tokens:
+        # If we can't parse, we fail safe: block explicit force push markers.
+        if re.search(r"\bgit\b[^\n]*\bpush\b", command, re.IGNORECASE) and re.search(
+            r"(?:--force(?!-with-lease)\b|\b-f\b|\+\w+)",
+            command,
+            re.IGNORECASE,
+        ):
+            return True, "Force push could not be parsed safely"
+        return False, ""
+
+    core = _strip_common_wrappers(tokens)
+    if len(core) < 2:
+        return False, ""
+
+    if core[0] != "git":
+        return False, ""
+
+    # Skip common git global options to find the subcommand (e.g., `git -C repo push ...`).
+    i = 1
+    while i < len(core):
+        t = core[i]
+        if t == "--":
+            i += 1
+            break
+        if not t.startswith("-"):
+            break
+        i += 1
+        if t in ("-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"):
+            if i < len(core):
+                i += 1
+
+    if i >= len(core) or core[i] != "push":
+        return False, ""
+
+    args = core[i + 1 :]
+
+    has_force_with_lease = any(
+        t == "--force-with-lease" or t.startswith("--force-with-lease=") for t in args
+    )
+    has_explicit_force = any(t in ("--force", "-f") for t in args)
+    has_plus_refspec = any(t.startswith("+") and len(t) > 1 for t in args)
+
+    if (has_explicit_force or has_plus_refspec) and not has_force_with_lease:
+        return True, "Force push rewrites remote history (use --force-with-lease if you must)"
+
+    if has_force_with_lease and (has_explicit_force or has_plus_refspec):
+        return True, "Refusing ambiguous force push flags; use only --force-with-lease"
+
+    return False, ""
 
 
 def check_destructive(command: str) -> tuple[bool, str]:
@@ -93,9 +339,27 @@ def check_destructive(command: str) -> tuple[bool, str]:
     Returns:
         (is_blocked, reason) - True if command should be blocked
     """
-    for pattern, reason in DESTRUCTIVE_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
+    commands_to_check = [command]
+    current = command
+    for _ in range(3):
+        inner = _unwrap_shell_c_command(current)
+        if not inner or inner in commands_to_check:
+            break
+        commands_to_check.append(inner)
+        current = inner
+
+    for candidate in commands_to_check:
+        blocked, reason = _check_rm_recursive_force(candidate)
+        if blocked:
             return True, reason
+
+        blocked, reason = _check_git_force_push(candidate)
+        if blocked:
+            return True, reason
+
+        for pattern, reason in DESTRUCTIVE_PATTERNS:
+            if re.search(pattern, candidate, re.IGNORECASE):
+                return True, reason
     return False, ""
 
 
@@ -119,10 +383,6 @@ def main():
         command = tool_input.get("command", "")
 
         if not command:
-            sys.exit(0)
-
-        # Check safe patterns first (fast path)
-        if is_safe(command):
             sys.exit(0)
 
         # Check for destructive patterns

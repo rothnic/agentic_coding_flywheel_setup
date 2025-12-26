@@ -142,11 +142,19 @@ modules:
         # Install ACFS zshrc
         ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
         mkdir -p ~/.acfs/zsh
-        curl --proto '=https' --proto-redir '=https' -fsSL -o ~/.acfs/zsh/acfs.zshrc "${ACFS_RAW}/acfs/zsh/acfs.zshrc"
+        CURL_ARGS=(-fsSL)
+        if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+          CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+        fi
+        curl "${CURL_ARGS[@]}" -o ~/.acfs/zsh/acfs.zshrc "${ACFS_RAW}/acfs/zsh/acfs.zshrc"
       - |
         # Install pre-configured Powerlevel10k settings (prevents config wizard on first login)
         ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
-        curl --proto '=https' --proto-redir '=https' -fsSL -o ~/.p10k.zsh "${ACFS_RAW}/acfs/zsh/p10k.zsh"
+        CURL_ARGS=(-fsSL)
+        if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+          CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+        fi
+        curl "${CURL_ARGS[@]}" -o ~/.p10k.zsh "${ACFS_RAW}/acfs/zsh/p10k.zsh"
       - |
         # Setup loader .zshrc
         if [[ -f ~/.zshrc ]] && ! grep -q "ACFS loader" ~/.zshrc; then
@@ -261,7 +269,11 @@ modules:
         case "$DISTRO_CODENAME" in
           oracular|plucky|questing) DISTRO_CODENAME="noble" ;;
         esac
-        curl -fsSL "https://pkgs.tailscale.com/stable/ubuntu/${DISTRO_CODENAME}.noarmor.gpg" \
+        CURL_ARGS=(-fsSL)
+        if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+          CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+        fi
+        curl "${CURL_ARGS[@]}" "https://pkgs.tailscale.com/stable/ubuntu/${DISTRO_CODENAME}.noarmor.gpg" \
           | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
         echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu ${DISTRO_CODENAME} main" \
           | tee /etc/apt/sources.list.d/tailscale.list
@@ -549,9 +561,27 @@ modules:
       run_as: current
       command: "command -v vault"
     install:
-      - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list
-      - apt-get update && apt-get install -y vault
+      - |
+        # HashiCorp doesn't always publish packages for newest Ubuntu versions.
+        # Fall back to noble (24.04 LTS) if the current codename isn't supported.
+        CODENAME=$(lsb_release -cs 2>/dev/null || echo "noble")
+
+        CURL_ARGS=(-fsSL)
+        CURL_CHECK_ARGS=(-fsSI)
+        if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+          CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+          CURL_CHECK_ARGS=(--proto '=https' --proto-redir '=https' -fsSI)
+        fi
+
+        if ! curl "${CURL_CHECK_ARGS[@]}" "https://apt.releases.hashicorp.com/dists/${CODENAME}/main/binary-amd64/Packages" >/dev/null 2>&1; then
+          CODENAME="noble"
+        fi
+
+        curl "${CURL_ARGS[@]}" https://apt.releases.hashicorp.com/gpg \
+          | gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${CODENAME} main" \
+          > /etc/apt/sources.list.d/hashicorp.list
+        apt-get update && apt-get install -y vault
     verify:
       - vault --version
     notes:
@@ -573,7 +603,12 @@ modules:
     install:
       - |
         mkdir -p /etc/apt/keyrings
-        curl --proto '=https' --proto-redir '=https' -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg
+        CURL_ARGS=(-fsSL)
+        if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+          CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+        fi
+        curl "${CURL_ARGS[@]}" https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+          | gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg
         CODENAME=$(lsb_release -cs 2>/dev/null || echo "noble")
         case "$CODENAME" in
           oracular|plucky|questing) CODENAME="noble" ;;

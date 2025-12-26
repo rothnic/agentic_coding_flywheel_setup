@@ -98,14 +98,35 @@ user_dir_has_content() {
     [[ -d "$path" && -n "$(ls -A "$path" 2>/dev/null)" ]]
 }
 
+find_user_bin() {
+    local name="$1"
+
+    local candidates=(
+        "$TARGET_HOME/.local/bin/$name"
+        "$TARGET_HOME/.bun/bin/$name"
+        "$TARGET_HOME/.atuin/bin/$name"
+    )
+
+    local candidate
+    for candidate in "${candidates[@]}"; do
+        if [[ -x "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # ============================================================
 # Status Check Functions
 # ============================================================
 
 check_claude_status() {
-    local claude_bin="$TARGET_HOME/.bun/bin/claude"
+    local claude_bin
+    claude_bin="$(find_user_bin "claude" 2>/dev/null || true)"
 
-    if [[ ! -x "$claude_bin" ]]; then
+    if [[ -z "$claude_bin" || ! -x "$claude_bin" ]]; then
         SERVICE_STATUS[claude]="not_installed"
         return
     fi
@@ -121,9 +142,10 @@ check_claude_status() {
 }
 
 check_codex_status() {
-    local codex_bin="$TARGET_HOME/.bun/bin/codex"
+    local codex_bin
+    codex_bin="$(find_user_bin "codex" 2>/dev/null || true)"
 
-    if [[ ! -x "$codex_bin" ]]; then
+    if [[ -z "$codex_bin" || ! -x "$codex_bin" ]]; then
         SERVICE_STATUS[codex]="not_installed"
         return
     fi
@@ -139,9 +161,10 @@ check_codex_status() {
 }
 
 check_gemini_status() {
-    local gemini_bin="$TARGET_HOME/.bun/bin/gemini"
+    local gemini_bin
+    gemini_bin="$(find_user_bin "gemini" 2>/dev/null || true)"
 
-    if [[ ! -x "$gemini_bin" ]]; then
+    if [[ -z "$gemini_bin" || ! -x "$gemini_bin" ]]; then
         SERVICE_STATUS[gemini]="not_installed"
         return
     fi
@@ -317,9 +340,10 @@ print_status_table() {
 # ============================================================
 
 setup_claude() {
-    local claude_bin="$TARGET_HOME/.bun/bin/claude"
+    local claude_bin
+    claude_bin="$(find_user_bin "claude" 2>/dev/null || true)"
 
-    if [[ ! -x "$claude_bin" ]]; then
+    if [[ -z "$claude_bin" || ! -x "$claude_bin" ]]; then
         gum_error "Claude Code not installed. Run the main installer first."
         return 1
     fi
@@ -353,9 +377,10 @@ Press Enter to launch Claude Code login..."
 }
 
 setup_codex() {
-    local codex_bin="$TARGET_HOME/.bun/bin/codex"
+    local codex_bin
+    codex_bin="$(find_user_bin "codex" 2>/dev/null || true)"
 
-    if [[ ! -x "$codex_bin" ]]; then
+    if [[ -z "$codex_bin" || ! -x "$codex_bin" ]]; then
         gum_error "Codex CLI not installed. Run the main installer first."
         return 1
     fi
@@ -653,9 +678,10 @@ maybe_run_cli_action() {
 }
 
 setup_gemini() {
-    local gemini_bin="$TARGET_HOME/.bun/bin/gemini"
+    local gemini_bin
+    gemini_bin="$(find_user_bin "gemini" 2>/dev/null || true)"
 
-    if [[ ! -x "$gemini_bin" ]]; then
+    if [[ -z "$gemini_bin" || ! -x "$gemini_bin" ]]; then
         gum_error "Gemini CLI not installed. Run the main installer first."
         return 1
     fi

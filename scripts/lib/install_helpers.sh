@@ -268,45 +268,50 @@ acfs_resolve_selection() {
         fi
     done
 
-    local found_dep=""
-    local found_chain=""
-    _acfs_find_skipped_dep() {
-        local current="$1"
-        local path="$2"
-        local deps="${ACFS_MODULE_DEPS["$current"]:-}"
-        [[ -n "$deps" ]] || return 1
-        IFS=',' read -ra _deps <<< "$deps"
-        local dep=""
-        for dep in "${_deps[@]}"; do
-            [[ -n "$dep" ]] || continue
-            if [[ -n "${skip_set[$dep]:-}" ]]; then
-                found_dep="$dep"
-                found_chain="$path -> $dep"
-                return 0
-            fi
-            if [[ -n "${visited[$dep]:-}" ]]; then
-                continue
-            fi
-            visited["$dep"]=1
-            if _acfs_find_skipped_dep "$dep" "$path -> $dep"; then
-                return 0
+    # When --no-deps is enabled, the user is explicitly asking to bypass dependency
+    # closure. In that mode we allow "unsafe" selections (including skipping deps)
+    # and rely on the warning printed below.
+    if [[ "${NO_DEPS:-false}" != "true" ]]; then
+        local found_dep=""
+        local found_chain=""
+        _acfs_find_skipped_dep() {
+            local current="$1"
+            local path="$2"
+            local deps="${ACFS_MODULE_DEPS["$current"]:-}"
+            [[ -n "$deps" ]] || return 1
+            IFS=',' read -ra _deps <<< "$deps"
+            local dep=""
+            for dep in "${_deps[@]}"; do
+                [[ -n "$dep" ]] || continue
+                if [[ -n "${skip_set[$dep]:-}" ]]; then
+                    found_dep="$dep"
+                    found_chain="$path -> $dep"
+                    return 0
+                fi
+                if [[ -n "${visited[$dep]:-}" ]]; then
+                    continue
+                fi
+                visited["$dep"]=1
+                if _acfs_find_skipped_dep "$dep" "$path -> $dep"; then
+                    return 0
+                fi
+            done
+            return 1
+        }
+
+        for module in "${!desired[@]}"; do
+            local -A visited=()
+            visited["$module"]=1
+            found_dep=""
+            found_chain=""
+            if _acfs_find_skipped_dep "$module" "$module"; then
+                log_error "Selection error: $module depends on skipped $found_dep"
+                log_error "Dependency chain: $found_chain"
+                log_error "Remove --skip $found_dep or omit $module."
+                return 1
             fi
         done
-        return 1
-    }
-
-    for module in "${!desired[@]}"; do
-        local -A visited=()
-        visited["$module"]=1
-        found_dep=""
-        found_chain=""
-        if _acfs_find_skipped_dep "$module" "$module"; then
-            log_error "Selection error: $module depends on skipped $found_dep"
-            log_error "Dependency chain: $found_chain"
-            log_error "Remove --skip $found_dep or omit $module."
-            return 1
-        fi
-    done
+    fi
 
     if [[ "${NO_DEPS:-false}" == "true" ]]; then
         log_warn "WARNING: --no-deps disables dependency closure; install may be incomplete."

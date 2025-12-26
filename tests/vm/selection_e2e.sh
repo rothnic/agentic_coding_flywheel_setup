@@ -174,7 +174,7 @@ test_broken_dependency_fails() {
 
     # Run with set +e to capture exit code
     set +e
-    output=$(bash "$REPO_ROOT/install.sh" --print-plan --only agents.claude --skip lang.bun 2>&1)
+    output=$(bash "$REPO_ROOT/install.sh" --print-plan --only agents.codex --skip lang.bun 2>&1)
     rc=$?
     set -e
 
@@ -189,7 +189,7 @@ test_broken_dependency_fails() {
 test_no_deps_prints_warning() {
     local name="--no-deps prints warning message"
     local output
-    output=$(bash "$REPO_ROOT/install.sh" --print-plan --only agents.claude --no-deps 2>&1) || true
+    output=$(bash "$REPO_ROOT/install.sh" --print-plan --only agents.codex --no-deps 2>&1) || true
 
     if echo "$output" | grep -qi "warning"; then
         pass "$name"

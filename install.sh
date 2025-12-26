@@ -162,7 +162,7 @@ _source_context_lib() {
     # Fallback: define minimal no-op stubs so install.sh still works
     set_phase() { :; }
     try_step() { shift; "$@"; }
-    try_step_eval() { shift; bash -c "$1"; }
+    try_step_eval() { shift; bash -e -o pipefail -c "$1"; }
     return 0
 }
 _source_context_lib
@@ -2401,7 +2401,7 @@ install_cli_tools() {
     else
         log_detail "Installing gum for glamorous shell scripts"
         try_step "Creating apt keyrings directory" $SUDO mkdir -p /etc/apt/keyrings || true
-        try_step_eval "Adding Charm apt key" "set -o pipefail; curl -fsSL https://repo.charm.sh/apt/gpg.key | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null" || true
+        try_step_eval "Adding Charm apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://repo.charm.sh/apt/gpg.key; else curl -fsSL https://repo.charm.sh/apt/gpg.key; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null" || true
         try_step_eval "Adding Charm apt repo" "printf 'Types: deb\nURIs: https://repo.charm.sh/apt/\nSuites: *\nComponents: *\nSigned-By: /etc/apt/keyrings/charm.gpg\n' | $SUDO tee /etc/apt/sources.list.d/charm.sources > /dev/null" || true
         try_step "Updating apt cache" $SUDO apt-get update -y || true
         if try_step "Installing gum" $SUDO apt-get install -y gum 2>/dev/null; then
@@ -2791,7 +2791,7 @@ install_cloud_db_legacy_db() {
         log_detail "Installing PostgreSQL 18 (PGDG repo, codename=$codename)"
         try_step "Creating apt keyrings for PostgreSQL" $SUDO mkdir -p /etc/apt/keyrings || true
 
-        if ! try_step_eval "Adding PostgreSQL apt key" "set -o pipefail; curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg 2>/dev/null"; then
+        if ! try_step_eval "Adding PostgreSQL apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc; else curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg 2>/dev/null"; then
             log_warn "PostgreSQL: failed to install signing key (skipping)"
         else
             try_step_eval "Adding PostgreSQL apt repo" "echo 'deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt ${codename}-pgdg main' | $SUDO tee /etc/apt/sources.list.d/pgdg.list > /dev/null" || true
@@ -2851,7 +2851,7 @@ install_cloud_db_legacy_tools() {
         log_detail "Installing Vault (HashiCorp repo, codename=$vault_codename)"
         try_step "Creating apt keyrings for Vault" $SUDO mkdir -p /etc/apt/keyrings || true
 
-        if ! try_step_eval "Adding HashiCorp apt key" "set -o pipefail; curl -fsSL https://apt.releases.hashicorp.com/gpg | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/hashicorp.gpg 2>/dev/null"; then
+        if ! try_step_eval "Adding HashiCorp apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://apt.releases.hashicorp.com/gpg; else curl -fsSL https://apt.releases.hashicorp.com/gpg; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/hashicorp.gpg 2>/dev/null"; then
             log_warn "Vault: failed to install signing key (skipping)"
         else
             try_step_eval "Adding HashiCorp apt repo" "echo 'deb [signed-by=/etc/apt/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com ${vault_codename} main' | $SUDO tee /etc/apt/sources.list.d/hashicorp.list > /dev/null" || true
