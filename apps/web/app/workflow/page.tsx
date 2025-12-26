@@ -1296,7 +1296,7 @@ export default function WorkflowPage() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">{service.purpose}</p>
                 <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                  bun install -g --trust {service.tool}
+                  bun add -g {service.tool}
                 </code>
               </motion.div>
             ))}
