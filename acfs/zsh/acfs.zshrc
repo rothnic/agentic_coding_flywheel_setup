@@ -334,6 +334,7 @@ acfs() {
 
 # --- Agent aliases (dangerously enabled by design) ---
 alias cc='NODE_OPTIONS="--max-old-space-size=32768" ENABLE_BACKGROUND_TASKS=1 ~/.local/bin/claude --dangerously-skip-permissions'
+alias oc='opencode'
 alias cod='codex --dangerously-bypass-approvals-and-sandbox'
 alias gmi='gemini --yolo'
 

@@ -162,6 +162,24 @@ check_claude_status() {
     fi
 }
 
+check_opencode_status() {
+    local opencode_bin
+    opencode_bin="$(find_user_bin "opencode" 2>/dev/null || true)"
+
+    if [[ -z "$opencode_bin" || ! -x "$opencode_bin" ]]; then
+        SERVICE_STATUS[opencode]="not_installed"
+        return
+    fi
+
+    # Check if configured (rough check for config file)
+    if user_file_exists "$TARGET_HOME/.opencode/config.json" || \
+       user_file_exists "$TARGET_HOME/.config/opencode/config.json"; then
+        SERVICE_STATUS[opencode]="configured"
+    else
+        SERVICE_STATUS[opencode]="installed"
+    fi
+}
+
 check_codex_status() {
     local codex_bin
     codex_bin="$(find_user_bin "codex" 2>/dev/null || true)"
@@ -273,6 +291,7 @@ check_postgres_status() {
 
 check_all_status() {
     check_claude_status
+    check_opencode_status
     check_codex_status
     check_gemini_status
     check_vercel_status
@@ -310,9 +329,9 @@ print_status_table() {
     gum_section "Service Status"
     echo ""
 
-    local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
-    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare" "PostgreSQL")
-    local categories=("AI Agent" "AI Agent" "AI Agent" "Cloud" "Cloud" "Cloud" "Database")
+    local services=("claude" "opencode" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
+    local labels=("Claude Code" "OpenCode CLI" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare" "PostgreSQL")
+    local categories=("AI Agent" "AI Agent" "AI Agent" "AI Agent" "Cloud" "Cloud" "Cloud" "Database")
 
     if [[ "$HAS_GUM" == "true" ]]; then
         # Use gum table for beautiful display
@@ -394,6 +413,46 @@ Press Enter to launch Claude Code login..."
         gum_success "Claude Code configured successfully!"
     else
         gum_warn "Claude Code may not be fully configured. Try running 'claude' again."
+    fi
+}
+
+setup_opencode() {
+    local opencode_bin
+    opencode_bin="$(find_user_bin "opencode" 2>/dev/null || true)"
+
+    if [[ -z "$opencode_bin" || ! -x "$opencode_bin" ]]; then
+        gum_error "OpenCode not installed. Run the main installer first."
+        return 1
+    fi
+
+    if [[ "${SERVICE_STATUS[opencode]}" == "configured" ]]; then
+        if ! gum_confirm "OpenCode appears to be configured. Reconfigure?"; then
+            return 0
+        fi
+    fi
+
+    gum_box "OpenCode Setup" "OpenCode uses OAuth to authenticate.
+
+We will run: 'opencode auth login'
+
+It will:
+ 1. Open a browser link to authorize
+ 2. Wait for you to approve
+ 3. Save the token
+
+Press Enter to start."
+
+    read -r
+
+    # Run opencode auth login interactively
+    run_as_user "$opencode_bin" auth login || true
+
+    # Re-check status
+    check_opencode_status
+    if [[ "${SERVICE_STATUS[opencode]}" == "configured" ]]; then
+        gum_success "OpenCode authenticated successfully!"
+    else
+        gum_warn "OpenCode may not be fully configured. Try running 'opencode auth login' again."
     fi
 }
 
@@ -872,9 +931,9 @@ show_menu() {
     if [[ "$HAS_GUM" == "true" ]]; then
         # Build menu items with status indicators
         local -a items=()
-        local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
-        local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler" "PostgreSQL")
-        local descs=("AI coding assistant" "OpenAI assistant" "Google AI assistant" "Deployment platform" "Database platform" "Edge platform" "Local database")
+        local services=("claude" "opencode" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
+        local labels=("Claude Code" "OpenCode CLI" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler" "PostgreSQL")
+        local descs=("AI coding assistant" "Open Source AI" "OpenAI assistant" "Google AI assistant" "Deployment platform" "Database platform" "Edge platform" "Local database")
 
         for i in "${!services[@]}"; do
             local svc="${services[$i]}"
@@ -905,6 +964,7 @@ show_menu() {
         case "$choice" in
             *"destructive-command guard"*) setup_claude_git_guard ;;
             *"Claude"*)    setup_claude ;;
+            *"OpenCode"*)  setup_opencode ;;
             *"Codex"*)     setup_codex ;;
             *"Gemini"*)    setup_gemini ;;
             *"Vercel"*)    setup_vercel ;;
@@ -920,20 +980,22 @@ show_menu() {
         local choice
         choice=$(gum_choose "What would you like to configure?" \
             "1. Claude Code (AI coding assistant)" \
-            "2. Codex CLI (OpenAI coding assistant)" \
-            "3. Gemini CLI (Google AI assistant)" \
-            "4. Vercel (deployment platform)" \
-            "5. Supabase (database platform)" \
-            "6. Cloudflare Wrangler (edge platform)" \
-            "7. PostgreSQL (check database)" \
-            "8. Install Claude destructive-command guard (recommended)" \
-            "9. Configure ALL unconfigured services" \
-            "10. Refresh status" \
+            "2. OpenCode CLI (Open Source AI)" \
+            "3. Codex CLI (OpenAI coding assistant)" \
+            "4. Gemini CLI (Google AI assistant)" \
+            "5. Vercel (deployment platform)" \
+            "6. Supabase (database platform)" \
+            "7. Cloudflare Wrangler (edge platform)" \
+            "8. PostgreSQL (check database)" \
+            "9. Install Claude destructive-command guard (recommended)" \
+            "10. Configure ALL unconfigured services" \
+            "11. Refresh status" \
             "0. Exit")
 
         case "$choice" in
             *"destructive-command guard"*) setup_claude_git_guard ;;
             *"Claude"*)    setup_claude ;;
+            *"OpenCode"*)  setup_opencode ;;
             *"Codex"*)     setup_codex ;;
             *"Gemini"*)    setup_gemini ;;
             *"Vercel"*)    setup_vercel ;;
@@ -951,9 +1013,9 @@ show_menu() {
 setup_all_unconfigured() {
     gum_section "Configuring All Unconfigured Services"
 
-    local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler")
-    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler")
-    local setup_funcs=("setup_claude" "setup_codex" "setup_gemini" "setup_vercel" "setup_supabase" "setup_wrangler")
+    local services=("claude" "opencode" "codex" "gemini" "vercel" "supabase" "wrangler")
+    local labels=("Claude Code" "OpenCode CLI" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler")
+    local setup_funcs=("setup_claude" "setup_opencode" "setup_codex" "setup_gemini" "setup_vercel" "setup_supabase" "setup_wrangler")
 
     # Count services needing setup
     local needs_setup=0

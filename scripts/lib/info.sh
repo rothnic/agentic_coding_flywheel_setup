@@ -301,6 +301,7 @@ info_get_installed_tools_summary() {
     agents_ok="○"
     local agent_count=0
     command -v claude &>/dev/null && agent_count=$((agent_count + 1))
+    command -v opencode &>/dev/null && agent_count=$((agent_count + 1))
     command -v codex &>/dev/null && agent_count=$((agent_count + 1))
     command -v gemini &>/dev/null && agent_count=$((agent_count + 1))
     [[ $agent_count -ge 2 ]] && agents_ok="✓"
@@ -370,7 +371,7 @@ info_render_terminal() {
 
     echo -e "  $shell_icon ${C_DIM}Shell:${C_RESET}     zsh + oh-my-zsh + powerlevel10k"
     echo -e "  $lang_icon ${C_DIM}Languages:${C_RESET} bun, uv, rust, go"
-    echo -e "  $agents_icon ${C_DIM}Agents:${C_RESET}    claude, codex, gemini"
+    echo -e "  $agents_icon ${C_DIM}Agents:${C_RESET}    claude, opencode, codex, gemini"
     echo -e "  $stack_icon ${C_DIM}Stack:${C_RESET}     ntm, bv, lazygit"
 
     if [[ -n "$skipped_tools" ]]; then
