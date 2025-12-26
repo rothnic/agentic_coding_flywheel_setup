@@ -462,14 +462,16 @@ modules:
     optional: false
     enabled_by_default: true
     tags: [recommended, agent]
-    dependencies: []
+    dependencies:
+      - base.system
     installed_check:
       run_as: target_user
       command: "test -x ~/.local/bin/claude"
-    install:
-      # Native installer (installs to ~/.local/bin/claude)
-      # This is the official installation method with built-in auto-update
-      - curl -fsSL https://claude.ai/install.sh | bash
+    verified_installer:
+      tool: claude
+      runner: bash
+      args: ["stable"]
+    install: []
     verify:
       - ~/.local/bin/claude --version || ~/.local/bin/claude --help
     notes:

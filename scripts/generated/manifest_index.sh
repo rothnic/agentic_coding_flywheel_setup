@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="627f6f936bb5f5c6159bf00e3d6164bd9c5a321f02f5ea1badb32181e3b0c4a3"
+ACFS_MANIFEST_SHA256="a8cc89b22b21625790c9723505c6444cc822ebc0c04727f0c351fb80c8fc575b"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -100,7 +100,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [tools.atuin]="base.system"
   [tools.zoxide]="base.system"
   [tools.ast_grep]="lang.rust"
-  [agents.claude]=""
+  [agents.claude]="base.system"
   [agents.codex]="lang.bun"
   [agents.gemini]="lang.bun"
   [tools.vault]="base.system"

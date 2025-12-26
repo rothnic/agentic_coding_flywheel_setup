@@ -317,11 +317,11 @@ describe('Utils: getTransitiveDependencies', () => {
 
   test('includes all transitive dependencies', () => {
     // Find a module with nested dependencies
-    // agents.claude -> lang.bun -> base.system
-    const claudeDeps = getTransitiveDependencies(manifest, 'agents.claude');
+    // agents.codex -> lang.bun -> base.system
+    const codexDeps = getTransitiveDependencies(manifest, 'agents.codex');
 
     // Should include lang.bun and base.system
-    const depIds = claudeDeps.map((d) => d.id);
+    const depIds = codexDeps.map((d) => d.id);
     expect(depIds).toContain('lang.bun');
     expect(depIds).toContain('base.system');
   });

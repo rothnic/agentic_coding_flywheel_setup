@@ -69,13 +69,55 @@ install_agents_claude() {
     log_step "Installing agents.claude"
 
     if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: curl -fsSL https://claude.ai/install.sh | bash (target_user)"
+        log_info "dry-run: verified installer: agents.claude"
     else
-        if ! run_as_target_shell <<'INSTALL_AGENTS_CLAUDE'
-curl -fsSL https://claude.ai/install.sh | bash
-INSTALL_AGENTS_CLAUDE
-        then
-            log_error "agents.claude: install command failed: curl -fsSL https://claude.ai/install.sh | bash"
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="claude"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "agents.claude: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' 'stable'; then
+                            install_success=true
+                        else
+                            log_error "agents.claude: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "agents.claude: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "agents.claude: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "agents.claude: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "agents.claude: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # No unverified fallback: verified install is required
+            if [[ "$install_success" != "true" ]]; then
+                log_error "Verified install failed for agents.claude"
+                false
+            fi
+        }; then
+            log_error "agents.claude: verified installer failed"
             return 1
         fi
     fi
