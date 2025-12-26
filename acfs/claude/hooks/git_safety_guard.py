@@ -295,7 +295,8 @@ def _check_git_force_push(command: str) -> tuple[bool, str]:
     if len(core) < 2:
         return False, ""
 
-    if core[0] != "git":
+    # Accept both `git ...` and explicit paths like `/usr/bin/git ...`.
+    if _basename(core[0]) != "git":
         return False, ""
 
     # Skip common git global options to find the subcommand (e.g., `git -C repo push ...`).

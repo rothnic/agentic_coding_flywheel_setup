@@ -126,6 +126,13 @@ update_motd_failure() {
     local error_msg="$1"
     local motd_file="/etc/update-motd.d/00-acfs-upgrade"
 
+    # Security: This message will be embedded into a shell script. Prevent any
+    # possibility of shell injection by normalizing to a single line and
+    # using shell-escaped assignment when writing the MOTD script.
+    error_msg="${error_msg//$'\r'/ }"
+    error_msg="${error_msg//$'\n'/ }"
+    error_msg="${error_msg//$'\t'/ }"
+
     # Truncate error message to fit box
     # Box content: "║  Error: " (10) + message + " ║" (2) = 64, so max = 52
     local max_len=52
@@ -134,6 +141,8 @@ update_motd_failure() {
     fi
     local padded_err
     padded_err=$(printf "%-${max_len}s" "$error_msg")
+    local padded_err_q
+    padded_err_q=$(printf '%q' "$padded_err")
 
     cat > "$motd_file" << 'MOTD_SCRIPT'
 #!/bin/bash
@@ -151,7 +160,8 @@ MOTD_SCRIPT
 
     # Add the error message with proper padding
     cat >> "$motd_file" << MOTD_ERROR
-echo -e "\${C}║\${N}  \${Y}Error:\${N} ${padded_err}\${C}║\${N}"
+ERROR_MSG=${padded_err_q}
+echo -e "\${C}║\${N}  \${Y}Error:\${N} \${ERROR_MSG}\${C}║\${N}"
 MOTD_ERROR
 
     cat >> "$motd_file" << 'MOTD_FOOTER'

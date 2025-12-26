@@ -1,0 +1,26 @@
+# UBS ignore globs (codebase scan hygiene)
+#
+# Purpose: keep UBS focused on source, not build artifacts or vendored deps.
+# Note: patterns are evaluated relative to the project root.
+
+# Dependencies / vendored
+node_modules/
+apps/web/node_modules/
+packages/**/node_modules/
+
+# Next.js build output
+apps/web/.next/
+
+# Research scripts (Playwright $$eval triggers UBS eval heuristics)
+apps/web/research_*.mjs
+
+# Generator embeds shell scripts in template strings (UBS JS heuristics produce false positives)
+packages/manifest/src/generate.ts
+
+# Playwright artifacts
+apps/web/playwright-report/
+apps/web/test-results/
+
+# Vercel metadata
+apps/web/.vercel/
+packages/onboard/.vercel/

@@ -97,17 +97,18 @@ describe('authChecks', () => {
     expect(checks.checkGitHub()).toEqual({ authenticated: true, details: 'octocat' });
   });
 
-  test('checkVercel returns authenticated with legacy ~/.vercel/auth.json', () => {
-    const authPath = path.join(HOME, '.vercel', 'auth.json');
-    const checks = createAuthChecks(
-      makeDeps({
-        existsSync: (filePath) => filePath === authPath,
-        readFileSync: () => JSON.stringify({ token: 'vercel-token', user: { email: 'me@example.com' } }),
-      }),
-    );
+	  test('checkVercel returns authenticated with legacy ~/.vercel/auth.json', () => {
+	    const authPath = path.join(HOME, '.vercel', 'auth.json');
+	    const checks = createAuthChecks(
+	      makeDeps({
+	        existsSync: (filePath) => filePath === authPath,
+	        readFileSync: () =>
+	          JSON.stringify({ user: { email: 'me@example.com' } }),
+	      }),
+	    );
 
-    expect(checks.checkVercel()).toEqual({ authenticated: true, details: 'me@example.com' });
-  });
+	    expect(checks.checkVercel()).toEqual({ authenticated: true, details: 'me@example.com' });
+	  });
 
   test('checkSupabase returns authenticated with access token file', () => {
     const tokenPath = path.join(HOME, '.supabase', 'access-token');

@@ -92,7 +92,7 @@ export const ModuleSchema = z
   .refine(
     (module) =>
       module.generated === false ||
-      module.verified_installer != null ||
+      module.verified_installer !== undefined ||
       module.install.length > 0,
     {
       message:

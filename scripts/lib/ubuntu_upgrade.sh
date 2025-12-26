@@ -800,6 +800,12 @@ upgrade_update_motd() {
     local message="${1:-Ubuntu upgrade in progress}"
     local motd_file="/etc/update-motd.d/00-acfs-upgrade"
 
+    # Security: This message is embedded into a shell script. Normalize to a
+    # single line and use shell-escaped assignment to prevent injection.
+    message="${message//$'\r'/ }"
+    message="${message//$'\n'/ }"
+    message="${message//$'\t'/ }"
+
     # Box is 64 chars wide. Content area = 62 chars.
     # Status line format: "║  Status: " (11) + message + " ║" (2) = 64
     # So message max = 64 - 11 - 2 = 51 chars
@@ -809,6 +815,8 @@ upgrade_update_motd() {
     fi
     local padded_msg
     padded_msg=$(printf "%-${max_len}s" "$message")
+    local padded_msg_q
+    padded_msg_q=$(printf '%q' "$padded_msg")
 
     # Create MOTD script with embedded ANSI colors
     cat > "$motd_file" << 'MOTD_HEADER'
@@ -830,7 +838,8 @@ MOTD_HEADER
 
     # Add dynamic status line
     cat >> "$motd_file" << MOTD_STATUS
-echo -e "\${C}║\${N}  \${B}Status:\${N} ${padded_msg} \${C}║\${N}"
+STATUS_MSG=${padded_msg_q}
+echo -e "\${C}║\${N}  \${B}Status:\${N} \${STATUS_MSG} \${C}║\${N}"
 MOTD_STATUS
 
     cat >> "$motd_file" << 'MOTD_FOOTER'
