@@ -210,7 +210,7 @@ confirm_resume() {
 # New flags
 --resume          # Explicitly resume from last checkpoint (default behavior if state exists)
 --force-reinstall # Ignore state file, start fresh
---reset-state     # Delete state file and exit (for debugging)
+--reset-state     # Move state file aside and exit (for debugging)
 ```
 
 ### Edge Cases

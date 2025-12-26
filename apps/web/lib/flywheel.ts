@@ -351,7 +351,7 @@ export const flywheelTools: FlywheelTool[] = [
       "ntm dashboard [session]",
     ],
     installCommand:
-      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh | bash",
+      "curl --proto '=https' --proto-redir '=https' -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh | bash",
     language: "Go",
   },
   {
@@ -390,7 +390,7 @@ export const flywheelTools: FlywheelTool[] = [
       "file_reservation_paths(project_key, agent, paths, ttl_seconds)",
     ],
     installCommand:
-      'curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh" | bash -s -- --yes',
+      'curl --proto \'=https\' --proto-redir \'=https\' -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh" | bash -s -- --yes',
     language: "Python",
   },
   {
@@ -426,7 +426,7 @@ export const flywheelTools: FlywheelTool[] = [
       "ubs --comparison baseline.json .",
     ],
     installCommand:
-      'curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh" | bash -s -- --easy-mode',
+      'curl --proto \'=https\' --proto-redir \'=https\' -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh" | bash -s -- --easy-mode',
     language: "Python",
   },
   {
@@ -465,7 +465,7 @@ export const flywheelTools: FlywheelTool[] = [
       "bv --diff-since HEAD~100",
     ],
     installCommand:
-      'curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh" | bash',
+      'curl --proto \'=https\' --proto-redir \'=https\' -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh" | bash',
     language: "Go",
   },
   {
@@ -502,7 +502,7 @@ export const flywheelTools: FlywheelTool[] = [
       "cass timeline --today --json",
     ],
     installCommand:
-      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode",
+      "curl --proto '=https' --proto-redir '=https' -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode",
     language: "Rust",
   },
   {
@@ -540,7 +540,7 @@ export const flywheelTools: FlywheelTool[] = [
       "cm serve",
     ],
     installCommand:
-      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh | bash -s -- --easy-mode",
+      "curl --proto '=https' --proto-redir '=https' -fsSL https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh | bash -s -- --easy-mode",
     language: "TypeScript",
   },
   {
@@ -575,7 +575,7 @@ export const flywheelTools: FlywheelTool[] = [
       "caam daemon start",
     ],
     installCommand:
-      'curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh" | bash',
+      'curl --proto \'=https\' --proto-redir \'=https\' -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh" | bash',
     language: "Go",
   },
   {
@@ -612,7 +612,7 @@ export const flywheelTools: FlywheelTool[] = [
       "slb tui",
     ],
     installCommand:
-      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh | bash",
+      "curl --proto '=https' --proto-redir '=https' -fsSL https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh | bash",
     language: "Go",
   },
 ];

@@ -17,7 +17,7 @@
 #   --skip-cloud      Skip cloud CLIs (wrangler, supabase, vercel)
 #   --resume          Resume from checkpoint (default when state exists)
 #   --force-reinstall Start fresh, ignore existing state
-#   --reset-state     Delete state file and exit (for debugging)
+#   --reset-state     Move state file aside and exit (for debugging)
 #   --interactive     Enable interactive prompts for resume decisions
 #   --skip-preflight  Skip pre-flight system validation
 #   --skip-ubuntu-upgrade  Skip automatic Ubuntu version upgrade
@@ -1762,7 +1762,7 @@ run_ubuntu_upgrade_phase() {
             log_info "  journalctl -u acfs-upgrade-resume"
             log_info "  tail -100 /var/log/acfs/upgrade_resume.log"
             log_error "To reset and retry upgrade:"
-            log_info "  sudo rm -f ${upgrade_state_file}"
+            log_info "  sudo mv -- '${upgrade_state_file}' '${upgrade_state_file}.backup.\$(date +%Y%m%d_%H%M%S)'"
             log_error "To proceed without upgrading:"
             log_info "  Re-run with --skip-ubuntu-upgrade (not recommended)"
             return 1

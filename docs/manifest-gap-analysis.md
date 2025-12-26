@@ -341,7 +341,7 @@ orchestration:
 | `--skip-cloud` | Skip wrangler/supabase/vercel | Tag `cloud` + `enabled_by_default: false` |
 | `--resume` | Resume from checkpoint | Orchestration (state.sh) |
 | `--force-reinstall` | Start fresh | Orchestration |
-| `--reset-state` | Delete state file | Orchestration |
+| `--reset-state` | Move state file aside | Orchestration |
 | `--interactive` | Enable resume prompts | Orchestration |
 | `--strict` | All tools critical (checksum abort) | Tag `critical` applied to all |
 | `--skip-preflight` | Skip pre-flight checks | Orchestration |
