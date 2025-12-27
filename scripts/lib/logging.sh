@@ -15,6 +15,7 @@ export ACFS_RED='\033[0;31m'
 export ACFS_GREEN='\033[0;32m'
 export ACFS_YELLOW='\033[0;33m'
 export ACFS_BLUE='\033[0;34m'
+export ACFS_TEAL='\033[0;36m'
 export ACFS_GRAY='\033[0;90m'
 export ACFS_NC='\033[0m' # No Color
 
