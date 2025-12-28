@@ -19,7 +19,10 @@ const instrumentSans = Instrument_Sans({
   display: "swap",
 });
 
+const siteUrl = "https://agent-flywheel.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Agent Flywheel - Agentic Coding Setup",
   description:
     "Transform a fresh cloud server into a fully-configured agentic coding environment. Claude Code, OpenAI Codex, Google Gemini: all pre-configured with 30+ modern developer tools. All totally free and open-source.",
@@ -35,16 +38,28 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Jeffrey Emanuel", url: "https://jeffreyemanuel.com/" }],
   openGraph: {
-    title: "Agent Flywheel - Agentic Coding Setup",
+    title: "Agent Flywheel - AI Agents Coding For You",
     description:
-      "From zero to fully-configured agentic coding VPS in 30 minutes.",
+      "Transform a fresh cloud server into a fully-configured agentic coding environment. Claude Code, OpenAI Codex, Google Gemini + 30 modern developer tools. Free & open-source.",
     type: "website",
+    url: siteUrl,
+    siteName: "Agent Flywheel",
+    images: [
+      {
+        url: "/og-home.jpg",
+        width: 1200,
+        height: 829,
+        alt: "Agent Flywheel - AI Agents Coding For You",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agent Flywheel - Agentic Coding Setup",
+    title: "Agent Flywheel - AI Agents Coding For You",
     description:
-      "From zero to fully-configured agentic coding VPS in 30 minutes.",
+      "Transform a fresh VPS into a fully-configured agentic coding environment. Claude, Codex, Gemini + 30 dev tools. Free & open-source.",
+    images: ["/og-home.jpg"],
+    creator: "@jeffreyemanuel",
   },
 };
 
