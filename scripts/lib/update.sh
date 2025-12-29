@@ -847,6 +847,8 @@ update_cloud() {
     if cmd_exists supabase || [[ "$FORCE_MODE" == "true" ]]; then
         capture_version_before "supabase"
         run_cmd "Supabase CLI" bash -c "$(supabase_release_update_script)"
+        # Refresh PATH in case ~/.local/bin was created during install.
+        ensure_path
         if capture_version_after "supabase"; then
             [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[supabase]} → ${VERSION_AFTER[supabase]}${NC}"
         fi
