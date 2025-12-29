@@ -183,12 +183,12 @@ test_version_number_conversion() {
         log_fail "Expected 24.04 from 2204, got: $result"
     fi
 
-    # 2404 (24.04) should map to "24.10"
+    # 2404 (24.04) should map to "25.04" (skip 24.10, which may be EOL)
     result=$(ubuntu_get_next_version_hardcoded 2404)
-    if [[ "$result" == "24.10" ]]; then
+    if [[ "$result" == "25.04" ]]; then
         log_pass "Numeric code 2404 correctly handled"
     else
-        log_fail "Expected 24.10 from 2404, got: $result"
+        log_fail "Expected 25.04 from 2404, got: $result"
     fi
 
     # 2510 (25.10) should return empty (no next version)
@@ -294,12 +294,12 @@ test_upgrade_path_chain() {
         current=$((major * 100 + minor))
     done
 
-    # Check the path: should be 24.10, 25.04, 25.10
+    # Check the path: should be 25.04, 25.10 (skip 24.10, which may be EOL)
     local path="${versions[*]}"
-    if [[ "$path" == "24.10 25.04 25.10" ]]; then
-        log_pass "Path from 24.04 to 25.10: 24.10 → 25.04 → 25.10"
+    if [[ "$path" == "25.04 25.10" ]]; then
+        log_pass "Path from 24.04 to 25.10: 25.04 → 25.10"
     else
-        log_fail "Expected '24.10 25.04 25.10', got: $path"
+        log_fail "Expected '25.04 25.10', got: $path"
     fi
 }
 
@@ -338,10 +338,10 @@ test_next_version_hardcoded() {
     assert_equals "24.04" "$result" "22.04 → 24.04 (LTS hop)"
 
     result=$(ubuntu_get_next_version_hardcoded 2404)
-    assert_equals "24.10" "$result" "24.04 → 24.10"
+    assert_equals "25.04" "$result" "24.04 → 25.04 (skip 24.10, which may be EOL)"
 
     result=$(ubuntu_get_next_version_hardcoded 2410)
-    assert_equals "25.04" "$result" "24.10 → 25.04"
+    assert_equals "25.04" "$result" "24.10 → 25.04 (if on 24.10)"
 
     result=$(ubuntu_get_next_version_hardcoded 2504)
     assert_equals "25.10" "$result" "25.04 → 25.10"
