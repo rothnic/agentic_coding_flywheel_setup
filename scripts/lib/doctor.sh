@@ -898,34 +898,26 @@ check_stack() {
     check_command "stack.ntm" "NTM" "ntm"
     check_command "stack.slb" "SLB" "slb"
 
-    # UBS - custom check with ARM64 guidance
+    # UBS - custom check
     if command -v ubs &>/dev/null; then
         local version
         version=$(get_version_line "ubs")
         check "stack.ubs" "UBS ($version)" "pass" "installed"
     else
-        if [[ "$is_arm64" == "true" ]]; then
-            check "stack.ubs" "UBS" "fail" "not found (ARM64: may require source build)" \
-                "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
-        else
-            check "stack.ubs" "UBS" "fail" "not found"
-        fi
+        check "stack.ubs" "UBS" "fail" "not found" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
     fi
 
     check_command "stack.bv" "Beads Viewer" "bv"
 
-    # CASS - custom check with ARM64 guidance
+    # CASS - custom check
     if command -v cass &>/dev/null; then
         local version
         version=$(get_version_line "cass")
         check "stack.cass" "CASS ($version)" "pass" "installed"
     else
-        if [[ "$is_arm64" == "true" ]]; then
-            check "stack.cass" "CASS" "fail" "not found (ARM64: builds from source, requires nightly Rust)" \
-                "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode"
-        else
-            check "stack.cass" "CASS" "fail" "not found"
-        fi
+        check "stack.cass" "CASS" "fail" "not found" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode"
     fi
 
     check_ntm_cass_compat
