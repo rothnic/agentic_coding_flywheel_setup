@@ -572,8 +572,31 @@ main() {
         exit 1
     fi
 
+    # SAFEGUARD: Reject test-like project names that may leak from test frameworks
+    # This prevents BATS tests from accidentally creating projects in /data/projects
+    if [[ "$project_name" =~ ^test_ ]]; then
+        echo -e "${RED}Error: Project names starting with 'test_' are not allowed${NC}" >&2
+        echo -e "${YELLOW}This safeguard prevents test framework pollution of /data/projects${NC}" >&2
+        echo -e "${YELLOW}If this is intentional, use a different naming convention${NC}" >&2
+        exit 1
+    fi
+
+    # SAFEGUARD: Reject names with hex-encoded characters (e.g., -2d, -5f, -3d)
+    # These patterns indicate test framework name encoding that leaked into production
+    if [[ "$project_name" =~ -[0-9a-f]{2} ]]; then
+        echo -e "${RED}Error: Project name contains hex-encoded characters (e.g., -2d, -5f)${NC}" >&2
+        echo -e "${YELLOW}This pattern suggests a test framework encoding leak${NC}" >&2
+        exit 1
+    fi
+
     # Set default directory
-    if [[ -z "$project_dir" ]]; then
+    # SAFEGUARD: When running in test environment, ALWAYS use /tmp to prevent pollution
+    if [[ -n "${BATS_TEST_NAME:-}" || -n "${ACFS_TEST_MODE:-}" ]]; then
+        if [[ -z "$project_dir" ]]; then
+            project_dir="/tmp/acfs-test-$$/$project_name"
+            echo -e "${YELLOW}Test mode detected: redirecting to $project_dir${NC}" >&2
+        fi
+    elif [[ -z "$project_dir" ]]; then
         project_dir="/data/projects/$project_name"
     fi
 
