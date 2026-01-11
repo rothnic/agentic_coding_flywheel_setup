@@ -213,16 +213,16 @@ get_current() {
     fi
 }
 
-# Get the next recommended lesson index (first incomplete, 0-8).
+# Get the next recommended lesson index (first incomplete, 0-10).
 get_next_incomplete() {
     local i
-    for i in {0..8}; do
+    for i in {0..10}; do
         if ! is_completed "$i"; then
             echo "$i"
             return 0
         fi
     done
-    echo "8"
+    echo "10"
 }
 
 # Mark a lesson as completed
@@ -243,7 +243,7 @@ mark_completed() {
             .completed = (.completed + [$lesson] | unique | sort) |
             . as $o |
             .current = (
-                [range(0;9) as $i | select(($o.completed | index($i)) == null) | $i] | first // 8
+                [range(0;11) as $i | select(($o.completed | index($i)) == null) | $i] | first // 10
             ) |
             .last_accessed = (now | todateiso8601)
         ' "$PROGRESS_FILE" > "$tmp"; then
@@ -643,12 +643,12 @@ show_auth_service() {
 # Returns: completed_count|total|percent|est_minutes_remaining
 calc_progress_stats() {
     local completed_count=0
-    for i in {0..8}; do
+    for i in {0..10}; do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
     done
-    local total=9
+    local total=11
     local percent=$((completed_count * 100 / total))
     local remaining=$((total - completed_count))
     local est_minutes=$((remaining * 5))  # ~5 min per lesson average
@@ -748,7 +748,7 @@ show_menu_gum() {
 
     # Build menu items with styled status indicators
     local -a items=()
-    for i in {0..8}; do
+    for i in {0..10}; do
         local status=""
         if is_completed "$i"; then
             status="✓"
@@ -765,7 +765,7 @@ show_menu_gum() {
     items+=("📊 [s] Show status")
     # Show certificate option only when all lessons complete
     local all_complete=true
-    for i in {0..8}; do
+    for i in {0..10}; do
         is_completed "$i" || { all_complete=false; break; }
     done
     if [[ "$all_complete" == "true" ]]; then

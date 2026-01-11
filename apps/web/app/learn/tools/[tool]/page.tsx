@@ -437,6 +437,40 @@ export default function ToolCardPage({ params }: Props) {
                 </motion.div>
               )}
 
+              {doc.id === "dcg" && (
+                <motion.div
+                  className="mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.65 }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldAlert className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
+                      Uninstallation
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.08] bg-black/40 p-4 text-sm text-white/70">
+                    <p className="mb-4">
+                      Remove the hook only, or fully purge DCG from your system.
+                      You can re-enable it anytime with{" "}
+                      <span className="font-mono text-white/90">dcg install</span>.
+                    </p>
+                    <pre className="rounded-lg border border-white/[0.08] bg-black/60 p-3 text-xs font-mono text-white/90 whitespace-pre">
+{`# Remove hook only
+dcg uninstall
+
+# Full removal (hook + binary + config)
+dcg uninstall --purge
+
+# Verify removal
+dcg doctor
+claude /hooks`}
+                    </pre>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Related Tools */}
               {doc.relatedTools.length > 0 && (
                 <motion.div

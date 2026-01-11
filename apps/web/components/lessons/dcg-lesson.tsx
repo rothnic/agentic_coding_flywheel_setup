@@ -132,6 +132,10 @@ $ dcg test "git reset --hard" --explain
               description: "Register the Claude Code hook",
             },
             {
+              command: "dcg uninstall",
+              description: "Remove the hook (use --purge for full removal)",
+            },
+            {
               command: "dcg allow-once <code>",
               description: "Bypass for a single approved command",
             },
@@ -141,6 +145,40 @@ $ dcg test "git reset --hard" --explain
             },
           ]}
         />
+      </Section>
+
+      <Divider />
+
+      <Section
+        title="Uninstalling DCG"
+        icon={<ShieldAlert className="h-5 w-5" />}
+        delay={0.23}
+      >
+        <Paragraph>
+          If you need to remove DCG, you can uninstall the hook and optionally
+          purge the binary and config. You can always re-enable it later with{" "}
+          <Highlight>dcg install</Highlight>.
+        </Paragraph>
+
+        <div className="mt-6">
+          <CodeBlock
+            code={`# Remove hook only (keeps dcg installed)
+$ dcg uninstall
+
+# Full removal (hook + binary + config)
+$ dcg uninstall --purge
+
+# Verify removal
+$ dcg doctor
+$ claude /hooks`}
+            language="bash"
+          />
+        </div>
+
+        <TipBox variant="info">
+          If you still want command safety but fewer blocks, prefer adjusting
+          packs instead of uninstalling.
+        </TipBox>
       </Section>
 
       <Divider />
