@@ -292,9 +292,10 @@ export const springs = {
  * Stagger animation helper - calculates delay for list item animations
  * @param index - The index of the item in the list
  * @param baseDelay - Base delay between items (default 0.1s)
+ * @param maxDelay - Maximum delay cap to prevent excessive delays in long lists (default 0.5s)
  */
-export function staggerDelay(index: number, baseDelay = 0.1): number {
-  return index * baseDelay;
+export function staggerDelay(index: number, baseDelay = 0.1, maxDelay = 0.5): number {
+  return Math.min(index * baseDelay, maxDelay);
 }
 
 /**
