@@ -1785,7 +1785,10 @@ acfs_chown_tree() {
     fi
 
     # GNU coreutils: -h = do not dereference symlinks; -R = recursive.
-    $SUDO chown -hR "$owner_group" "$resolved"
+    if ! $SUDO chown -hR "$owner_group" "$resolved"; then
+        log_error "acfs_chown_tree: chown failed for $resolved"
+        return 1
+    fi
 }
 
 confirm_or_exit() {
