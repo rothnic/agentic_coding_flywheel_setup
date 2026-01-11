@@ -7,6 +7,7 @@ import { m, type HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { springs } from "@/components/motion";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 
 /**
  * Button variants with Apple HIG compliant sizing:
@@ -91,6 +92,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const isDisabled = disabled || loading;
+    const prefersReducedMotion = useReducedMotion();
+    const shouldDisableMotion = disableMotion || prefersReducedMotion;
 
     // Loading spinner component
     const LoadingSpinner = () => (
@@ -123,8 +126,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
-    // For link variant or disableMotion, render without animations
-    if (variant === "link" || disableMotion) {
+    // For link variant or when motion should be disabled, render without animations
+    // This respects both the explicit disableMotion prop and user's reduced motion preference
+    if (variant === "link" || shouldDisableMotion) {
       return (
         <button
           type="button"
