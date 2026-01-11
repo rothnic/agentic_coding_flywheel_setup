@@ -13,6 +13,7 @@ VERBOSE="${1:-}"
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 pass() { echo "[$(date '+%H:%M:%S')] [PASS] $*"; }
 fail() { echo "[$(date '+%H:%M:%S')] [FAIL] $*"; return 1; }
+skip() { echo "[$(date '+%H:%M:%S')] [SKIP] $*"; }
 detail() { [[ "$VERBOSE" == "--verbose" ]] && echo "  -> $*" >&2 || true; }
 
 # ============================================================
@@ -393,8 +394,8 @@ test_allow_once_code_extraction() {
     short_code=$(echo "$hook_output" | grep -oE '[A-Z]{3,4}-[A-Z0-9]{3,4}' | head -1)
 
     if [[ -z "$short_code" ]]; then
-        # Try alternative patterns
-        short_code=$(echo "$hook_output" | grep -oE 'code[:\s]*([a-zA-Z0-9-]+)' | head -1 | sed 's/.*code[:\s]*//')
+        # Try alternative patterns (note: [: ] for colon or space, not \s)
+        short_code=$(echo "$hook_output" | grep -oE 'code[: ]*[a-zA-Z0-9-]+' | head -1 | sed 's/.*code[: ]*//')
     fi
 
     if [[ -z "$short_code" ]]; then

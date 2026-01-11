@@ -347,7 +347,6 @@ main() {
 
     local passed=0
     local failed=0
-    local skipped=0
 
     # Run tests
     echo ">> Testing tool availability:"
