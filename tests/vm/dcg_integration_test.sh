@@ -40,17 +40,17 @@ test_dcg_binary_installed() {
 test_dcg_hook_registered() {
     harness_subsection "Testing DCG hook registration..."
 
-    # Check via dcg doctor
+    # Check via dcg doctor (uses text output since --format json isn't fully supported)
     local doctor_output
-    doctor_output=$(dcg doctor --format json 2>/dev/null) || true
+    doctor_output=$(dcg doctor 2>&1) || true
 
-    if echo "$doctor_output" | grep -q '"hook_registered":true'; then
+    if echo "$doctor_output" | grep -q "hook wiring.*OK"; then
         harness_pass "DCG hook is registered"
         return 0
     else
         harness_fail "DCG hook is NOT registered"
         harness_info "dcg doctor output:"
-        dcg doctor 2>&1 | while read -r line; do harness_info "  $line"; done || true
+        echo "$doctor_output" | while read -r line; do harness_info "  $line"; done || true
         return 1
     fi
 }

@@ -13,7 +13,6 @@ NC='\033[0m'
 pass() { echo -e "${GREEN}[PASS]${NC} $1"; }
 fail() { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
 skip() { echo -e "${YELLOW}[SKIP]${NC} $1 (skipped)"; }
-info() { echo -e "  $1"; }
 
 echo "============================================================"
 echo "  DCG Smoke Test"

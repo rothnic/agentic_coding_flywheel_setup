@@ -660,7 +660,26 @@ configure_dcg() {
 
     if [[ -z "$dcg_bin" || ! -x "$dcg_bin" ]]; then
         gum_error "DCG not installed. Run the main installer first."
+        gum_detail "Then run: dcg install (or re-run acfs services-setup)"
         return 1
+    fi
+
+    if [[ "$SERVICES_SETUP_NONINTERACTIVE" != "true" ]]; then
+        gum_box "DCG Safety Primer" "DCG (Destructive Command Guard) blocks dangerous commands before they run.
+
+Examples it will block:
+  • git reset --hard
+  • rm -rf ./src
+  • DROP TABLE users
+
+When blocked, you'll see:
+  • Why it matched
+  • A safer alternative
+  • An allow-once code for legit bypasses
+
+Try it:
+  dcg test 'git status'
+  dcg test 'git reset --hard' --explain"
     fi
 
     gum_box "DCG Setup" "DCG blocks destructive git/filesystem commands before they execute.
@@ -678,6 +697,7 @@ It also supports optional protection packs (database, Kubernetes, cloud)."
                     run_as_user "$dcg_bin" install || gum_warn "DCG hook registration failed"
                 else
                     gum_warn "Skipped DCG hook registration"
+                    gum_detail "You can enable later with: dcg install"
                 fi
             fi
         fi

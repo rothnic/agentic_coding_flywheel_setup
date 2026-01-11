@@ -3545,8 +3545,14 @@ install_stack_phase() {
     if binary_installed "dcg"; then
         log_detail "DCG already installed"
     else
-        log_detail "Installing DCG"
-        try_step "Installing DCG" acfs_run_verified_upstream_script_as_target "dcg" "bash" || log_warn "DCG installation may have failed"
+        log_info "Installing DCG (Destructive Command Guard)..."
+        log_detail "DCG blocks destructive git/fs commands before they run"
+        if try_step "Installing DCG" acfs_run_verified_upstream_script_as_target "dcg" "bash"; then
+            log_success "DCG installed. Run 'dcg doctor' to verify."
+        else
+            log_warn "DCG installation may have failed"
+            log_detail "Recovery: re-run the installer or run the DCG installer manually, then run: dcg install"
+        fi
     fi
 
     # Best-effort hook registration (Claude Code)
@@ -3560,9 +3566,15 @@ install_stack_phase() {
     fi
 
     if [[ -n "$dcg_bin" ]]; then
-        try_step "Registering DCG hook" run_as_target "$dcg_bin" install || log_warn "DCG hook registration failed"
+        if try_step "Registering DCG hook" run_as_target "$dcg_bin" install; then
+            log_success "DCG hook registered with Claude Code"
+        else
+            log_warn "DCG hook registration failed"
+            log_detail "Next steps: run: dcg install and check with: dcg doctor"
+        fi
     else
         log_warn "DCG hook not registered (dcg binary not found in standard paths)"
+        log_detail "Install DCG first, then run: dcg install"
     fi
 
     log_success "Dicklesworthstone stack installed"

@@ -228,6 +228,8 @@ jobs:
           su - ubuntu -c "zsh -ic 'cm --help'"
           su - ubuntu -c "zsh -ic 'caam --help'"
           su - ubuntu -c "zsh -ic 'slb --help'"
+          su - ubuntu -c "zsh -ic 'dcg --version'"
+          su - ubuntu -c "zsh -ic 'dcg doctor'"
           su - ubuntu -c "zsh -ic 'onboard --help'"
           su - ubuntu -c "zsh -ic 'claude --version'"
           su - ubuntu -c "zsh -ic 'codex --version'"
