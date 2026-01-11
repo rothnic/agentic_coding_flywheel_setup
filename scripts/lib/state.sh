@@ -487,13 +487,19 @@ state_phase_start() {
         new_state=$(echo "$state" | jq --arg phase "$phase_id" --arg step "$step" --argjson start "$start_time" '
             .current_phase = $phase |
             .current_step = $step |
-            .phase_start_time = $start
+            .phase_start_time = $start |
+            .failed_phase = null |
+            .failed_step = null |
+            .failed_error = null
         ') || return 1
     else
         new_state=$(echo "$state" | jq --arg phase "$phase_id" --argjson start "$start_time" '
             .current_phase = $phase |
             .current_step = null |
-            .phase_start_time = $start
+            .phase_start_time = $start |
+            .failed_phase = null |
+            .failed_step = null |
+            .failed_error = null
         ') || return 1
     fi
 

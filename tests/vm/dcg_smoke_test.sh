@@ -47,7 +47,7 @@ else
     pass "dcg doctor completed (some checks may need attention)"
 fi
 # Check hook registration status
-if echo "$doctor_output" | grep -q "hook wiring.*OK"; then
+if echo "$doctor_output" | grep -qi "hook wiring.*OK"; then
     pass "Hook is registered"
 else
     skip "Hook not registered (run 'dcg install' to register)"
@@ -93,7 +93,7 @@ fi
 
 # Re-check hook status after install
 doctor_output=$(dcg doctor 2>&1) || true
-if echo "$doctor_output" | grep -q "hook wiring.*OK"; then
+if echo "$doctor_output" | grep -qi "hook wiring.*OK"; then
     pass "Hook registered after dcg install"
 else
     fail "Hook not registered after dcg install"
