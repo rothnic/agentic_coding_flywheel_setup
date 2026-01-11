@@ -196,14 +196,20 @@ ubuntu_get_next_upgrade() {
     output=$(do-release-upgrade -c 2>&1) || true
 
     # Parse output for version info
-    # Output looks like: "New release '24.10' available."
-    # Use -o to only output the matching part, then extract version
+    # Output examples:
+    #   "New release '24.10' available."
+    #   "New release '24.04.1 LTS' available."
+    # Extract the first major.minor pair inside the quotes.
     local release_line
-    release_line=$(echo "$output" | grep -oE "New release '[0-9]+\.[0-9]+' available" | head -n 1)
-    
+    release_line=$(echo "$output" | grep -oE "New release '[^']+' available" | head -n 1)
+
     if [[ -n "$release_line" ]]; then
-        echo "$release_line" | grep -oE "[0-9]+\.[0-9]+" | head -n 1
-        return 0
+        local version
+        version=$(echo "$release_line" | grep -oE "[0-9]+\.[0-9]+" | head -n 1)
+        if [[ -n "$version" ]]; then
+            echo "$version"
+            return 0
+        fi
     fi
 
     # No upgrade available
