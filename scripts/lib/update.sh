@@ -1560,18 +1560,6 @@ EOF
 }
 
 main() {
-    # Guard against running as root (unless ACFS is actually installed in /root)
-    if [[ $EUID -eq 0 ]] && [[ "${HOME}" != "/root" ]]; then
-        echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
-        echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
-        if [[ "$YES_MODE" != "true" ]]; then
-            read -r -p "Continue anyway? [y/N] " response
-            if [[ ! "$response" =~ ^[Yy] ]]; then
-                exit 1
-            fi
-        fi
-    fi
-
     # Ensure PATH includes user tool directories
     ensure_path
 
@@ -1686,6 +1674,19 @@ main() {
                 ;;
         esac
     done
+
+    # Guard against running as root (unless ACFS is actually installed in /root)
+    # This check is placed after argument parsing so --yes works correctly
+    if [[ $EUID -eq 0 ]] && [[ "${HOME}" != "/root" ]]; then
+        echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
+        echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
+        if [[ "$YES_MODE" != "true" ]]; then
+            read -r -p "Continue anyway? [y/N] " response
+            if [[ ! "$response" =~ ^[Yy] ]]; then
+                exit 1
+            fi
+        fi
+    fi
 
     # Initialize logging
     init_logging
