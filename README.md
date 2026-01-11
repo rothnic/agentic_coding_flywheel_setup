@@ -2150,7 +2150,7 @@ triggers:
 5. **Alert**: For non-trusted tools, creates GitHub issue for manual review
 
 **Trusted Tools (Auto-Update Enabled):**
-- Dicklesworthstone stack tools (ntm, cass, cm, ubs, slb, caam, bv, agent-mail)
+- Dicklesworthstone stack tools (ntm, cass, cm, ubs, slb, dcg, caam, bv, agent-mail, ru)
 - These are maintained by the same author, so upstream changes are implicitly trusted
 
 **Non-Trusted Tools (Manual Review Required):**
