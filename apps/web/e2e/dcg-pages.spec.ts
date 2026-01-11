@@ -132,6 +132,21 @@ test.describe.serial("DCG Website Pages", () => {
       await expect(dcgEntry).toBeVisible();
     });
 
+    test("DCG glossary entry expands definition", async ({ page }) => {
+      await page.goto("/learn/glossary");
+      await page.waitForLoadState("networkidle");
+
+      const dcgCard = page.locator("#dcg");
+      await expect(dcgCard).toBeVisible();
+
+      const readMore = dcgCard.getByRole("button", { name: /read more/i });
+      await readMore.click();
+
+      await expect(
+        dcgCard.getByText(/Destructive Command Guard/i)
+      ).toBeVisible();
+    });
+
     test("glossary page loads without JS errors with DCG entry", async ({
       page,
     }) => {
