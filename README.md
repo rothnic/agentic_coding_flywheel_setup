@@ -1,6 +1,6 @@
 # Agentic Coding Flywheel Setup (ACFS)
 
-![Version](https://img.shields.io/badge/Version-0.2.0-bd93f9?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-0.5.0-bd93f9?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Ubuntu%2025.10-6272a4?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-50fa7b?style=for-the-badge)
 ![Shell](https://img.shields.io/badge/Shell-Bash-ff79c6?style=for-the-badge)
@@ -33,8 +33,8 @@ The installer is **idempotent**—if interrupted, simply re-run it. It will auto
 
 > **Production environments:** For stable, reproducible installs, pin to a tagged release or specific commit:
 > ```bash
-> # Preferred: use a tagged release (e.g., v0.1.0)
-> ACFS_REF=v0.1.0 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/v0.1.0/install.sh" | bash -s -- --yes --mode vibe
+> # Preferred: use a tagged release (e.g., v0.5.0)
+> ACFS_REF=v0.5.0 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/v0.5.0/install.sh" | bash -s -- --yes --mode vibe
 >
 > # Alternative: pin to a specific commit SHA
 > ACFS_REF=abc1234 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/abc1234/install.sh" | bash -s -- --yes --mode vibe
@@ -1057,7 +1057,7 @@ Each lesson includes:
 
 ## Interactive Onboarding (TUI)
 
-After installation, users can learn the ACFS workflow through an interactive terminal-based tutorial. The onboarding TUI guides users through 9 lessons covering Linux basics through full agentic workflows.
+After installation, users can learn the ACFS workflow through an interactive terminal-based tutorial. The onboarding TUI guides users through 11 lessons covering Linux basics through full agentic workflows.
 
 ### Running Onboarding
 
@@ -1081,6 +1081,8 @@ onboard --reset        # Reset progress and start fresh
 | 6 | NTM Prompt Palette | 5 min | Command palette features |
 | 7 | Flywheel Loop | 8 min | Complete agentic workflow |
 | 8 | Keeping Updated | 4 min | Using `acfs-update`, troubleshooting |
+| 9 | RU: Multi-Repo Mastery | 6 min | Multi-repo sync, agent-sweep, parallel workflows |
+| 10 | DCG: Destructive Command Guard | 5 min | Command safety, protection packs, allow-once workflow |
 
 ### Progress Tracking
 
@@ -2382,7 +2384,7 @@ agentic_coding_flywheel_setup/
 │   │   └── tmux.conf             # Tmux configuration
 │   └── onboard/
 │       ├── onboard.sh            # Onboarding TUI script
-│       └── lessons/              # Tutorial markdown (8 files)
+│       └── lessons/              # Tutorial markdown (11 files)
 │
 ├── scripts/
 │   ├── lib/                      # Installer bash libraries
