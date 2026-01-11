@@ -88,6 +88,71 @@ test_hook_blocks_git_reset_hard() {
     fi
 }
 
+test_hook_blocks_git_checkout_discard() {
+    log "Testing hook blocks: git checkout -- <files>"
+    local result
+    result=$(simulate_hook_call "git checkout -- README.md")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git checkout -- is blocked by hook"
+        return 0
+    else
+        fail "git checkout -- was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_blocks_git_restore() {
+    log "Testing hook blocks: git restore <files>"
+    local result
+    result=$(simulate_hook_call "git restore README.md")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git restore is blocked by hook"
+        return 0
+    else
+        fail "git restore was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_blocks_git_branch_delete_force() {
+    log "Testing hook blocks: git branch -D"
+    local result
+    result=$(simulate_hook_call "git branch -D feature/test")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git branch -D is blocked by hook"
+        return 0
+    else
+        fail "git branch -D was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_blocks_git_stash_drop() {
+    log "Testing hook blocks: git stash drop"
+    local result
+    result=$(simulate_hook_call "git stash drop")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git stash drop is blocked by hook"
+        return 0
+    else
+        fail "git stash drop was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_blocks_git_stash_clear() {
+    log "Testing hook blocks: git stash clear"
+    local result
+    result=$(simulate_hook_call "git stash clear")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git stash clear is blocked by hook"
+        return 0
+    else
+        fail "git stash clear was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
 assert_deny_message_quality() {
     local message="$1"
 
@@ -160,6 +225,58 @@ test_hook_allows_git_status() {
     fi
 }
 
+test_hook_allows_git_checkout_branch() {
+    log "Testing hook allows: git checkout -b"
+    local result
+    result=$(simulate_hook_call "git checkout -b feature/test")
+    if [[ "$result" == "ALLOWED" ]]; then
+        pass "git checkout -b is allowed by hook"
+        return 0
+    else
+        fail "git checkout -b was incorrectly blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_allows_git_restore_staged() {
+    log "Testing hook allows: git restore --staged"
+    local result
+    result=$(simulate_hook_call "git restore --staged README.md")
+    if [[ "$result" == "ALLOWED" ]]; then
+        pass "git restore --staged is allowed by hook"
+        return 0
+    else
+        fail "git restore --staged was incorrectly blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_allows_git_clean_dry_run() {
+    log "Testing hook allows: git clean -n"
+    local result
+    result=$(simulate_hook_call "git clean -n")
+    if [[ "$result" == "ALLOWED" ]]; then
+        pass "git clean -n is allowed by hook"
+        return 0
+    else
+        fail "git clean -n was incorrectly blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_allows_git_push_force_with_lease() {
+    log "Testing hook allows: git push --force-with-lease"
+    local result
+    result=$(simulate_hook_call "git push --force-with-lease origin main")
+    if [[ "$result" == "ALLOWED" ]]; then
+        pass "git push --force-with-lease is allowed by hook"
+        return 0
+    else
+        fail "git push --force-with-lease was incorrectly blocked (result: $result)"
+        return 1
+    fi
+}
+
 test_hook_allows_rm_rf_tmp() {
     log "Testing hook allows: rm -rf /tmp/test"
     local result
@@ -182,6 +299,19 @@ test_hook_blocks_git_push_force() {
         return 0
     else
         fail "git push --force was NOT blocked (result: $result)"
+        return 1
+    fi
+}
+
+test_hook_blocks_git_push_f_short() {
+    log "Testing hook blocks: git push -f (short form)"
+    local result
+    result=$(simulate_hook_call "git push -f origin main")
+    if [[ "$result" == "DENIED" ]]; then
+        pass "git push -f is blocked by hook"
+        return 0
+    else
+        fail "git push -f was NOT blocked (result: $result)"
         return 1
     fi
 }
@@ -216,6 +346,11 @@ main() {
     # Dangerous commands that SHOULD be blocked
     echo ">> Testing dangerous commands (should be BLOCKED):"
     test_hook_blocks_git_reset_hard && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_blocks_git_checkout_discard && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_blocks_git_restore && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_blocks_git_branch_delete_force && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_blocks_git_stash_drop && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_blocks_git_stash_clear && passed=$((passed + 1)) || failed=$((failed + 1))
     test_deny_message_quality && passed=$((passed + 1)) || failed=$((failed + 1))
     test_hook_blocks_rm_rf && passed=$((passed + 1)) || failed=$((failed + 1))
     test_hook_blocks_git_push_force && passed=$((passed + 1)) || failed=$((failed + 1))
@@ -226,6 +361,10 @@ main() {
     # Safe commands that should be allowed
     echo ">> Testing safe commands (should be ALLOWED):"
     test_hook_allows_git_status && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_allows_git_checkout_branch && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_allows_git_restore_staged && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_allows_git_clean_dry_run && passed=$((passed + 1)) || failed=$((failed + 1))
+    test_hook_allows_git_push_force_with_lease && passed=$((passed + 1)) || failed=$((failed + 1))
     test_hook_allows_rm_rf_tmp && passed=$((passed + 1)) || failed=$((failed + 1))
 
     echo ""
