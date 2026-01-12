@@ -126,6 +126,7 @@ declare -gA KNOWN_INSTALLERS=(
     [cm]="https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"
     [caam]="https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
     [slb]="https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
+    [opencode]="https://opencode.ai/install"
 )
 
 # ============================================================
