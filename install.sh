@@ -44,7 +44,7 @@ export DEBCONF_NONINTERACTIVE_SEEN=true
 # Configuration
 # ============================================================
 ACFS_VERSION="0.1.0"
-ACFS_REPO_OWNER="Dicklesworthstone"
+ACFS_REPO_OWNER="${ACFS_REPO_OWNER:-Dicklesworthstone}"
 ACFS_REPO_NAME="agentic_coding_flywheel_setup"
 ACFS_REF="${ACFS_REF:-main}"
 ACFS_RAW="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${ACFS_REF}"
