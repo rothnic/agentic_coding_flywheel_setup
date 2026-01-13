@@ -558,6 +558,34 @@ modules:
       - "Uses native installer with built-in 'claude update' command"
       - "Binary installed to ~/.local/bin/claude"
 
+  - id: agents.opencode
+    description: OpenCode CLI
+    category: agents
+    phase: 7
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    tags: [recommended, agent]
+    dependencies:
+      - base.system
+    installed_check:
+      run_as: target_user
+      command: "test -x ~/.local/bin/opencode"
+    verified_installer:
+      tool: opencode
+      runner: bash
+      args: ["--", "--no-modify-path"]
+    install:
+      - |
+        # Link opencode to ~/.local/bin
+        mkdir -p ~/.local/bin
+        ln -sf ~/.opencode/bin/opencode ~/.local/bin/opencode
+    verify:
+      - ~/.local/bin/opencode --version || ~/.local/bin/opencode --help
+    notes:
+      - "Uses native installer with --no-modify-path to avoid RC file changes"
+      - "Manually linked to ~/.local/bin/opencode"
+
   - id: agents.codex
     description: OpenAI Codex CLI
     category: agents

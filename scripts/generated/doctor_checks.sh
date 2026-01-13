@@ -135,6 +135,7 @@ declare -a MANIFEST_CHECKS=(
     "tools.zoxide	Zoxide (better cd)	command -v zoxide	required"
     "tools.ast_grep	ast-grep (used by UBS for syntax-aware scanning)	sg --version	required"
     "agents.claude	Claude Code	~/.local/bin/claude --version || ~/.local/bin/claude --help	required"
+    "agents.opencode	OpenCode CLI	~/.local/bin/opencode --version || ~/.local/bin/opencode --help	required"
     "agents.codex	OpenAI Codex CLI	~/.local/bin/codex --version || ~/.local/bin/codex --help	required"
     "agents.gemini	Google Gemini CLI	~/.local/bin/gemini --version || ~/.local/bin/gemini --help	required"
     "tools.vault	HashiCorp Vault CLI	vault --version	required"

@@ -1,4 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "ACFS Claude Code base settings. DCG hooks are registered separately via 'dcg install'."
+  "$comment": "ACFS Claude Code settings with git safety guard hook",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/git_safety_guard.py"
+          }
+        ]
+      }
+    ]
+  }
 }
