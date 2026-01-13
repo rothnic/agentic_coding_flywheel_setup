@@ -98,8 +98,9 @@ printf '%s\n' "" \
   "  WINDOWS (Ctrl-b + number):" \
   "    0:welcome  - This instructions window" \
   "    1:claude   - Claude Code (Anthropic)" \
-  "    2:codex    - Codex CLI (OpenAI)" \
-  "    3:gemini   - Gemini CLI (Google)" \
+  "    2:opencode - OpenCode (Open Source)" \
+  "    3:codex    - Codex CLI (OpenAI)" \
+  "    4:gemini   - Gemini CLI (Google)" \
   "" \
   "  TMUX BASICS:" \
   "    Ctrl-b d        - Detach (keep session running)" \
@@ -109,6 +110,7 @@ printf '%s\n' "" \
   "" \
   "  START AN AGENT:" \
   "    claude          - Start Claude Code" \
+  "    opencode        - Start OpenCode" \
   "    codex           - Start Codex CLI" \
   "    gemini          - Start Gemini CLI" \
   "" \
@@ -133,6 +135,7 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
 
   # Add agent windows
   tmux new-window -t "$SESSION_NAME" -n "claude" -c /data/projects/my_first_project
+  tmux new-window -t "$SESSION_NAME" -n "opencode" -c /data/projects/my_first_project
   tmux new-window -t "$SESSION_NAME" -n "codex" -c /data/projects/my_first_project
   tmux new-window -t "$SESSION_NAME" -n "gemini" -c /data/projects/my_first_project
 

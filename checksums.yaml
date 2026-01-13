@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2025-12-25T08:05:45+00:00
+# checksums.yaml - Auto-generated 2026-01-12T20:07:04+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -8,15 +8,15 @@ installers:
 
   cass:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    sha256: "1545a3b7f028007e68eccb84b3e7dcd0e44ab2f21b5c078b7302b6683ed939e9"
+    sha256: "b40361a3eedb0968edeb4b31de90e4a6636cc8e83ad5ef2b8bfcd6ed7dbce3c3"
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
-    sha256: "e5a183bde1c637e0c14692d6adcc27e81b3adc55f05499434615330fc581c02f"
+    sha256: "9cc8832efa1305221911043a6cc7fe12683e07b56e4fca7a03d3f6081e81a69d"
 
   claude:
     url: "https://claude.ai/install.sh"
-    sha256: "54715810c1e802c8aca39cc867ae9b2ec764574e20f2a653c97ec61bebc07d68"
+    sha256: "363382bed8849f78692bd2f15167a1020e1f23e7da1476ab8808903b6bebae05"
 
   atuin:
     url: "https://setup.atuin.sh"
@@ -28,7 +28,7 @@ installers:
 
   uv:
     url: "https://astral.sh/uv/install.sh"
-    sha256: "e27424708d1ac59cfc94e3f540a111f2edbb37bc8164febce8ee7fa5d5505c71"
+    sha256: "f6e468855afb4e653fa96ed68a7cad0b2534794ece25ec202f6543c589eb04dc"
 
   ntm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
@@ -36,7 +36,7 @@ installers:
 
   cm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"
-    sha256: "c3e5c65b3d61cedb6c983e47a39d69b0b01423f627670eb756d48561a49883fd"
+    sha256: "705b8143db3d7c4dadc99aeb03fd952e6905cb74d8017b7b6a132a1b69bb47af"
 
   caam:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
@@ -44,7 +44,7 @@ installers:
 
   ubs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
-    sha256: "0a2591c9a52ad003a4dcee8f3098af67b122b019a68eb3f03f37cd8021675198"
+    sha256: "20b1f6b6337ac4df6e45af4c0028ecd01313a040f6233f60c7da42d9b8f1aa87"
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
@@ -62,6 +62,11 @@ installers:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
     sha256: "5cc023bfb705b0b4a2d1a335d80da5f59285040182d4d26cca01282752dbde7b"
 
+  opencode:
+    url: "https://opencode.ai/install"
+    sha256: "12eb351c4875b27889ccfa4686cf99eb6815957d287ceab4cfe1107802c48671"
+
   ohmyzsh:
     url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
     sha256: "ce0b7c94aa04d8c7a8137e45fe5c4744e3947871f785fd58117c480c1bf49352"
+

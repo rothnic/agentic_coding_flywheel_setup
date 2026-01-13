@@ -490,6 +490,34 @@ modules:
       - "Uses native installer with built-in 'claude update' command"
       - "Binary installed to ~/.local/bin/claude"
 
+  - id: agents.opencode
+    description: OpenCode CLI
+    category: agents
+    phase: 7
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    tags: [recommended, agent]
+    dependencies:
+      - base.system
+    installed_check:
+      run_as: target_user
+      command: "test -x ~/.local/bin/opencode"
+    verified_installer:
+      tool: opencode
+      runner: bash
+      args: ["--", "--no-modify-path"]
+    install:
+      - |
+        # Link opencode to ~/.local/bin
+        mkdir -p ~/.local/bin
+        ln -sf ~/.opencode/bin/opencode ~/.local/bin/opencode
+    verify:
+      - ~/.local/bin/opencode --version || ~/.local/bin/opencode --help
+    notes:
+      - "Uses native installer with --no-modify-path to avoid RC file changes"
+      - "Manually linked to ~/.local/bin/opencode"
+
   - id: agents.codex
     description: OpenAI Codex CLI
     category: agents
@@ -912,8 +940,9 @@ modules:
           "  WINDOWS (Ctrl-b + number):" \
           "    0:welcome  - This instructions window" \
           "    1:claude   - Claude Code (Anthropic)" \
-          "    2:codex    - Codex CLI (OpenAI)" \
-          "    3:gemini   - Gemini CLI (Google)" \
+          "    2:opencode - OpenCode (Open Source)" \
+          "    3:codex    - Codex CLI (OpenAI)" \
+          "    4:gemini   - Gemini CLI (Google)" \
           "" \
           "  TMUX BASICS:" \
           "    Ctrl-b d        - Detach (keep session running)" \
@@ -923,6 +952,7 @@ modules:
           "" \
           "  START AN AGENT:" \
           "    claude          - Start Claude Code" \
+          "    opencode        - Start OpenCode" \
           "    codex           - Start Codex CLI" \
           "    gemini          - Start Gemini CLI" \
           "" \
@@ -938,6 +968,7 @@ modules:
 
           # Add agent windows
           tmux new-window -t "$SESSION_NAME" -n "claude" -c /data/projects/my_first_project
+          tmux new-window -t "$SESSION_NAME" -n "opencode" -c /data/projects/my_first_project
           tmux new-window -t "$SESSION_NAME" -n "codex" -c /data/projects/my_first_project
           tmux new-window -t "$SESSION_NAME" -n "gemini" -c /data/projects/my_first_project
 

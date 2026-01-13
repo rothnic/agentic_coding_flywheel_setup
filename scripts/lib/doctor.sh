@@ -693,6 +693,7 @@ check_agents() {
     section "Agents"
 
     check_command "agent.claude" "Claude Code" "claude"
+    check_command "agent.opencode" "OpenCode CLI" "opencode" "acfs update --force --agents-only"
     check_command "agent.codex" "Codex CLI" "codex" "bun install -g --trust @openai/codex@latest"
     check_command "agent.gemini" "Gemini CLI" "gemini" "bun install -g --trust @google/gemini-cli@latest"
 
@@ -701,6 +702,12 @@ check_agents() {
         check "agent.alias.cc" "cc alias" "pass"
     else
         check "agent.alias.cc" "cc alias" "warn" "not in zshrc"
+    fi
+
+    if grep -q "^alias oc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+        check "agent.alias.oc" "oc alias" "pass"
+    else
+        check "agent.alias.oc" "oc alias" "warn" "not in zshrc"
     fi
 
     if grep -q "^alias cod=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
@@ -1050,6 +1057,7 @@ run_deep_checks() {
 # Enhanced per bead 325: Check config files, API keys, and low-cost API checks
 deep_check_agent_auth() {
     check_claude_auth
+    check_opencode_auth
     check_codex_auth
     check_gemini_auth
 }
@@ -1084,6 +1092,33 @@ check_claude_auth() {
         # Config exists but system info fails - partial setup
         check "deep.agent.claude_auth" "Claude Code auth" "warn" "config exists, verify failed" "Run: claude to re-authenticate"
     fi
+}
+
+# check_opencode_auth - Thorough OpenCode authentication check
+# Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
+check_opencode_auth() {
+    # Skip if not installed
+    if ! command -v opencode &>/dev/null; then
+        check "deep.agent.opencode_auth" "OpenCode CLI" "warn" "not installed" "acfs update --force --agents-only"
+        return
+    fi
+
+    # Check if binary works
+    if ! opencode --version &>/dev/null; then
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "fail" "binary error" "Reinstall: acfs update --force --agents-only"
+        return
+    fi
+
+    # Check for config file (indicates previous auth)
+    # OpenCode stores config in ~/.opencode/config.json (assumed based on pattern)
+    # If standard is different, this should be updated.
+    local config_file="$HOME/.opencode/config.json"
+    if [[ ! -f "$config_file" ]]; then
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "warn" "no config file" "Run: opencode auth login"
+        return
+    fi
+
+    check "deep.agent.opencode_auth" "OpenCode CLI auth" "pass" "config found"
 }
 
 # check_codex_auth - Thorough Codex CLI authentication check

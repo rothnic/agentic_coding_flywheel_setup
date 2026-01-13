@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="49c8843d2d7976e8ba24bb6f8d5b0888cc84b8e9e0293654b4f6889662004f2e"
+ACFS_MANIFEST_SHA256="8ef3a4182791f20dc881da320c2db01c871ae94847d6daede3da3e40e81587c5"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -25,6 +25,7 @@ ACFS_MODULES_IN_ORDER=(
   "tools.zoxide"
   "tools.ast_grep"
   "agents.claude"
+  "agents.opencode"
   "agents.codex"
   "agents.gemini"
   "tools.vault"
@@ -63,6 +64,7 @@ declare -gA ACFS_MODULE_PHASE=(
   [tools.zoxide]="6"
   [tools.ast_grep]="6"
   [agents.claude]="7"
+  [agents.opencode]="7"
   [agents.codex]="7"
   [agents.gemini]="7"
   [tools.vault]="8"
@@ -101,6 +103,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [tools.zoxide]="base.system"
   [tools.ast_grep]="lang.rust"
   [agents.claude]="base.system"
+  [agents.opencode]="base.system"
   [agents.codex]="lang.bun"
   [agents.gemini]="lang.bun"
   [tools.vault]="base.system"
@@ -139,6 +142,7 @@ declare -gA ACFS_MODULE_FUNC=(
   [tools.zoxide]="install_tools_zoxide"
   [tools.ast_grep]="install_tools_ast_grep"
   [agents.claude]="install_agents_claude"
+  [agents.opencode]="install_agents_opencode"
   [agents.codex]="install_agents_codex"
   [agents.gemini]="install_agents_gemini"
   [tools.vault]="install_tools_vault"
@@ -177,6 +181,7 @@ declare -gA ACFS_MODULE_CATEGORY=(
   [tools.zoxide]="tools"
   [tools.ast_grep]="tools"
   [agents.claude]="agents"
+  [agents.opencode]="agents"
   [agents.codex]="agents"
   [agents.gemini]="agents"
   [tools.vault]="tools"
@@ -215,6 +220,7 @@ declare -gA ACFS_MODULE_TAGS=(
   [tools.zoxide]="recommended,shell-ux"
   [tools.ast_grep]="recommended"
   [agents.claude]="recommended,agent"
+  [agents.opencode]="recommended,agent"
   [agents.codex]="recommended,agent"
   [agents.gemini]="recommended,agent"
   [tools.vault]="optional,cloud"
@@ -253,6 +259,7 @@ declare -gA ACFS_MODULE_DEFAULT=(
   [tools.zoxide]="1"
   [tools.ast_grep]="1"
   [agents.claude]="1"
+  [agents.opencode]="1"
   [agents.codex]="1"
   [agents.gemini]="1"
   [tools.vault]="0"

@@ -112,6 +112,23 @@ export const SERVICES: Service[] = [
     docsUrl: 'https://docs.anthropic.com/',
   },
   {
+    id: 'opencode-cli',
+    name: 'OpenCode CLI',
+    provider: 'OpenCode',
+    logo: '/logos/opencode.svg',
+    category: 'agent',
+    priority: 'strongly-recommended',
+    tier: 'recommended',
+    sortOrder: 3,
+    shortDescription: 'Fully featured AI coding agent',
+    whyNeeded: 'A powerful open-source alternative to Claude Code. Fully featured and terminal-native.',
+    signupUrl: 'https://opencode.ai/',
+    supportsGoogleSso: false, // Assuming for now
+    postInstallCommand: 'opencode',
+    installedByAcfs: true,
+    docsUrl: 'https://opencode.ai/docs',
+  },
+  {
     id: 'codex-cli',
     name: 'Codex CLI',
     provider: 'OpenAI',
