@@ -43,7 +43,7 @@ export DEBCONF_NONINTERACTIVE_SEEN=true
 # ============================================================
 # Configuration
 # ============================================================
-ACFS_VERSION="0.3.0"
+ACFS_VERSION="0.5.0"
 # Allow fork installations by overriding these via environment variables
 ACFS_REPO_OWNER="${ACFS_REPO_OWNER:-Dicklesworthstone}"
 ACFS_REPO_NAME="${ACFS_REPO_NAME:-agentic_coding_flywheel_setup}"
@@ -3448,6 +3448,38 @@ install_stack_phase() {
         fi
     fi
 
+    # Configure NTM with current model defaults (issue #39)
+    # NTM ships with outdated defaults; create config with current recommended models
+    local ntm_config_dir="$TARGET_HOME/.config/ntm"
+    local ntm_config_file="$ntm_config_dir/config.toml"
+    if binary_installed "ntm"; then
+        if [[ ! -f "$ntm_config_file" ]]; then
+            log_detail "Creating NTM config with current model defaults"
+            run_as_target mkdir -p "$ntm_config_dir" || true
+            run_as_target cat > "$ntm_config_file" << 'NTM_CONFIG_EOF'
+# NTM Configuration - created by ACFS
+# Updated model defaults for ChatGPT Pro and Gemini accounts
+
+# Codex model - gpt-5.2-codex with xhigh reasoning (works with ChatGPT Pro)
+default_codex = "gpt-5.2-codex"
+codex_reasoning_effort = "xhigh"
+
+# Gemini model - gemini-3 pro preview
+default_gemini = "gemini-3-pro-preview"
+
+# Claude model - Opus 4.5 (most capable)
+default_claude = "claude-opus-4-5"
+NTM_CONFIG_EOF
+            if [[ $? -eq 0 ]]; then
+                log_success "NTM config created with current model defaults"
+            else
+                log_warn "Failed to create NTM config"
+            fi
+        else
+            log_detail "NTM config already exists, skipping"
+        fi
+    fi
+
     # MCP Agent Mail (check for mcp-agent-mail stub or mcp_agent_mail directory)
     # NOTE: We run this in tmux because the installer starts the server which blocks
     if binary_installed "mcp-agent-mail" || [[ -d "$TARGET_HOME/mcp_agent_mail" ]]; then
@@ -3542,6 +3574,14 @@ install_stack_phase() {
     else
         log_detail "Installing SLB"
         try_step "Installing SLB" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+    fi
+
+    # RU (Repo Updater)
+    if binary_installed "ru"; then
+        log_detail "RU already installed"
+    else
+        log_detail "Installing RU"
+        try_step "Installing RU" acfs_run_verified_upstream_script_as_target "ru" "bash" || log_warn "RU installation may have failed"
     fi
 
     # DCG (Destructive Command Guard)
@@ -4351,6 +4391,22 @@ main() {
         _run_phase_with_report "cloud_db" "7/9 Cloud & DB" install_cloud_db
         _run_phase_with_report "stack" "8/9 Stack" install_stack_phase
         _run_phase_with_report "finalize" "9/9 Finalize" finalize
+
+        # Always update checksums.yaml and VERSION after all phases complete
+        # This ensures resume installs get fresh metadata even if finalize was previously completed
+        # Related: PR #44 - fix checksums.yaml becoming stale on resume installs
+        if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -d "$ACFS_BOOTSTRAP_DIR" ]]; then
+            if [[ -f "$ACFS_BOOTSTRAP_DIR/checksums.yaml" ]]; then
+                log_detail "Ensuring checksums.yaml is up to date"
+                $SUDO cp -f "$ACFS_BOOTSTRAP_DIR/checksums.yaml" "$ACFS_HOME/checksums.yaml" 2>/dev/null || true
+                $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/checksums.yaml" 2>/dev/null || true
+            fi
+            if [[ -f "$ACFS_BOOTSTRAP_DIR/VERSION" ]]; then
+                log_detail "Ensuring VERSION is up to date"
+                $SUDO cp -f "$ACFS_BOOTSTRAP_DIR/VERSION" "$ACFS_HOME/VERSION" 2>/dev/null || true
+                $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/VERSION" 2>/dev/null || true
+            fi
+        fi
 
         # Calculate installation time for success report
         local installation_end_time total_seconds

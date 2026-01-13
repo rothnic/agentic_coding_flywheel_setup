@@ -257,8 +257,9 @@ upgrade_codex_cli() {
 # Gemini CLI Installation (Google)
 # ============================================================
 
-# Configure Gemini CLI settings for tmux/agent compatibility
+# Configure Gemini CLI settings for tmux/agent compatibility and OAuth authentication
 # Sets enableInteractiveShell: false to avoid node-pty issues in tmux panes
+# Sets selectedType: "oauth-personal" for browser-based OAuth (not API key)
 _configure_gemini_settings() {
     local target_home="$1"
     local settings_dir="$target_home/.gemini"
@@ -267,13 +268,14 @@ _configure_gemini_settings() {
     # Create settings directory if needed
     _agent_run_as_user "mkdir -p '$settings_dir'" || return 1
 
-    # If settings file doesn't exist, create it with tmux-compatible defaults
+    # If settings file doesn't exist, create it with tmux-compatible defaults and OAuth auth
     if [[ ! -f "$settings_file" ]]; then
-        log_detail "Creating Gemini settings for tmux compatibility..."
+        log_detail "Creating Gemini settings for tmux compatibility and OAuth auth..."
         # Write default settings - the JSON is simple enough to inline
         # Note: Using double quotes for variable expansion, escaping inner quotes
         _agent_run_as_user "cat > '$settings_file' << 'GEMINI_EOF'
 {
+  \"selectedType\": \"oauth-personal\",
   \"tools\": {
     \"shell\": {
       \"enableInteractiveShell\": false
@@ -286,26 +288,39 @@ GEMINI_EOF"
 
     # Settings file exists - merge our settings if jq is available
     if command -v jq &>/dev/null; then
-        # Check if enableInteractiveShell is already set (use has() to properly detect false values)
-        local current_value
-        current_value=$(_agent_run_as_user "jq -r 'if .tools.shell | has(\"enableInteractiveShell\") then .tools.shell.enableInteractiveShell | tostring else \"unset\" end' '$settings_file'" 2>/dev/null || echo "error")
+        local tmp_file="$settings_dir/.settings.tmp.$$"
+        local needs_update=false
 
-        if [[ "$current_value" == "false" ]]; then
-            # Already configured correctly for tmux
-            log_detail "Gemini shell settings already configured (enableInteractiveShell=false)"
-        elif [[ "$current_value" == "unset" || "$current_value" == "error" || "$current_value" == "true" ]]; then
-            # Need to add or fix the setting
-            log_detail "Configuring Gemini shell settings for tmux compatibility..."
-            local tmp_file="$settings_dir/.settings.tmp.$$"
-            # Run jq and redirect INSIDE the _agent_run_as_user command so file is owned by target user
-            if _agent_run_as_user "jq '.tools = (.tools // {}) | .tools.shell = (.tools.shell // {}) | .tools.shell.enableInteractiveShell = false' '$settings_file' > '$tmp_file' && mv '$tmp_file' '$settings_file'" 2>/dev/null; then
-                : # Success
+        # Check if enableInteractiveShell is already set correctly
+        local shell_value
+        shell_value=$(_agent_run_as_user "jq -r 'if .tools.shell | has(\"enableInteractiveShell\") then .tools.shell.enableInteractiveShell | tostring else \"unset\" end' '$settings_file'" 2>/dev/null || echo "error")
+
+        if [[ "$shell_value" != "false" ]]; then
+            needs_update=true
+        fi
+
+        # Check if selectedType is set to oauth-personal (fix gemini-api-key if found)
+        local auth_value
+        auth_value=$(_agent_run_as_user "jq -r '.selectedType // \"unset\"' '$settings_file'" 2>/dev/null || echo "error")
+
+        if [[ "$auth_value" == "gemini-api-key" ]]; then
+            log_detail "Fixing Gemini auth from API key to OAuth..."
+            needs_update=true
+        elif [[ "$auth_value" == "unset" || "$auth_value" == "error" ]]; then
+            needs_update=true
+        fi
+
+        if [[ "$needs_update" == "true" ]]; then
+            log_detail "Configuring Gemini settings for tmux compatibility and OAuth..."
+            # Update both shell settings and auth type
+            if _agent_run_as_user "jq '.selectedType = \"oauth-personal\" | .tools = (.tools // {}) | .tools.shell = (.tools.shell // {}) | .tools.shell.enableInteractiveShell = false' '$settings_file' > '$tmp_file' && mv '$tmp_file' '$settings_file'" 2>/dev/null; then
+                log_detail "Gemini settings configured (OAuth + tmux compatibility)"
             else
                 _agent_run_as_user "rm -f '$tmp_file'" 2>/dev/null
                 log_warn "Could not update Gemini settings automatically"
             fi
         else
-            log_detail "Gemini shell settings already configured (enableInteractiveShell=$current_value)"
+            log_detail "Gemini settings already configured correctly"
         fi
     else
         log_detail "jq not available; skipping Gemini settings merge"

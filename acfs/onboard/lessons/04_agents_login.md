@@ -23,11 +23,10 @@ The aliases are configured for **maximum power** (vibe mode):
 ### `cc` (Claude Code)
 ```bash
 NODE_OPTIONS="--max-old-space-size=32768" \
-  ENABLE_BACKGROUND_TASKS=1 \
   claude --dangerously-skip-permissions
 ```
 - Extra memory for large projects
-- Background task support
+- Background tasks enabled by default
 - No permission prompts
 
 ### `cod` (Codex CLI)

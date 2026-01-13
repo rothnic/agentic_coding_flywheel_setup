@@ -1221,6 +1221,7 @@ check_codex_auth() {
 # check_gemini_auth - Thorough Gemini CLI authentication check
 # Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
 # Related: bead 325
+# Fixed: Check actual Gemini CLI credential files (mcp-oauth-tokens-v2.json, google_accounts.json)
 check_gemini_auth() {
     # Skip if not installed
     if ! command -v gemini &>/dev/null; then
@@ -1236,10 +1237,20 @@ check_gemini_auth() {
 
     # Gemini CLI uses OAuth web login (like Claude Code and Codex CLI)
     # Users authenticate via `gemini` command which opens browser login
-    # Credentials are stored in config files, NOT via API keys
+    # Credentials are stored in ~/.gemini/ directory
     local found_auth=false
 
-    # Check for Gemini CLI credentials
+    # Check for actual Gemini CLI OAuth tokens (primary auth method)
+    if [[ -f "$HOME/.gemini/mcp-oauth-tokens-v2.json" ]]; then
+        found_auth=true
+    fi
+
+    # Check for Google accounts file (secondary auth evidence)
+    if [[ -f "$HOME/.gemini/google_accounts.json" ]]; then
+        found_auth=true
+    fi
+
+    # Fallback checks for other potential credential locations
     if [[ -f "$HOME/.config/gemini/credentials.json" ]]; then
         found_auth=true
     fi
@@ -1298,7 +1309,7 @@ check_postgres_connection() {
 # Related: bead azw
 # Fixed: Try current user first before postgres user (pg_roles is readable by any authenticated user)
 # Fixed: Provide actionable fix message (createuser, not systemctl status)
-# Fixed: Use parameterized queries to prevent SQL injection (ACFS_TARGET_USER is passed via -v)
+# Fixed: Use bash variable substitution with validated input (:'var' syntax is unreliable across psql versions)
 check_postgres_role() {
     # Skip if not installed
     if ! command -v psql &>/dev/null; then
@@ -1319,20 +1330,20 @@ check_postgres_role() {
 
     # Try to check if target user role exists
     # pg_roles view is readable by any authenticated user - no superuser required
-    # SECURITY: Use psql -v to pass variable and :'var' syntax for safe interpolation
+    # SECURITY: target_user is validated above with regex, safe for bash substitution
     local role_check
     local connect_success=false
-    local sql_query="SELECT 1 FROM pg_roles WHERE rolname=:'target_user'"
+    local sql_query="SELECT 1 FROM pg_roles WHERE rolname='$target_user'"
 
     # Try connecting as current user first (mirrors check_postgres_connection behavior)
     # This works when pg_hba.conf allows peer auth for local users
-    if role_check=$(timeout 5 psql -w -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    if role_check=$(timeout 5 psql -w -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     # Try localhost with postgres user as fallback
-    elif role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    elif role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     # Try unix socket with postgres user as last resort
-    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     fi
 
