@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="f5b10215c1a29feedffaab56012c6d1b773ce24381a3d7b192a4a37d287735fd"
+ACFS_MANIFEST_SHA256="9d4f75f84e16be9ff50ae672d9ae07cbbe874672a882c9728f7af2767b35b29a"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -50,6 +50,7 @@ ACFS_MODULES_IN_ORDER=(
   "acfs.onboard"
   "acfs.update"
   "acfs.doctor"
+  "acfs.utilities"
 )
 
 declare -gA ACFS_MODULE_PHASE=(
@@ -94,6 +95,7 @@ declare -gA ACFS_MODULE_PHASE=(
   [acfs.onboard]="10"
   [acfs.update]="10"
   [acfs.doctor]="10"
+  [acfs.utilities]="10"
 )
 
 declare -gA ACFS_MODULE_DEPS=(
@@ -138,6 +140,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [acfs.onboard]=""
   [acfs.update]=""
   [acfs.doctor]=""
+  [acfs.utilities]="agents.opencode"
 )
 
 declare -gA ACFS_MODULE_FUNC=(
@@ -182,6 +185,7 @@ declare -gA ACFS_MODULE_FUNC=(
   [acfs.onboard]="install_acfs_onboard"
   [acfs.update]="install_acfs_update"
   [acfs.doctor]="install_acfs_doctor"
+  [acfs.utilities]="install_acfs_utilities"
 )
 
 declare -gA ACFS_MODULE_CATEGORY=(
@@ -226,6 +230,7 @@ declare -gA ACFS_MODULE_CATEGORY=(
   [acfs.onboard]="acfs"
   [acfs.update]="acfs"
   [acfs.doctor]="acfs"
+  [acfs.utilities]="acfs"
 )
 
 declare -gA ACFS_MODULE_TAGS=(
@@ -270,6 +275,7 @@ declare -gA ACFS_MODULE_TAGS=(
   [acfs.onboard]="orchestration"
   [acfs.update]="orchestration"
   [acfs.doctor]="orchestration"
+  [acfs.utilities]="orchestration,opencode"
 )
 
 declare -gA ACFS_MODULE_DEFAULT=(
@@ -314,6 +320,7 @@ declare -gA ACFS_MODULE_DEFAULT=(
   [acfs.onboard]="1"
   [acfs.update]="1"
   [acfs.doctor]="1"
+  [acfs.utilities]="1"
 )
 
 ACFS_MANIFEST_INDEX_LOADED=true

@@ -164,6 +164,7 @@ declare -a MANIFEST_CHECKS=(
     "acfs.onboard	Onboarding TUI tutorial	onboard --help || command -v onboard	required"
     "acfs.update	ACFS update command wrapper	command -v acfs-update	required"
     "acfs.doctor	ACFS doctor command for health checks	acfs doctor --help || command -v acfs	required"
+    "acfs.utilities	ACFS utility scripts (ocs for OpenCode server management)	ocs --help || command -v ocs	required"
 )
 
 # Run all manifest checks

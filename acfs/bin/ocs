@@ -1,0 +1,319 @@
+#!/usr/bin/env bash
+# ============================================================
+# OpenCode Server Manager (ocs)
+# Manage OpenCode server instances for shared MCP connections
+# ============================================================
+
+set -euo pipefail
+
+OPENCODE_PORT="${OPENCODE_PORT:-4096}"
+OPENCODE_LOG_DIR="${OPENCODE_LOG_DIR:-$HOME/.opencode/logs}"
+OPENCODE_PID_FILE="$HOME/.opencode/server.pid"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+usage() {
+    cat << 'EOF'
+OpenCode Server Manager (ocs)
+
+Usage:
+  ocs start      Start OpenCode server in background
+  ocs stop       Stop OpenCode server
+  ocs restart    Restart OpenCode server
+  ocs status     Show server status and active connections
+  ocs logs       Tail server logs
+  ocs connect    Connect a new OpenCode client to the running server
+
+Options:
+  --port PORT    Server port (default: 4096)
+  --help         Show this help message
+
+Examples:
+  # Start server
+  ocs start
+
+  # Check status
+  ocs status
+
+  # Connect multiple clients in tmux via NTM
+  ntm spawn "ocs-claude" "oca 'Review this code'" --agent claude
+  ntm spawn "ocs-planning" "oca 'Create a plan for this feature'" --agent planning
+  ntm spawn "ocs-testing" "oca 'Write tests for this module'" --agent testing
+
+  # Quick launch: server + 3 clients
+  ocs quick-start
+
+Environment:
+  OPENCODE_PORT      Server port (default: 4096)
+  OPENCODE_LOG_DIR   Log directory (default: ~/.opencode/logs)
+
+EOF
+}
+
+log_info() {
+    echo -e "${BLUE}→${NC} $*"
+}
+
+log_success() {
+    echo -e "${GREEN}✓${NC} $*"
+}
+
+log_warn() {
+    echo -e "${YELLOW}⚠${NC} $*"
+}
+
+log_error() {
+    echo -e "${RED}✖${NC} $*" >&2
+}
+
+get_server_pid() {
+    if [[ -f "$OPENCODE_PID_FILE" ]]; then
+        cat "$OPENCODE_PID_FILE"
+    fi
+}
+
+is_server_running() {
+    local pid
+    pid=$(get_server_pid)
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+get_connection_count() {
+    # Count active connections to the OpenCode server port
+    local count
+    count=$(ss -tn 2>/dev/null | grep ":$OPENCODE_PORT" | grep ESTAB | wc -l || echo "0")
+    echo "$count"
+}
+
+start_server() {
+    if is_server_running; then
+        log_warn "OpenCode server is already running (PID: $(get_server_pid))"
+        return 0
+    fi
+
+    log_info "Starting OpenCode server on port $OPENCODE_PORT..."
+    
+    # Create log directory
+    mkdir -p "$OPENCODE_LOG_DIR"
+    
+    # Start server in background
+    local log_file="$OPENCODE_LOG_DIR/server-$(date +%Y%m%d-%H%M%S).log"
+    
+    nohup opencode serve --port "$OPENCODE_PORT" > "$log_file" 2>&1 &
+    local pid=$!
+    
+    # Save PID
+    echo "$pid" > "$OPENCODE_PID_FILE"
+    
+    # Wait a moment and verify it started
+    sleep 2
+    if is_server_running; then
+        log_success "OpenCode server started (PID: $pid)"
+        log_info "Log file: $log_file"
+        log_info "Connect with: opencode run --attach http://localhost:$OPENCODE_PORT <prompt>"
+    else
+        log_error "Failed to start OpenCode server"
+        rm -f "$OPENCODE_PID_FILE"
+        return 1
+    fi
+}
+
+stop_server() {
+    local pid
+    pid=$(get_server_pid)
+    
+    if [[ -z "$pid" ]]; then
+        log_warn "OpenCode server is not running"
+        return 0
+    fi
+    
+    if ! kill -0 "$pid" 2>/dev/null; then
+        log_warn "OpenCode server PID file exists but process is not running"
+        rm -f "$OPENCODE_PID_FILE"
+        return 0
+    fi
+    
+    log_info "Stopping OpenCode server (PID: $pid)..."
+    kill "$pid" 2>/dev/null || true
+    
+    # Wait for shutdown (max 5 seconds)
+    local count=0
+    while kill -0 "$pid" 2>/dev/null && [[ $count -lt 50 ]]; do
+        sleep 0.1
+        ((count++))
+    done
+    
+    if kill -0 "$pid" 2>/dev/null; then
+        log_warn "Server didn't stop gracefully, forcing..."
+        kill -9 "$pid" 2>/dev/null || true
+    fi
+    
+    rm -f "$OPENCODE_PID_FILE"
+    log_success "OpenCode server stopped"
+}
+
+restart_server() {
+    stop_server
+    sleep 1
+    start_server
+}
+
+show_status() {
+    local pid
+    pid=$(get_server_pid)
+    
+    echo "OpenCode Server Status"
+    echo "====================="
+    echo ""
+    
+    if is_server_running; then
+        echo -e "Status:      ${GREEN}Running${NC}"
+        echo "PID:         $pid"
+        echo "Port:        $OPENCODE_PORT"
+        echo "URL:         http://localhost:$OPENCODE_PORT"
+        
+        local conn_count
+        conn_count=$(get_connection_count)
+        echo "Connections: $conn_count active"
+        
+        # Show memory usage if ps is available
+        if command -v ps &>/dev/null; then
+            local mem_usage
+            mem_usage=$(ps -o rss= -p "$pid" 2>/dev/null | awk '{print int($1/1024)"MB"}' || echo "N/A")
+            echo "Memory:      $mem_usage"
+        fi
+        
+        # Show uptime
+        if command -v ps &>/dev/null; then
+            local uptime
+            uptime=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ' || echo "N/A")
+            echo "Uptime:      $uptime"
+        fi
+    else
+        echo -e "Status:      ${RED}Not running${NC}"
+        if [[ -f "$OPENCODE_PID_FILE" ]]; then
+            echo -e "${YELLOW}Note: Stale PID file exists${NC}"
+        fi
+    fi
+    
+    echo ""
+    echo "Quick commands:"
+    echo "  ocs start              Start the server"
+    echo "  oca '<prompt>'         Run a prompt on the server"
+    echo "  ocs quick-start        Launch server + 3 agent clients"
+}
+
+tail_logs() {
+    if [[ ! -d "$OPENCODE_LOG_DIR" ]]; then
+        log_error "Log directory does not exist: $OPENCODE_LOG_DIR"
+        return 1
+    fi
+    
+    local latest_log
+    latest_log=$(ls -t "$OPENCODE_LOG_DIR"/server-*.log 2>/dev/null | head -1)
+    
+    if [[ -z "$latest_log" ]]; then
+        log_error "No log files found in $OPENCODE_LOG_DIR"
+        return 1
+    fi
+    
+    log_info "Tailing log: $latest_log"
+    tail -f "$latest_log"
+}
+
+connect_client() {
+    if ! is_server_running; then
+        log_error "OpenCode server is not running"
+        log_info "Start it with: ocs start"
+        return 1
+    fi
+    
+    log_info "Connecting to OpenCode server at http://localhost:$OPENCODE_PORT"
+    log_info "Usage: opencode run --attach http://localhost:$OPENCODE_PORT '<your prompt>'"
+    
+    # Interactive mode if no prompt provided
+    exec opencode run --attach "http://localhost:$OPENCODE_PORT"
+}
+
+quick_start() {
+    log_info "Quick Start: Launching OpenCode server + 3 agent clients in tmux"
+    echo ""
+    
+    # Start server if not running
+    if ! is_server_running; then
+        start_server || return 1
+        sleep 3
+    else
+        log_info "Server already running"
+    fi
+    
+    # Check if ntm is available
+    if ! command -v ntm &>/dev/null; then
+        log_error "NTM (Named Tmux Manager) not found"
+        log_info "Install with: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh | bash"
+        return 1
+    fi
+    
+    log_info "Spawning 3 OpenCode clients in tmux sessions..."
+    echo ""
+    
+    # Spawn 3 clients with different roles
+    ntm spawn "oc-architect" "echo 'OpenCode Architect Client'; echo 'Use oca command to send prompts'; bash" || true
+    ntm spawn "oc-reviewer" "echo 'OpenCode Reviewer Client'; echo 'Use oca command to send prompts'; bash" || true
+    ntm spawn "oc-tester" "echo 'OpenCode Tester Client'; echo 'Use oca command to send prompts'; bash" || true
+    
+    echo ""
+    log_success "Quick start complete!"
+    echo ""
+    echo "Usage:"
+    echo "  1. Switch to a session:  ntm attach oc-architect"
+    echo "  2. Send a prompt:        oca 'Your prompt here'"
+    echo "  3. List all sessions:    ntm list"
+    echo "  4. View all clients:     ntm palette"
+    echo ""
+}
+
+# Parse arguments
+CMD="${1:-}"
+shift || true
+
+case "$CMD" in
+    start)
+        start_server
+        ;;
+    stop)
+        stop_server
+        ;;
+    restart)
+        restart_server
+        ;;
+    status)
+        show_status
+        ;;
+    logs)
+        tail_logs
+        ;;
+    connect)
+        connect_client
+        ;;
+    quick-start)
+        quick_start
+        ;;
+    --help|-h|help|"")
+        usage
+        ;;
+    *)
+        log_error "Unknown command: $CMD"
+        echo ""
+        usage
+        exit 1
+        ;;
+esac
