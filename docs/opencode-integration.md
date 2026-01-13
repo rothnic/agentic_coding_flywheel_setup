@@ -81,23 +81,133 @@ ntm palette                 # View all sessions in a grid
 
 ### Integration with NTM (Named Tmux Manager)
 
-For more control, manually create sessions with specific roles:
+ACFS provides seamless integration between OpenCode and NTM for coordinating multiple agent sessions.
+
+#### Spawning Multiple OpenCode Sessions
+
+Use the `ocs spawn` command to create multiple OpenCode sessions with different agent roles:
 
 ```bash
-# Start server
+# Spawn 3 different agent types
+ocs spawn myproject --oc-architect=1 --oc-reviewer=1 --oc-tester=1
+
+# Spawn 2 default agents
+ocs spawn analytics --oc=2
+
+# Mix different agent types
+ocs spawn webapp --oc=2 --oc-architect=1 --oc-docs=1 --oc-debugger=1
+
+# All agents with default role
+ocs spawn research --oc=5
+```
+
+#### Agent Types
+
+| Type | Role | Best For |
+|------|------|----------|
+| `default` | General-purpose | Mixed tasks, exploration |
+| `architect` | System design | Architecture decisions, API design |
+| `reviewer` | Code review | Quality checks, security review |
+| `tester` | Test generation | Unit tests, integration tests, edge cases |
+| `docs` | Documentation | README, API docs, inline comments |
+| `debugger` | Bug hunting | Performance issues, memory leaks, crashes |
+
+#### Sending Commands to All Agents
+
+Once you've spawned sessions, use `ntm send` to broadcast commands:
+
+```bash
+# Send to all agents in a project
+ntm send myproject "Analyze this codebase and identify the main components"
+
+# Send to specific agent pattern (all architects)
+ntm send myproject-architect "Review the system architecture for scalability"
+
+# Send to specific agent pattern (all reviewers)
+ntm send myproject-reviewer "Check for security vulnerabilities"
+
+# Send to a specific session
+ntm send myproject-tester-1 "Generate tests for the user authentication module"
+```
+
+#### Complete Multi-Agent Workflow
+
+Here's a complete example workflow combining server management and multi-agent coordination:
+
+```bash
+# 1. Start the OpenCode server (if not running)
 ocs start
 
-# Create specialized client sessions
-ntm spawn "planning" "oca 'Create a detailed plan for...'"
-ntm spawn "implementation" "bash"  # Manual session for implementation
-ntm spawn "testing" "oca 'Write comprehensive tests for...'"
-ntm spawn "documentation" "oca 'Document the following code...'"
+# 2. Spawn specialized agents for a new project
+ocs spawn myapi --oc-architect=1 --oc=2 --oc-tester=1 --oc-reviewer=1
 
-# View all sessions in command palette
+# 3. Send initial analysis to all agents
+ntm send myapi "This is a REST API project. Analyze the current state and identify areas for improvement."
+
+# 4. Send specialized tasks to specific agent types
+ntm send myapi-architect "Design a scalable architecture for handling 10k requests/second"
+ntm send myapi-tester "Generate comprehensive test suite with >80% coverage"
+ntm send myapi-reviewer "Review code for security vulnerabilities and performance bottlenecks"
+
+# 5. Monitor server status
+ocs status
+
+# 6. Attach to specific agent to review work
+ntm attach myapi-architect-1
+
+# 7. List all active sessions
+ntm list | grep myapi
+
+# 8. View all sessions in grid layout
 ntm palette
+```
 
-# Attach to specific session
-ntm attach planning
+#### Parallel Agent Workflows
+
+Coordinate multiple agents working in parallel on different aspects:
+
+```bash
+# Spawn agents for different project areas
+ocs spawn fullstack --oc-architect=1 --oc=2 --oc-tester=2 --oc-docs=1
+
+# Frontend agent
+ntm send fullstack-oc-1 "Focus on React frontend components. Implement responsive design."
+
+# Backend agent
+ntm send fullstack-oc-2 "Focus on Express backend API. Implement RESTful endpoints."
+
+# Test agents work on both
+ntm send fullstack-tester "Write E2E tests covering user authentication flow"
+
+# Docs agent creates documentation
+ntm send fullstack-docs "Create comprehensive API documentation with examples"
+
+# Architect oversees integration
+ntm send fullstack-architect "Ensure frontend and backend integration follows best practices"
+```
+
+#### Mixed Agent Session Example
+
+Combine OpenCode with other agents (Claude, Codex, Gemini) in a single project:
+
+```bash
+# Start OpenCode server
+ocs start
+
+# Create OpenCode sessions
+ocs spawn project1 --oc-architect=1 --oc-reviewer=1
+
+# Also create traditional agent sessions with NTM
+ntm spawn project1-claude-1 "cc" --cc=1
+ntm spawn project1-codex-1 "cod" --cod=1
+
+# Now send commands to all agents
+ntm send project1 "Analyze the authentication system"
+
+# Or target specific agents
+ntm send project1-architect "Design improvements for auth system"
+ntm send project1-claude "Implement the improved auth system"
+ntm send project1-reviewer "Review the implementation"
 ```
 
 ### Multi-Agent Workflow Example
@@ -171,15 +281,117 @@ As of OpenCode CLI v1.0, the interactive TUI (`opencode`) does not explicitly do
 
 ## Security & Hooks (Gap Analysis)
 
-ACFS implements a `PreToolUse` hook for Claude Code (`git_safety_guard.py`) to block destructive commands. OpenCode requires an equivalent mechanism.
+ACFS implements a `PreToolUse` hook for Claude Code (`git_safety_guard.py`) to block destructive commands. OpenCode has similar mechanisms through its plugin ecosystem.
+
+### OpenCode Plugin Compatibility
+
+OpenCode supports an extensive plugin ecosystem with many Claude Code-compatible features:
+
+#### Safety and Security Plugins
+
+1. **CC Safety Net** - Port of Claude Code's safety net for destructive commands
+   - GitHub: [kenryu42/claude-code-safety-net](https://github.com/kenryu42/claude-code-safety-net)
+   - Catches destructive git and filesystem commands before execution
+   - Compatible with ACFS's git_safety_guard.py approach
+
+2. **Envsitter Guard** - Prevents .env file leaks
+   - GitHub: [boxpositron/envsitter-guard](https://github.com/boxpositron/envsitter-guard)
+   - Blocks access to sensitive environment files
+   - Shows keys + fingerprints only, never values
+
+#### Background Task Management
+
+3. **Background Agents** - Claude Code-style background agents
+   - GitHub: [kdcokenny/opencode-background-agents](https://github.com/kdcokenny/opencode-background-agents)
+   - Async delegation with context persistence
+   - Similar to Claude Code's background task feature enabled by `ENABLE_BACKGROUND_TASKS=1`
+
+4. **Froggy** - Comprehensive hooks and specialized agents
+   - GitHub: [smartfrog/opencode-froggy](https://github.com/smartfrog/opencode-froggy)
+   - Claude Code-style hooks
+   - Specialized agent support
+   - Additional tools like gitingest
+
+#### Agent Coordination
+
+5. **IAM (Inter-Agent Messaging)** - Multi-agent communication
+   - GitHub: [spoons-and-mirrors/iam](https://github.com/spoons-and-mirrors/iam)
+   - Parallel subagent coordination
+   - Async message broadcasting
+   - Perfect for `ocs spawn` multi-agent workflows
+
+6. **Agent Skills** - Dynamic skills loader
+   - GitHub: [joshuadavidthomas/opencode-agent-skills](https://github.com/joshuadavidthomas/opencode-agent-skills)
+   - Discovers skills from project/user/plugin directories
+   - Extends agent capabilities
+
+#### Memory and Context
+
+7. **Agent Memory** - Letta-inspired persistent memory
+   - GitHub: [joshuadavidthomas/opencode-agent-memory](https://github.com/joshuadavidthomas/opencode-agent-memory)
+   - Self-editable memory blocks
+   - Context persistence across sessions
+
+8. **Dynamic Context Pruning** - Optimize token usage
+   - GitHub: [Tarquinen/opencode-dynamic-context-pruning](https://github.com/Tarquinen/opencode-dynamic-context-pruning)
+   - Prunes obsolete tool outputs
+   - Reduces token consumption
+
+### Installing OpenCode Plugins
+
+OpenCode plugins can be installed directly:
+
+```bash
+# Example: Install CC Safety Net plugin
+npm install -g @kenryu42/claude-code-safety-net
+
+# Configure in ~/.opencode/config.json
+{
+  "plugins": [
+    "@kenryu42/claude-code-safety-net"
+  ]
+}
+```
+
+### ACFS Git Safety Guard Compatibility
+
+The ACFS `git_safety_guard.py` hook for Claude Code follows similar patterns to OpenCode's CC Safety Net plugin. Key features:
+
+- Blocks destructive git commands (`git reset --hard`, `git clean -f`)
+- Blocks dangerous filesystem operations (`rm -rf`)
+- PreToolUse hook integration
+- Configurable via `~/.claude/settings.json`
+
+For OpenCode users, the CC Safety Net plugin provides equivalent functionality and can be used alongside ACFS's Claude Code safety guard.
+
+### Recommended Plugin Stack for ACFS Users
+
+```bash
+# Core safety
+- CC Safety Net (destructive command protection)
+- Envsitter Guard (environment variable protection)
+
+# Multi-agent workflows (when using ocs spawn)
+- IAM (inter-agent messaging)
+- Background Agents (async task delegation)
+
+# Productivity
+- Agent Memory (persistent context)
+- Dynamic Context Pruning (token optimization)
+- Agent Skills (extended capabilities)
+```
+
+### Integration with Claude Code Extensions
+
+Since OpenCode is designed with Claude Code compatibility in mind, most Claude Code extensions and hooks can be adapted for OpenCode use. The plugin ecosystem actively maintains compatibility with Claude Code patterns.
 
 **OpenCode Alternatives:**
 1.  **Permissions**: OpenCode allows granular permission configuration (`OPENCODE_PERMISSION` env var or config).
-    - Can we restrict `git push --force` or `rm -rf` via permissions?
-    - OpenCode prompts for permission by default, but ACFS users might run with auto-approve (`-y` equivalent).
+    - Can restrict `git push --force` or `rm -rf` via permissions
+    - OpenCode prompts for permission by default, but ACFS users might run with auto-approve (`-y` equivalent)
 2.  **Rules**: `Configure -> Rules`. Can system prompts enforce safety? (Less reliable than hooks).
 3.  **Middleware/Plugins**: OpenCode supports plugins. A custom plugin could implement the safety guard logic.
 
 **Recommendation:**
-Investigate OpenCode Plugin API to port `git_safety_guard.py` logic, or rely on strict Permission configuration.
+Use OpenCode's CC Safety Net plugin for parity with Claude Code's git_safety_guard.py, or explore the extensive plugin ecosystem at [awesome-opencode](https://github.com/awesome-opencode/awesome-opencode) for additional functionality.
 

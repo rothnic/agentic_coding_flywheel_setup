@@ -22,16 +22,21 @@ usage() {
 OpenCode Server Manager (ocs)
 
 Usage:
-  ocs start      Start OpenCode server in background
-  ocs stop       Stop OpenCode server
-  ocs restart    Restart OpenCode server
-  ocs status     Show server status and active connections
-  ocs logs       Tail server logs
-  ocs connect    Connect a new OpenCode client to the running server
+  ocs start                    Start OpenCode server in background
+  ocs stop                     Stop OpenCode server
+  ocs restart                  Restart OpenCode server
+  ocs status                   Show server status and active connections
+  ocs logs                     Tail server logs
+  ocs connect                  Connect a new OpenCode client to the running server
+  ocs spawn NAME [OPTIONS]     Spawn OpenCode tmux sessions with NTM integration
 
-Options:
-  --port PORT    Server port (default: 4096)
-  --help         Show this help message
+Spawn Options:
+  --oc=N                       Spawn N OpenCode sessions (default agent)
+  --oc-architect=N             Spawn N architect agents
+  --oc-reviewer=N              Spawn N reviewer agents
+  --oc-tester=N                Spawn N tester agents
+  --oc-docs=N                  Spawn N documentation agents
+  --oc-debugger=N              Spawn N debugger agents
 
 Examples:
   # Start server
@@ -40,10 +45,17 @@ Examples:
   # Check status
   ocs status
 
-  # Connect multiple clients in tmux via NTM
-  ntm spawn "ocs-claude" "oca 'Review this code'" --agent claude
-  ntm spawn "ocs-planning" "oca 'Create a plan for this feature'" --agent planning
-  ntm spawn "ocs-testing" "oca 'Write tests for this module'" --agent testing
+  # Spawn 3 different agent types
+  ocs spawn myproject --oc-architect=1 --oc-reviewer=1 --oc-tester=1
+
+  # Spawn 2 default agents
+  ocs spawn myproject --oc=2
+
+  # Mix different agent types
+  ocs spawn myproject --oc=1 --oc-architect=2 --oc-docs=1
+
+  # Send command to all OpenCode agents in project
+  ntm send myproject "Analyze this codebase and suggest improvements"
 
   # Quick launch: server + 3 clients
   ocs quick-start
@@ -51,6 +63,14 @@ Examples:
 Environment:
   OPENCODE_PORT      Server port (default: 4096)
   OPENCODE_LOG_DIR   Log directory (default: ~/.opencode/logs)
+
+Agent Types:
+  - default: General-purpose agent
+  - architect: System design and architecture
+  - reviewer: Code review and quality checks
+  - tester: Test generation and coverage
+  - docs: Documentation and comments
+  - debugger: Bug hunting and performance
 
 EOF
 }
@@ -281,6 +301,137 @@ quick_start() {
     echo ""
 }
 
+spawn_opencode_sessions() {
+    local project_name="$1"
+    shift
+    
+    if [[ -z "$project_name" ]]; then
+        log_error "Project name required"
+        echo "Usage: ocs spawn PROJECT_NAME [OPTIONS]"
+        echo "Example: ocs spawn myproject --oc-architect=2 --oc-reviewer=1"
+        return 1
+    fi
+    
+    # Start server if not running
+    if ! is_server_running; then
+        log_info "Starting OpenCode server..."
+        start_server || return 1
+        sleep 3
+    fi
+    
+    # Check if ntm is available
+    if ! command -v ntm &>/dev/null; then
+        log_error "NTM (Named Tmux Manager) not found"
+        log_info "Install with: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh | bash"
+        return 1
+    fi
+    
+    # Parse agent count options
+    local oc_count=0
+    local oc_architect_count=0
+    local oc_reviewer_count=0
+    local oc_tester_count=0
+    local oc_docs_count=0
+    local oc_debugger_count=0
+    
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --oc=*)
+                oc_count="${1#*=}"
+                ;;
+            --oc-architect=*)
+                oc_architect_count="${1#*=}"
+                ;;
+            --oc-reviewer=*)
+                oc_reviewer_count="${1#*=}"
+                ;;
+            --oc-tester=*)
+                oc_tester_count="${1#*=}"
+                ;;
+            --oc-docs=*)
+                oc_docs_count="${1#*=}"
+                ;;
+            --oc-debugger=*)
+                oc_debugger_count="${1#*=}"
+                ;;
+            *)
+                log_warn "Unknown option: $1"
+                ;;
+        esac
+        shift
+    done
+    
+    local total_agents=$((oc_count + oc_architect_count + oc_reviewer_count + oc_tester_count + oc_docs_count + oc_debugger_count))
+    
+    if [[ $total_agents -eq 0 ]]; then
+        log_error "No agents specified. Use --oc=N or --oc-TYPE=N"
+        echo "Example: ocs spawn myproject --oc=2"
+        return 1
+    fi
+    
+    log_info "Spawning $total_agents OpenCode agent(s) for project: $project_name"
+    echo ""
+    
+    # Spawn default agents
+    for ((i=1; i<=oc_count; i++)); do
+        local session_name="${project_name}-oc-${i}"
+        log_info "Creating session: $session_name (default agent)"
+        ntm spawn "$session_name" "echo 'OpenCode Agent ${i}'; echo 'Connected to server at http://localhost:$OPENCODE_PORT'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    # Spawn architect agents
+    for ((i=1; i<=oc_architect_count; i++)); do
+        local session_name="${project_name}-architect-${i}"
+        log_info "Creating session: $session_name (architect)"
+        ntm spawn "$session_name" "echo 'OpenCode Architect ${i}'; echo 'Role: System design and architecture'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    # Spawn reviewer agents
+    for ((i=1; i<=oc_reviewer_count; i++)); do
+        local session_name="${project_name}-reviewer-${i}"
+        log_info "Creating session: $session_name (reviewer)"
+        ntm spawn "$session_name" "echo 'OpenCode Reviewer ${i}'; echo 'Role: Code review and quality'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    # Spawn tester agents
+    for ((i=1; i<=oc_tester_count; i++)); do
+        local session_name="${project_name}-tester-${i}"
+        log_info "Creating session: $session_name (tester)"
+        ntm spawn "$session_name" "echo 'OpenCode Tester ${i}'; echo 'Role: Test generation and coverage'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    # Spawn docs agents
+    for ((i=1; i<=oc_docs_count; i++)); do
+        local session_name="${project_name}-docs-${i}"
+        log_info "Creating session: $session_name (documentation)"
+        ntm spawn "$session_name" "echo 'OpenCode Docs ${i}'; echo 'Role: Documentation and comments'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    # Spawn debugger agents
+    for ((i=1; i<=oc_debugger_count; i++)); do
+        local session_name="${project_name}-debugger-${i}"
+        log_info "Creating session: $session_name (debugger)"
+        ntm spawn "$session_name" "echo 'OpenCode Debugger ${i}'; echo 'Role: Bug hunting and performance'; echo 'Use: oca \"your prompt\"'; bash" || true
+    done
+    
+    echo ""
+    log_success "Spawned $total_agents OpenCode agent(s)"
+    echo ""
+    echo "Sending commands to all agents:"
+    echo "  ntm send $project_name \"Analyze this codebase\""
+    echo ""
+    echo "Sending to specific agent pattern:"
+    echo "  ntm send ${project_name}-architect \"Focus on architecture\""
+    echo "  ntm send ${project_name}-reviewer \"Review code quality\""
+    echo ""
+    echo "List all sessions:"
+    echo "  ntm list | grep $project_name"
+    echo ""
+    echo "Attach to a session:"
+    echo "  ntm attach ${project_name}-architect-1"
+    echo ""
+}
+
 # Parse arguments
 CMD="${1:-}"
 shift || true
@@ -303,6 +454,9 @@ case "$CMD" in
         ;;
     connect)
         connect_client
+        ;;
+    spawn)
+        spawn_opencode_sessions "$@"
         ;;
     quick-start)
         quick_start
