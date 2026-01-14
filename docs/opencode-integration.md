@@ -88,17 +88,14 @@ ACFS provides seamless integration between OpenCode and NTM for coordinating mul
 Use the `ocs spawn` command to create multiple OpenCode sessions with different agent roles:
 
 ```bash
-# Spawn 3 different agent types
-ocs spawn myproject --oc-architect=1 --oc-reviewer=1 --oc-tester=1
+# Match NTM pattern: spawn with type counts
+ocs spawn myproject --oc=2 --oc-architect=1 --oc-tester=1
 
-# Spawn 2 default agents
-ocs spawn analytics --oc=2
+# All default agents
+ocs spawn analytics --oc=3
 
-# Mix different agent types
-ocs spawn webapp --oc=2 --oc-architect=1 --oc-docs=1 --oc-debugger=1
-
-# All agents with default role
-ocs spawn research --oc=5
+# Single architect
+ocs spawn webapp --oc-architect=1
 ```
 
 #### Agent Types
@@ -112,44 +109,46 @@ ocs spawn research --oc=5
 | `docs` | Documentation | README, API docs, inline comments |
 | `debugger` | Bug hunting | Performance issues, memory leaks, crashes |
 
-#### Sending Commands to All Agents
+#### Sending Commands to Agents
 
-Once you've spawned sessions, use `ntm send` to broadcast commands:
+The spawned sessions follow NTM conventions - send commands to all sessions or target by session name:
 
 ```bash
-# Send to all agents in a project
+# Send to ALL sessions in the project
 ntm send myproject "Analyze this codebase and identify the main components"
 
-# Send to specific agent pattern (all architects)
-ntm send myproject-architect "Review the system architecture for scalability"
-
-# Send to specific agent pattern (all reviewers)
-ntm send myproject-reviewer "Check for security vulnerabilities"
-
-# Send to a specific session
+# Target specific sessions by name (sessions are named: PROJECT-TYPE-N)
+ntm send myproject-architect-1 "Review the system architecture for scalability"
 ntm send myproject-tester-1 "Generate tests for the user authentication module"
 ```
 
+**Note:** Unlike `ntm spawn` with `--cc`, `--cod` flags, OpenCode sessions are targeted by their full session name since each OpenCode agent connects to the same shared server. To target all architects, you can use pattern matching with your shell or ntm features.
+
 #### Complete Multi-Agent Workflow
 
-Here's a complete example workflow combining server management and multi-agent coordination:
+Here's a complete example workflow following NTM patterns:
 
 ```bash
 # 1. Start the OpenCode server (if not running)
 ocs start
 
-# 2. Spawn specialized agents for a new project
-ocs spawn myapi --oc-architect=1 --oc=2 --oc-tester=1 --oc-reviewer=1
+# 2. Spawn agents following NTM flag pattern
+ocs spawn myapi --oc-architect=1 --oc=2 --oc-tester=1
 
-# 3. Send initial analysis to all agents
-ntm send myapi "This is a REST API project. Analyze the current state and identify areas for improvement."
+# This creates sessions:
+#   myapi-architect-1
+#   myapi-oc-1
+#   myapi-oc-2
+#   myapi-tester-1
 
-# 4. Send specialized tasks to specific agent types
-ntm send myapi-architect "Design a scalable architecture for handling 10k requests/second"
-ntm send myapi-tester "Generate comprehensive test suite with >80% coverage"
-ntm send myapi-reviewer "Review code for security vulnerabilities and performance bottlenecks"
+# 3. Send initial analysis to ALL agents
+ntm send myapi "This is a REST API project. Analyze the current state."
 
-# 5. Monitor server status
+# 4. Send to specific agents by session name
+ntm send myapi-architect-1 "Design scalable architecture for 10k req/s"
+ntm send myapi-tester-1 "Generate comprehensive test suite with >80% coverage"
+
+# 5. Monitor server and client resource usage
 ocs status
 
 # 6. Attach to specific agent to review work
@@ -158,32 +157,23 @@ ntm attach myapi-architect-1
 # 7. List all active sessions
 ntm list | grep myapi
 
-# 8. View all sessions in grid layout
+# 8. View all sessions in grid layout  
 ntm palette
 ```
 
 #### Parallel Agent Workflows
 
-Coordinate multiple agents working in parallel on different aspects:
+Coordinate multiple agents working in parallel:
 
 ```bash
-# Spawn agents for different project areas
-ocs spawn fullstack --oc-architect=1 --oc=2 --oc-tester=2 --oc-docs=1
+# Spawn agents following NTM conventions
+ocs spawn fullstack --oc=2 --oc-tester=2 --oc-docs=1
 
-# Frontend agent
-ntm send fullstack-oc-1 "Focus on React frontend components. Implement responsive design."
-
-# Backend agent
-ntm send fullstack-oc-2 "Focus on Express backend API. Implement RESTful endpoints."
-
-# Test agents work on both
-ntm send fullstack-tester "Write E2E tests covering user authentication flow"
-
-# Docs agent creates documentation
-ntm send fullstack-docs "Create comprehensive API documentation with examples"
-
-# Architect oversees integration
-ntm send fullstack-architect "Ensure frontend and backend integration follows best practices"
+# Agents work on different areas
+ntm send fullstack-oc-1 "Focus on React frontend - implement responsive design"
+ntm send fullstack-oc-2 "Focus on Express backend - implement RESTful endpoints"
+ntm send fullstack-tester-1 "Write E2E tests for user authentication flow"
+ntm send fullstack-docs-1 "Create comprehensive API documentation with examples"
 ```
 
 #### Mixed Agent Session Example
@@ -195,19 +185,17 @@ Combine OpenCode with other agents (Claude, Codex, Gemini) in a single project:
 ocs start
 
 # Create OpenCode sessions
-ocs spawn project1 --oc-architect=1 --oc-reviewer=1
+ocs spawn project1 --oc=2
 
 # Also create traditional agent sessions with NTM
-ntm spawn project1-claude-1 "cc" --cc=1
-ntm spawn project1-codex-1 "cod" --cod=1
+ntm spawn project1 --cc=1 --cod=1
 
-# Now send commands to all agents
+# Now send commands to ALL agents (both OpenCode and others)
 ntm send project1 "Analyze the authentication system"
 
-# Or target specific agents
-ntm send project1-architect "Design improvements for auth system"
-ntm send project1-claude "Implement the improved auth system"
-ntm send project1-reviewer "Review the implementation"
+# Or target specific sessions
+ntm send project1-oc-1 "Use OpenCode to implement the auth system"
+ntm send project1-cc-1 "Use Claude to review the implementation"
 ```
 
 ### Multi-Agent Workflow Example

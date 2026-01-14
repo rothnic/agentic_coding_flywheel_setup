@@ -25,12 +25,12 @@ Usage:
   ocs start                    Start OpenCode server in background
   ocs stop                     Stop OpenCode server
   ocs restart                  Restart OpenCode server
-  ocs status                   Show server status and active connections
+  ocs status                   Show server status, connections, and resource usage
   ocs logs                     Tail server logs
   ocs connect                  Connect a new OpenCode client to the running server
   ocs spawn NAME [OPTIONS]     Spawn OpenCode tmux sessions with NTM integration
 
-Spawn Options:
+Spawn Options (follows NTM pattern):
   --oc=N                       Spawn N OpenCode sessions (default agent)
   --oc-architect=N             Spawn N architect agents
   --oc-reviewer=N              Spawn N reviewer agents
@@ -39,26 +39,29 @@ Spawn Options:
   --oc-debugger=N              Spawn N debugger agents
 
 Examples:
-  # Start server
+  # Start server (like starting cc, cod, or gmi)
   ocs start
 
-  # Check status
+  # Check status with resource monitoring
   ocs status
 
-  # Spawn 3 different agent types
-  ocs spawn myproject --oc-architect=1 --oc-reviewer=1 --oc-tester=1
+  # Spawn agents (follows NTM --cc=N pattern)
+  ocs spawn myproject --oc=2 --oc-architect=1
 
-  # Spawn 2 default agents
-  ocs spawn myproject --oc=2
+  # Send commands to all OpenCode agents (NTM syntax)
+  ntm send myproject "Analyze this codebase"
 
-  # Mix different agent types
-  ocs spawn myproject --oc=1 --oc-architect=2 --oc-docs=1
-
-  # Send command to all OpenCode agents in project
-  ntm send myproject "Analyze this codebase and suggest improvements"
+  # Send to specific session by name
+  ntm send myproject-architect-1 "Review system architecture"
 
   # Quick launch: server + 3 clients
   ocs quick-start
+
+Interface Philosophy:
+  - `ocs` follows agent patterns like `cc`, `cod`, `gmi` for consistency
+  - Spawning follows NTM's `--cc=N` flag pattern
+  - Use `ntm send` for broadcasting to agents
+  - Resource monitoring built-in (CPU, memory for server + clients)
 
 Environment:
   OPENCODE_PORT      Server port (default: 4096)
@@ -209,6 +212,11 @@ show_status() {
             local mem_usage
             mem_usage=$(ps -o rss= -p "$pid" 2>/dev/null | awk '{print int($1/1024)"MB"}' || echo "N/A")
             echo "Memory:      $mem_usage"
+            
+            # Show CPU usage
+            local cpu_usage
+            cpu_usage=$(ps -o %cpu= -p "$pid" 2>/dev/null | tr -d ' ' || echo "N/A")
+            echo "CPU:         ${cpu_usage}%"
         fi
         
         # Show uptime
@@ -216,6 +224,59 @@ show_status() {
             local uptime
             uptime=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ' || echo "N/A")
             echo "Uptime:      $uptime"
+        fi
+        
+        echo ""
+        echo "Client Processes:"
+        echo "-----------------"
+        
+        # Find all opencode client processes
+        if command -v pgrep &>/dev/null && command -v ps &>/dev/null; then
+            local client_pids
+            client_pids=$(pgrep -f "opencode run --attach" 2>/dev/null || true)
+            
+            if [[ -n "$client_pids" ]]; then
+                local total_client_mem=0
+                local total_client_cpu=0
+                local client_count=0
+                
+                echo "PID      CPU%   MEM(MB)  COMMAND"
+                echo "------   ----   -------  -------"
+                
+                while IFS= read -r cpid; do
+                    if [[ -n "$cpid" ]]; then
+                        local cmem
+                        local ccpu
+                        local ccmd
+                        cmem=$(ps -o rss= -p "$cpid" 2>/dev/null | awk '{print int($1/1024)}' || echo "0")
+                        ccpu=$(ps -o %cpu= -p "$cpid" 2>/dev/null | tr -d ' ' || echo "0")
+                        ccmd=$(ps -o comm= -p "$cpid" 2>/dev/null || echo "opencode")
+                        
+                        printf "%-8s %-6s %-8s %s\n" "$cpid" "$ccpu" "${cmem}MB" "$ccmd"
+                        
+                        total_client_mem=$((total_client_mem + cmem))
+                        total_client_cpu=$(awk "BEGIN {print $total_client_cpu + $ccpu}")
+                        ((client_count++))
+                    fi
+                done <<< "$client_pids"
+                
+                echo ""
+                echo "Total Clients: $client_count"
+                echo "Total Client Memory: ${total_client_mem}MB"
+                echo "Total Client CPU: ${total_client_cpu}%"
+                
+                # Combined totals
+                local combined_mem=$((mem_usage + total_client_mem))
+                local combined_cpu=$(awk "BEGIN {print $cpu_usage + $total_client_cpu}")
+                echo ""
+                echo "Combined Total (Server + Clients):"
+                echo "  Memory: ${combined_mem}MB"
+                echo "  CPU: ${combined_cpu}%"
+            else
+                echo "No active client processes found"
+            fi
+        else
+            echo "Install 'pgrep' and 'ps' for detailed client monitoring"
         fi
     else
         echo -e "Status:      ${RED}Not running${NC}"
@@ -228,7 +289,7 @@ show_status() {
     echo "Quick commands:"
     echo "  ocs start              Start the server"
     echo "  oca '<prompt>'         Run a prompt on the server"
-    echo "  ocs quick-start        Launch server + 3 agent clients"
+    echo "  ocs spawn myproject --oc=2  Spawn 2 OpenCode agents"
 }
 
 tail_logs() {
@@ -417,18 +478,26 @@ spawn_opencode_sessions() {
     echo ""
     log_success "Spawned $total_agents OpenCode agent(s)"
     echo ""
-    echo "Sending commands to all agents:"
+    echo "Using NTM to send commands:"
+    echo ""
+    echo "Send to ALL agents in project:"
     echo "  ntm send $project_name \"Analyze this codebase\""
     echo ""
-    echo "Sending to specific agent pattern:"
-    echo "  ntm send ${project_name}-architect \"Focus on architecture\""
-    echo "  ntm send ${project_name}-reviewer \"Review code quality\""
+    echo "Send to specific session by name:"
+    echo "  ntm send ${project_name}-architect-1 \"Focus on architecture\""
+    echo "  ntm send ${project_name}-tester-1 \"Generate tests\""
+    echo ""
+    echo "Note: Sessions are named ${project_name}-TYPE-N"
+    echo "      Use exact session names with ntm send"
     echo ""
     echo "List all sessions:"
     echo "  ntm list | grep $project_name"
     echo ""
     echo "Attach to a session:"
     echo "  ntm attach ${project_name}-architect-1"
+    echo ""
+    echo "Check resource usage:"
+    echo "  ocs status"
     echo ""
 }
 
