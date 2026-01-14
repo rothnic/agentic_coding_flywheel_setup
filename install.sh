@@ -3699,11 +3699,16 @@ finalize() {
     try_step "Setting acfs-update ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$TARGET_HOME/.local/bin/acfs-update" || return 1
 
-    # Install ocs (OpenCode Server Manager) utility
-    log_detail "Installing ocs utility"
-    try_step "Installing ocs" install_asset "acfs/bin/ocs" "$ACFS_HOME/bin/ocs" || return 1
-    try_step "Setting ocs permissions" $SUDO chmod 755 "$ACFS_HOME/bin/ocs" || return 1
-    try_step "Setting ocs ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/ocs" || return 1
+    # Install OpenCode modular structure
+    log_detail "Installing OpenCode modular structure"
+    try_step "Creating OpenCode directories" $SUDO mkdir -p "$ACFS_HOME/opencode"/{bin,functions,config} || return 1
+    try_step "Installing OpenCode config" install_asset "acfs/opencode/config/opencode.conf.sh" "$ACFS_HOME/opencode/config/opencode.conf.sh" || return 1
+    try_step "Installing oca function" install_asset "acfs/opencode/functions/oca.zsh" "$ACFS_HOME/opencode/functions/oca.zsh" || return 1
+    try_step "Installing ocs utility" install_asset "acfs/bin/ocs" "$ACFS_HOME/opencode/bin/ocs" || return 1
+    try_step "Setting OpenCode permissions" $SUDO chmod 755 "$ACFS_HOME/opencode/bin/ocs" "$ACFS_HOME/opencode/config/opencode.conf.sh" "$ACFS_HOME/opencode/functions/oca.zsh" || return 1
+    try_step "Setting OpenCode ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/opencode" || return 1
+    # Symlink ocs to bin for backward compatibility
+    try_step "Linking ocs to bin" run_as_target ln -sf "$ACFS_HOME/opencode/bin/ocs" "$ACFS_HOME/bin/ocs" || return 1
 
     # Install services-setup wizard
     try_step "Installing services-setup.sh" install_asset "scripts/services-setup.sh" "$ACFS_HOME/scripts/services-setup.sh" || return 1
