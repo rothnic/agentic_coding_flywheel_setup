@@ -374,11 +374,69 @@ acfs() {
   esac
 }
 
+# --- OpenCode intelligent wrapper function ---
+# oca: Smart wrapper around opencode CLI with per-project server management
+oca() {
+  local project_dir="$PWD"
+  local acfs_dir
+  
+  # Determine ACFS storage directory
+  if [[ "$project_dir" == "$HOME" ]]; then
+    acfs_dir="$HOME/.opencode/acfs"
+  else
+    acfs_dir="$project_dir/.opencode/acfs"
+  fi
+  
+  # Ensure directory exists
+  mkdir -p "$acfs_dir"
+  
+  # Calculate project-specific port
+  local port_file="$acfs_dir/port"
+  if [[ ! -f "$port_file" ]]; then
+    local hash=$(echo -n "$project_dir" | md5sum | cut -c1-4)
+    local port=$((4096 + 0x$hash % 1000))
+    echo "$port" > "$port_file"
+  fi
+  local port=$(cat "$port_file")
+  
+  # Check if server is running
+  local pid_file="$acfs_dir/server.pid"
+  local server_running=false
+  if [[ -f "$pid_file" ]]; then
+    local pid=$(cat "$pid_file")
+    if kill -0 "$pid" 2>/dev/null; then
+      server_running=true
+    fi
+  fi
+  
+  # Start server if not running
+  if [[ "$server_running" == "false" ]]; then
+    echo "🚀 Starting OpenCode server for $(basename "$project_dir") on port $port..."
+    opencode server start --port "$port" --daemon &>/dev/null &
+    local server_pid=$!
+    echo "$server_pid" > "$pid_file"
+    sleep 2  # Give server time to start
+  fi
+  
+  # Handle different invocation patterns
+  if [[ $# -eq 0 ]]; then
+    # No arguments: Open TUI
+    opencode --attach "http://localhost:$port"
+  elif [[ "$1" == "run" ]]; then
+    # Explicit run command
+    shift
+    opencode run --attach "http://localhost:$port" "$@"
+  else
+    # Pass through all other commands
+    opencode --attach "http://localhost:$port" "$@"
+  fi
+}
+
 # --- Agent aliases (dangerously enabled by design) ---
 alias cc='NODE_OPTIONS="--max-old-space-size=32768" ENABLE_BACKGROUND_TASKS=1 ~/.local/bin/claude --dangerously-skip-permissions'
 alias oc='opencode'
 # ocs is now a utility script in ~/.acfs/bin/ocs for managing OpenCode server
-alias oca='opencode run --attach http://localhost:4096'
+# oca is now a function (see above) for intelligent per-project server management
 alias cod='codex --dangerously-bypass-approvals-and-sandbox'
 alias gmi='gemini --yolo'
 
