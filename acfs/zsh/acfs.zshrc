@@ -384,7 +384,7 @@ if [[ -f "$HOME/.acfs/opencode/functions/oca.zsh" ]]; then
 fi
 
 # --- Agent aliases (dangerously enabled by design) ---
-alias cc='NODE_OPTIONS="--max-old-space-size=32768" ENABLE_BACKGROUND_TASKS=1 ~/.local/bin/claude --dangerously-skip-permissions'
+alias cc='NODE_OPTIONS="--max-old-space-size=32768" ~/.local/bin/claude --dangerously-skip-permissions'
 alias oc='opencode'
 # ocs is now a utility script in ~/.acfs/bin/ocs for managing OpenCode server
 # oca is now a function (see above) for intelligent per-project server management

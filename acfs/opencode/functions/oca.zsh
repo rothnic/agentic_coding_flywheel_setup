@@ -20,11 +20,29 @@ oca() {
   # Check if server is running
   if ! opencode_is_server_running "$project_dir"; then
     echo "🚀 Starting OpenCode server for $(basename "$project_dir") on port $port..."
-    # Start server in background
-    opencode server start --port "$port" &>/dev/null &
+    # Start server in background (daemon mode)
+    opencode server --port "$port" &>/dev/null &
     local server_pid=$!
     echo "$server_pid" > "$pid_file"
-    sleep 3  # Give server time to start
+    
+    # Wait for server to be ready (poll status endpoint)
+    local max_attempts=30
+    local attempt=0
+    echo "Waiting for server to be ready..."
+    while [[ $attempt -lt $max_attempts ]]; do
+      if curl -s "http://localhost:$port/health" &>/dev/null || \
+         curl -s "http://localhost:$port/status" &>/dev/null || \
+         curl -s "http://localhost:$port/" &>/dev/null; then
+        echo "✓ Server ready on port $port"
+        break
+      fi
+      sleep 0.5
+      ((attempt++))
+    done
+    
+    if [[ $attempt -ge $max_attempts ]]; then
+      echo "⚠️  Warning: Server may not be fully ready yet (timed out after 15s)"
+    fi
   fi
   
   # Handle different invocation patterns
