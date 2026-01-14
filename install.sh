@@ -3662,6 +3662,7 @@ finalize() {
         "08_keeping_updated.md"
         "09_ru.md"
         "10_dcg.md"
+        "11_opencode.md"
     )
     local lesson
     for lesson in "${lesson_files[@]}"; do
@@ -3697,6 +3698,12 @@ finalize() {
     try_step "Setting acfs-update permissions" $SUDO chmod 755 "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Setting acfs-update ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$TARGET_HOME/.local/bin/acfs-update" || return 1
+
+    # Install ocs (OpenCode Server Manager) utility
+    log_detail "Installing ocs utility"
+    try_step "Installing ocs" install_asset "acfs/bin/ocs" "$ACFS_HOME/bin/ocs" || return 1
+    try_step "Setting ocs permissions" $SUDO chmod 755 "$ACFS_HOME/bin/ocs" || return 1
+    try_step "Setting ocs ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/ocs" || return 1
 
     # Install services-setup wizard
     try_step "Installing services-setup.sh" install_asset "scripts/services-setup.sh" "$ACFS_HOME/scripts/services-setup.sh" || return 1
