@@ -412,7 +412,8 @@ oca() {
   # Start server if not running
   if [[ "$server_running" == "false" ]]; then
     echo "🚀 Starting OpenCode server for $(basename "$project_dir") on port $port..."
-    opencode server start --port "$port" --daemon &>/dev/null &
+    # Start server in background, capture actual PID
+    opencode server --port "$port" &>/dev/null &
     local server_pid=$!
     echo "$server_pid" > "$pid_file"
     sleep 2  # Give server time to start
@@ -420,15 +421,15 @@ oca() {
   
   # Handle different invocation patterns
   if [[ $# -eq 0 ]]; then
-    # No arguments: Open TUI
-    opencode --attach "http://localhost:$port"
+    # No arguments: Open TUI attached to server
+    opencode attach "http://localhost:$port"
   elif [[ "$1" == "run" ]]; then
-    # Explicit run command
+    # Explicit run command: execute prompt in TUI mode
     shift
-    opencode run --attach "http://localhost:$port" "$@"
+    opencode run "$@"
   else
-    # Pass through all other commands
-    opencode --attach "http://localhost:$port" "$@"
+    # Pass through all other commands with proper context
+    opencode "$@"
   fi
 }
 
