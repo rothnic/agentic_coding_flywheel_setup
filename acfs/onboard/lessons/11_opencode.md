@@ -88,21 +88,34 @@ ocs restart
 
 ## Multi-Agent Workflows with NTM
 
-OpenCode integrates with NTM for coordinating multiple agents:
+OpenCode integrates seamlessly with NTM. You have two options:
+
+### Option 1: OpenCode-Only Sessions (via ocs)
 
 ```bash
-# Spawn 2 OpenCode agents + 1 architect
+# Spawn OpenCode agents directly
 ocs spawn myproject --oc=2 --oc-architect=1
 
-# Send commands to all agents
+# This creates tmux sessions compatible with ntm send
 ntm send myproject "Analyze authentication system"
-
-# Send to specific session
 ntm send myproject-architect-1 "Design scalable architecture"
-
-# Check resource usage
-ocs status
 ```
+
+### Option 2: Mixed Agent Sessions (via ntm)
+
+```bash
+# Spawn multiple agent types together
+ntm spawn myproject --cc=2 --cod=1 --oc=1 --gmi=1
+
+# Send to all agents
+ntm send myproject "Review this codebase"
+
+# Target specific agent types
+ntm send myproject --cc "Focus on code quality"
+ntm send myproject --oc "Check security patterns"
+```
+
+**Note:** `ocs spawn` creates OpenCode-specific sessions. Use `ntm spawn` to mix multiple agent types in one session.
 
 ---
 
@@ -243,12 +256,15 @@ opencode models
 Now that you understand OpenCode, try combining it with other agents:
 
 ```bash
-# Mix OpenCode with Claude and Codex
-ocs spawn project --oc=1
-ntm spawn project --cc=1 --cod=1
+# Mix OpenCode with Claude, Codex, and Gemini
+ntm spawn project --cc=1 --cod=1 --oc=1 --gmi=1
 
 # Send coordinated prompts
-ntm send project "Review this PR"
+ntm send project "Review this PR and suggest improvements"
+
+# Or use OpenCode-only for privacy-focused work
+ocs spawn private-project --oc=2
+ntm send private-project "Audit security practices"
 ```
 
 For more details, see `docs/opencode-integration.md`.

@@ -37,7 +37,7 @@ Verifies all required tools are installed.
 ### Create a Project Session
 
 ```bash
-ntm spawn myproject --cc=2 --cod=1 --gmi=1
+ntm spawn myproject --cc=2 --cod=1 --gmi=1 --oc=1
 ```
 
 This creates:
@@ -45,6 +45,7 @@ This creates:
 - 2 Claude Code panes
 - 1 Codex pane
 - 1 Gemini pane
+- 1 OpenCode pane
 
 ### List Sessions
 
@@ -71,6 +72,7 @@ This sends the same prompt to **all** agents in the session!
 ```bash
 ntm send myproject --cc "Focus on the API layer"
 ntm send myproject --cod "Focus on the frontend"
+ntm send myproject --oc "Review for security vulnerabilities"
 ```
 
 ---
@@ -94,13 +96,14 @@ That's the power of multi-agent development!
 For a typical project:
 
 ```bash
-ntm spawn myproject --cc=2 --cod=1 --gmi=1
+ntm spawn myproject --cc=2 --cod=1 --gmi=1 --oc=1
 ```
 
 Why this ratio?
 - **2 Claude** - Great for architecture and complex reasoning
 - **1 Codex** - Fast iteration and testing
 - **1 Gemini** - Different perspective, good for docs
+- **1 OpenCode** - Privacy-focused, versatile multi-provider agent
 
 ---
 
