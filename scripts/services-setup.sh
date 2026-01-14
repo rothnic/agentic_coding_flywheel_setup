@@ -113,6 +113,13 @@ user_file_exists() {
     [[ -f "$path" ]]
 }
 
+# Check if a directory exists (from current user perspective)
+# Used for checking config directories in target user's home
+user_dir_exists() {
+    local path="$1"
+    [[ -d "$path" ]]
+}
+
 # Check if a directory exists and is non-empty
 user_dir_has_content() {
     local path="$1"
