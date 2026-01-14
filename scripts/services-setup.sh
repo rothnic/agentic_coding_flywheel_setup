@@ -1234,7 +1234,7 @@ $(gum style --foreground "$ACFS_MUTED" "Configure AI agents and cloud services")
 $(gum style --foreground "$ACFS_TEAL" 'Your ACFS environment is configured!')
 
 $(gum style --foreground "$ACFS_MUTED" 'Next steps:')
-$(gum style --foreground "$ACFS_PRIMARY" '  • Start coding with:') $(gum style --foreground "$ACFS_ACCENT" 'cc') $(gum style --foreground "$ACFS_MUTED" '(Claude Code)')
+$(gum style --foreground "$ACFS_PRIMARY" '  • Start coding with:') $(gum style --foreground "$ACFS_ACCENT" 'cc, cod, gmi, oc')
 $(gum style --foreground "$ACFS_PRIMARY" '  • Create a project:') $(gum style --foreground "$ACFS_ACCENT" 'ntm new myproject')
 $(gum style --foreground "$ACFS_PRIMARY" '  • Run the onboarding:') $(gum style --foreground "$ACFS_ACCENT" 'onboard')
 
@@ -1243,7 +1243,7 @@ $(gum style --foreground "$ACFS_PINK" --bold '  Happy coding! 🚀')"
         gum_completion "Services Setup Complete" "Your ACFS environment is configured!
 
 Next steps:
-  • Start coding with: cc (Claude Code)
+  • Start coding with: cc, cod, gmi, oc
   • Create a project session: ntm new myproject
   • Run the onboarding: onboard
 

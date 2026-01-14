@@ -3847,13 +3847,14 @@ run_smoke_test() {
         ((critical_failed += 1))
     fi
 
-    # 6) claude, codex, gemini commands exist
+    # 6) claude, codex, gemini, opencode commands exist
     local missing_agents=()
     [[ -x "$TARGET_HOME/.local/bin/claude" || -x "$TARGET_HOME/.bun/bin/claude" ]] || missing_agents+=("claude")
     [[ -x "$TARGET_HOME/.bun/bin/codex" || -x "$TARGET_HOME/.local/bin/codex" ]] || missing_agents+=("codex")
     [[ -x "$TARGET_HOME/.bun/bin/gemini" || -x "$TARGET_HOME/.local/bin/gemini" ]] || missing_agents+=("gemini")
+    [[ -x "$TARGET_HOME/.local/bin/opencode" || -x "$TARGET_HOME/.bun/bin/opencode" ]] || missing_agents+=("opencode")
     if [[ ${#missing_agents[@]} -eq 0 ]]; then
-        echo "✅ Agents: claude, codex, gemini" >&2
+        echo "✅ Agents: claude, codex, gemini, opencode" >&2
         ((critical_passed += 1))
     else
         echo "✖ Agents: missing ${missing_agents[*]}" >&2
