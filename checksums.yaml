@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-01-17T22:01:52+00:00
+# checksums.yaml - Auto-generated 2026-01-18T08:01:43+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "03bd75d76b8c99fdeebcb334e4c46378ff1379d0256348ebd0119cb1d39dcb8c"
+    sha256: "4dc567579545803903456b54ec9cbf4f3ebc44db4ec22d77585389bad6adb44f"
 
   claude:
     url: "https://claude.ai/install.sh"
