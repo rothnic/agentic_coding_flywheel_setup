@@ -103,16 +103,24 @@ ntm send myproject-architect-1 "Design scalable architecture"
 
 ### Option 2: Mixed Agent Sessions (via ntm)
 
-```bash
-# Spawn multiple agent types together
-ntm spawn myproject --cc=2 --cod=1 --oc=1 --gmi=1
+**Note:** The `--oc` flag is not yet supported by ntm. Current workaround:
 
-# Send to all agents
+```bash
+# Spawn with supported agents
+ntm spawn myproject --cc=2 --cod=1 --gmi=1
+
+# Attach to session
+ntm attach myproject
+
+# In tmux: Ctrl+a then c to create new pane, then run:
+oca  # This opens OpenCode in the new pane
+
+# Send to ntm-supported agents
 ntm send myproject "Review this codebase"
 
-# Target specific agent types
+# Target specific agent types (OpenCode requires manual interaction)
 ntm send myproject --cc "Focus on code quality"
-ntm send myproject --oc "Check security patterns"
+ntm send myproject --cod "Focus on testing"
 ```
 
 **Note:** `ocs spawn` creates OpenCode-specific sessions. Use `ntm spawn` to mix multiple agent types in one session.
@@ -253,13 +261,17 @@ opencode models
 
 ## Next Steps
 
-Now that you understand OpenCode, try combining it with other agents:
+Now that you understand OpenCode, you can use it alongside other agents:
 
 ```bash
-# Mix OpenCode with Claude, Codex, and Gemini
-ntm spawn project --cc=1 --cod=1 --oc=1 --gmi=1
+# Spawn ntm session with supported agents
+ntm spawn project --cc=1 --cod=1 --gmi=1
 
-# Send coordinated prompts
+# Manually add OpenCode by attaching and opening new panes
+ntm attach project
+# In tmux: Ctrl+a then c, then run: oca
+
+# Send coordinated prompts to ntm-managed agents
 ntm send project "Review this PR and suggest improvements"
 
 # Or use OpenCode-only for privacy-focused work

@@ -37,7 +37,7 @@ Verifies all required tools are installed.
 ### Create a Project Session
 
 ```bash
-ntm spawn myproject --cc=2 --cod=1 --gmi=1 --oc=1
+ntm spawn myproject --cc=2 --cod=1 --gmi=1
 ```
 
 This creates:
@@ -45,7 +45,8 @@ This creates:
 - 2 Claude Code panes
 - 1 Codex pane
 - 1 Gemini pane
-- 1 OpenCode pane
+
+**Note:** OpenCode (`--oc`) support in ntm is coming soon. For now, manually open `oca` in additional panes after spawning the session.
 
 ### List Sessions
 
@@ -72,8 +73,10 @@ This sends the same prompt to **all** agents in the session!
 ```bash
 ntm send myproject --cc "Focus on the API layer"
 ntm send myproject --cod "Focus on the frontend"
-ntm send myproject --oc "Review for security vulnerabilities"
+ntm send myproject --gmi "Focus on the documentation"
 ```
+
+**Note:** To use OpenCode, manually open `oca` in a pane and interact directly.
 
 ---
 
@@ -96,7 +99,13 @@ That's the power of multi-agent development!
 For a typical project:
 
 ```bash
-ntm spawn myproject --cc=2 --cod=1 --gmi=1 --oc=1
+ntm spawn myproject --cc=2 --cod=1 --gmi=1
+```
+
+Then manually open OpenCode in additional panes if needed:
+```bash
+ntm attach myproject  # Attach to session
+# In tmux: Ctrl+a then c to create new pane, then run: oca
 ```
 
 Why this ratio?
