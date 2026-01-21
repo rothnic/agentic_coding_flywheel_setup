@@ -29,7 +29,7 @@ acfs-update
 That's it! This updates:
 - System packages (apt)
 - Shell tools (OMZ, P10K, plugins)
-- Coding agents (Claude, Codex, Gemini)
+- Coding agents (Claude, Codex, Gemini, OpenCode)
 - Cloud CLIs (Wrangler, Supabase, Vercel)
 - Language runtimes (Bun, Rust, uv)
 
@@ -135,6 +135,9 @@ bun install -g --trust @openai/codex@latest
 
 # Gemini
 bun install -g --trust @google/gemini-cli@latest
+
+# OpenCode
+opencode update
 ```
 
 ### Shell tools won't update

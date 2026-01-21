@@ -558,6 +558,34 @@ modules:
       - "Uses native installer with built-in 'claude update' command"
       - "Binary installed to ~/.local/bin/claude"
 
+  - id: agents.opencode
+    description: OpenCode CLI
+    category: agents
+    phase: 7
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    tags: [recommended, agent]
+    dependencies:
+      - base.system
+    installed_check:
+      run_as: target_user
+      command: "test -x ~/.local/bin/opencode"
+    verified_installer:
+      tool: opencode
+      runner: bash
+      args: ["--", "--no-modify-path"]
+    install:
+      - |
+        # Link opencode to ~/.local/bin
+        mkdir -p ~/.local/bin
+        ln -sf ~/.opencode/bin/opencode ~/.local/bin/opencode
+    verify:
+      - ~/.local/bin/opencode --version || ~/.local/bin/opencode --help
+    notes:
+      - "Uses native installer with --no-modify-path to avoid RC file changes"
+      - "Manually linked to ~/.local/bin/opencode"
+
   - id: agents.codex
     description: OpenAI Codex CLI
     category: agents
@@ -1316,3 +1344,36 @@ modules:
         chmod +x ~/.local/bin/acfs
     verify:
       - acfs doctor --help || command -v acfs
+
+  - id: acfs.utilities
+    description: ACFS utility scripts (ocs for OpenCode server management)
+    category: acfs
+    phase: 10
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    generated: false
+    tags: [orchestration, opencode]
+    dependencies:
+      - agents.opencode
+    notes:
+      - "Install ocs (OpenCode Server Manager) to ~/.acfs/bin/ocs"
+    install:
+      - mkdir -p ~/.acfs/bin
+      - |
+        # Install ocs (OpenCode Server Manager)
+        if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/acfs/bin/ocs" ]]; then
+          cp "${ACFS_BOOTSTRAP_DIR}/acfs/bin/ocs" ~/.acfs/bin/ocs
+        elif [[ -f "acfs/bin/ocs" ]]; then
+          cp "acfs/bin/ocs" ~/.acfs/bin/ocs
+        else
+          ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
+          CURL_ARGS=(-fsSL)
+          if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+            CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+          fi
+          curl "${CURL_ARGS[@]}" "${ACFS_RAW}/acfs/bin/ocs" -o ~/.acfs/bin/ocs
+        fi
+        chmod +x ~/.acfs/bin/ocs
+    verify:
+      - ocs --help || command -v ocs

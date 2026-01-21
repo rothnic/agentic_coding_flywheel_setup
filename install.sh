@@ -3662,6 +3662,7 @@ finalize() {
         "08_keeping_updated.md"
         "09_ru.md"
         "10_dcg.md"
+        "11_opencode.md"
     )
     local lesson
     for lesson in "${lesson_files[@]}"; do
@@ -3697,6 +3698,17 @@ finalize() {
     try_step "Setting acfs-update permissions" $SUDO chmod 755 "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Setting acfs-update ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$TARGET_HOME/.local/bin/acfs-update" || return 1
+
+    # Install OpenCode modular structure
+    log_detail "Installing OpenCode modular structure"
+    try_step "Creating OpenCode directories" $SUDO mkdir -p "$ACFS_HOME/opencode"/{bin,functions,config} || return 1
+    try_step "Installing OpenCode config" install_asset "acfs/opencode/config/opencode.conf.sh" "$ACFS_HOME/opencode/config/opencode.conf.sh" || return 1
+    try_step "Installing oca function" install_asset "acfs/opencode/functions/oca.zsh" "$ACFS_HOME/opencode/functions/oca.zsh" || return 1
+    try_step "Installing ocs utility" install_asset "acfs/bin/ocs" "$ACFS_HOME/opencode/bin/ocs" || return 1
+    try_step "Setting OpenCode permissions" $SUDO chmod 755 "$ACFS_HOME/opencode/bin/ocs" "$ACFS_HOME/opencode/config/opencode.conf.sh" "$ACFS_HOME/opencode/functions/oca.zsh" || return 1
+    try_step "Setting OpenCode ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/opencode" || return 1
+    # Symlink ocs to bin for backward compatibility
+    try_step "Linking ocs to bin" run_as_target ln -sf "$ACFS_HOME/opencode/bin/ocs" "$ACFS_HOME/bin/ocs" || return 1
 
     # Install services-setup wizard
     try_step "Installing services-setup.sh" install_asset "scripts/services-setup.sh" "$ACFS_HOME/scripts/services-setup.sh" || return 1
@@ -3847,13 +3859,14 @@ run_smoke_test() {
         ((critical_failed += 1))
     fi
 
-    # 6) claude, codex, gemini commands exist
+    # 6) claude, codex, gemini, opencode commands exist
     local missing_agents=()
     [[ -x "$TARGET_HOME/.local/bin/claude" || -x "$TARGET_HOME/.bun/bin/claude" ]] || missing_agents+=("claude")
     [[ -x "$TARGET_HOME/.bun/bin/codex" || -x "$TARGET_HOME/.local/bin/codex" ]] || missing_agents+=("codex")
     [[ -x "$TARGET_HOME/.bun/bin/gemini" || -x "$TARGET_HOME/.local/bin/gemini" ]] || missing_agents+=("gemini")
+    [[ -x "$TARGET_HOME/.local/bin/opencode" || -x "$TARGET_HOME/.bun/bin/opencode" ]] || missing_agents+=("opencode")
     if [[ ${#missing_agents[@]} -eq 0 ]]; then
-        echo "✅ Agents: claude, codex, gemini" >&2
+        echo "✅ Agents: claude, codex, gemini, opencode" >&2
         ((critical_passed += 1))
     else
         echo "✖ Agents: missing ${missing_agents[*]}" >&2

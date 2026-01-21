@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="c36c792a06e4c6ed3b45413945726cbe23a50f00602481dbd49266e735ab4ec8"
+ACFS_MANIFEST_SHA256="9d4f75f84e16be9ff50ae672d9ae07cbbe874672a882c9728f7af2767b35b29a"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -26,6 +26,7 @@ ACFS_MODULES_IN_ORDER=(
   "tools.zoxide"
   "tools.ast_grep"
   "agents.claude"
+  "agents.opencode"
   "agents.codex"
   "agents.gemini"
   "tools.vault"
@@ -49,6 +50,7 @@ ACFS_MODULES_IN_ORDER=(
   "acfs.onboard"
   "acfs.update"
   "acfs.doctor"
+  "acfs.utilities"
 )
 
 declare -gA ACFS_MODULE_PHASE=(
@@ -69,6 +71,7 @@ declare -gA ACFS_MODULE_PHASE=(
   [tools.zoxide]="6"
   [tools.ast_grep]="6"
   [agents.claude]="7"
+  [agents.opencode]="7"
   [agents.codex]="7"
   [agents.gemini]="7"
   [tools.vault]="8"
@@ -92,6 +95,7 @@ declare -gA ACFS_MODULE_PHASE=(
   [acfs.onboard]="10"
   [acfs.update]="10"
   [acfs.doctor]="10"
+  [acfs.utilities]="10"
 )
 
 declare -gA ACFS_MODULE_DEPS=(
@@ -112,6 +116,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [tools.zoxide]="base.system"
   [tools.ast_grep]="lang.rust"
   [agents.claude]="base.system"
+  [agents.opencode]="base.system"
   [agents.codex]="lang.bun"
   [agents.gemini]="lang.bun"
   [tools.vault]="base.system"
@@ -135,6 +140,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [acfs.onboard]=""
   [acfs.update]=""
   [acfs.doctor]=""
+  [acfs.utilities]="agents.opencode"
 )
 
 declare -gA ACFS_MODULE_FUNC=(
@@ -155,6 +161,7 @@ declare -gA ACFS_MODULE_FUNC=(
   [tools.zoxide]="install_tools_zoxide"
   [tools.ast_grep]="install_tools_ast_grep"
   [agents.claude]="install_agents_claude"
+  [agents.opencode]="install_agents_opencode"
   [agents.codex]="install_agents_codex"
   [agents.gemini]="install_agents_gemini"
   [tools.vault]="install_tools_vault"
@@ -178,6 +185,7 @@ declare -gA ACFS_MODULE_FUNC=(
   [acfs.onboard]="install_acfs_onboard"
   [acfs.update]="install_acfs_update"
   [acfs.doctor]="install_acfs_doctor"
+  [acfs.utilities]="install_acfs_utilities"
 )
 
 declare -gA ACFS_MODULE_CATEGORY=(
@@ -198,6 +206,7 @@ declare -gA ACFS_MODULE_CATEGORY=(
   [tools.zoxide]="tools"
   [tools.ast_grep]="tools"
   [agents.claude]="agents"
+  [agents.opencode]="agents"
   [agents.codex]="agents"
   [agents.gemini]="agents"
   [tools.vault]="tools"
@@ -221,6 +230,7 @@ declare -gA ACFS_MODULE_CATEGORY=(
   [acfs.onboard]="acfs"
   [acfs.update]="acfs"
   [acfs.doctor]="acfs"
+  [acfs.utilities]="acfs"
 )
 
 declare -gA ACFS_MODULE_TAGS=(
@@ -241,6 +251,7 @@ declare -gA ACFS_MODULE_TAGS=(
   [tools.zoxide]="recommended,shell-ux"
   [tools.ast_grep]="recommended"
   [agents.claude]="recommended,agent"
+  [agents.opencode]="recommended,agent"
   [agents.codex]="recommended,agent"
   [agents.gemini]="recommended,agent"
   [tools.vault]="optional,cloud"
@@ -264,6 +275,7 @@ declare -gA ACFS_MODULE_TAGS=(
   [acfs.onboard]="orchestration"
   [acfs.update]="orchestration"
   [acfs.doctor]="orchestration"
+  [acfs.utilities]="orchestration,opencode"
 )
 
 declare -gA ACFS_MODULE_DEFAULT=(
@@ -284,6 +296,7 @@ declare -gA ACFS_MODULE_DEFAULT=(
   [tools.zoxide]="1"
   [tools.ast_grep]="1"
   [agents.claude]="1"
+  [agents.opencode]="1"
   [agents.codex]="1"
   [agents.gemini]="1"
   [tools.vault]="0"
@@ -307,6 +320,7 @@ declare -gA ACFS_MODULE_DEFAULT=(
   [acfs.onboard]="1"
   [acfs.update]="1"
   [acfs.doctor]="1"
+  [acfs.utilities]="1"
 )
 
 ACFS_MANIFEST_INDEX_LOADED=true

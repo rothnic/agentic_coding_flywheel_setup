@@ -4,15 +4,16 @@
 
 ---
 
-## The Three Agents
+## The Four Agents
 
-You have three powerful coding agents installed:
+You have four powerful coding agents installed:
 
 | Agent | Command | Alias | Company |
 |-------|---------|-------|---------|
 | Claude Code | `claude` | `cc` | Anthropic |
 | Codex CLI | `codex` | `cod` | OpenAI |
 | Gemini CLI | `gemini` | `gmi` | Google |
+| OpenCode | `opencode` | `oc` | Anomaly |
 
 ---
 
@@ -41,6 +42,22 @@ codex --dangerously-bypass-approvals-and-sandbox
 gemini --yolo
 ```
 - YOLO mode (no confirmations)
+
+### `oc` (OpenCode)
+```bash
+opencode
+```
+- Interactive TUI mode
+- Shared server architecture (use `ocs` for server management)
+- Use `oca` to attach clients to running server
+
+**OpenCode Server Management:**
+```bash
+ocs                # Show help and available commands
+ocs start          # Start OpenCode server in background
+ocs status         # Check server status, connections, resource usage
+ocs spawn myproject --oc=2  # Spawn multiple agent sessions
+```
 
 ---
 
@@ -97,6 +114,39 @@ gemini
 ```
 Follow the prompts to authenticate with your Google account.
 
+### OpenCode
+```bash
+opencode
+```
+OpenCode will guide you through initial setup:
+1. Select your preferred AI providers (Anthropic, OpenAI, Google, etc.)
+2. Authenticate with each provider
+3. Choose default models
+
+**Quick Setup:**
+```bash
+# Start interactive setup
+oc
+
+# Check available models after setup
+opencode models
+
+# Test with a simple prompt
+oc "Hello! Please confirm you're working."
+```
+
+**Server Mode** (for multi-agent workflows):
+```bash
+# Start server in background
+ocs start
+
+# Connect a client
+oca "Your prompt here"
+
+# Check server status
+ocs status
+```
+
 ---
 
 ## Backup Your Credentials!
@@ -107,6 +157,7 @@ After logging in, **immediately** back up your credentials:
 caam backup claude my-main-account
 caam backup codex my-main-account
 caam backup gemini my-main-account
+caam backup opencode my-main-account
 ```
 
 Now you can switch accounts later with:
@@ -134,6 +185,10 @@ cod "Hello! Please confirm you're working."
 gmi "Hello! Please confirm you're working."
 ```
 
+```bash
+oc "Hello! Please confirm you're working."
+```
+
 ---
 
 ## Quick Tips
@@ -142,6 +197,7 @@ gmi "Hello! Please confirm you're working."
 2. **Be specific** - Clear instructions get better results
 3. **Check the output** - Agents can make mistakes
 4. **Use multiple agents** - Different agents have different strengths
+5. **Discover commands** - Run `ocs` to see OpenCode server management options
 
 ---
 
@@ -151,10 +207,13 @@ Let's verify your agents are ready:
 
 ```bash
 # Check which agents are installed
-which claude codex gemini
+which claude codex gemini opencode
 
 # Check your agent credential backups
 caam ls
+
+# Verify OpenCode server utility is available
+ocs --help
 
 # If you haven't logged in yet, start with Claude:
 claude auth login

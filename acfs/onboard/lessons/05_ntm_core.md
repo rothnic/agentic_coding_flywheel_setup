@@ -46,6 +46,8 @@ This creates:
 - 1 Codex pane
 - 1 Gemini pane
 
+**Note:** OpenCode (`--oc`) support in ntm is coming soon. For now, manually open `oca` in additional panes after spawning the session.
+
 ### List Sessions
 
 ```bash
@@ -71,7 +73,10 @@ This sends the same prompt to **all** agents in the session!
 ```bash
 ntm send myproject --cc "Focus on the API layer"
 ntm send myproject --cod "Focus on the frontend"
+ntm send myproject --gmi "Focus on the documentation"
 ```
+
+**Note:** To use OpenCode, manually open `oca` in a pane and interact directly.
 
 ---
 
@@ -97,10 +102,17 @@ For a typical project:
 ntm spawn myproject --cc=2 --cod=1 --gmi=1
 ```
 
+Then manually open OpenCode in additional panes if needed:
+```bash
+ntm attach myproject  # Attach to session
+# In tmux: Ctrl+a then c to create new pane, then run: oca
+```
+
 Why this ratio?
 - **2 Claude** - Great for architecture and complex reasoning
 - **1 Codex** - Fast iteration and testing
 - **1 Gemini** - Different perspective, good for docs
+- **1 OpenCode** - Privacy-focused, versatile multi-provider agent
 
 ---
 

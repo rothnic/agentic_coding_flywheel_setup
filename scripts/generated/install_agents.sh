@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: agents
-# Modules: 3
+# Modules: 4
 
 # Claude Code
 install_agents_claude() {
@@ -171,6 +171,97 @@ INSTALL_AGENTS_CLAUDE
     fi
 
     log_success "agents.claude installed"
+}
+
+# OpenCode CLI
+install_agents_opencode() {
+    local module_id="agents.opencode"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing agents.opencode"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: agents.opencode"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="opencode"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "agents.opencode: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--no-modify-path'; then
+                            install_success=true
+                        else
+                            log_error "agents.opencode: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "agents.opencode: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "agents.opencode: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "agents.opencode: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "agents.opencode: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for agents.opencode"
+                false
+            fi
+        }; then
+            log_error "agents.opencode: verified installer failed"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: # Link opencode to ~/.local/bin (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_AGENTS_OPENCODE'
+# Link opencode to ~/.local/bin
+mkdir -p ~/.local/bin
+ln -sf ~/.opencode/bin/opencode ~/.local/bin/opencode
+INSTALL_AGENTS_OPENCODE
+        then
+            log_error "agents.opencode: install command failed: # Link opencode to ~/.local/bin"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: ~/.local/bin/opencode --version || ~/.local/bin/opencode --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_AGENTS_OPENCODE'
+~/.local/bin/opencode --version || ~/.local/bin/opencode --help
+INSTALL_AGENTS_OPENCODE
+        then
+            log_error "agents.opencode: verify failed: ~/.local/bin/opencode --version || ~/.local/bin/opencode --help"
+            return 1
+        fi
+    fi
+
+    log_success "agents.opencode installed"
 }
 
 # OpenAI Codex CLI
@@ -277,6 +368,7 @@ INSTALL_AGENTS_GEMINI
 install_agents() {
     log_section "Installing agents modules"
     install_agents_claude
+    install_agents_opencode
     install_agents_codex
     install_agents_gemini
 }

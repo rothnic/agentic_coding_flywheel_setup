@@ -37,6 +37,9 @@ export BUN_INSTALL="$HOME/.bun"
 # Atuin (installer default)
 [[ -d "$HOME/.atuin/bin" ]] && export PATH="$HOME/.atuin/bin:$PATH"
 
+# ACFS utilities
+[[ -d "$HOME/.acfs/bin" ]] && export PATH="$HOME/.acfs/bin:$PATH"
+
 # Ensure user-local binaries take precedence (e.g., native Claude install).
 export PATH="$HOME/.local/bin:$PATH"
 
@@ -371,8 +374,20 @@ acfs() {
   esac
 }
 
+# --- OpenCode intelligent wrapper function ---
+# Load OpenCode configuration and oca function from modular structure
+if [[ -f "$HOME/.acfs/opencode/config/opencode.conf.sh" ]]; then
+  source "$HOME/.acfs/opencode/config/opencode.conf.sh"
+fi
+if [[ -f "$HOME/.acfs/opencode/functions/oca.zsh" ]]; then
+  source "$HOME/.acfs/opencode/functions/oca.zsh"
+fi
+
 # --- Agent aliases (dangerously enabled by design) ---
 alias cc='NODE_OPTIONS="--max-old-space-size=32768" ~/.local/bin/claude --dangerously-skip-permissions'
+alias oc='opencode'
+# ocs is now a utility script in ~/.acfs/bin/ocs for managing OpenCode server
+# oca is now a function (see above) for intelligent per-project server management
 alias cod='codex --dangerously-bypass-approvals-and-sandbox'
 alias gmi='gemini --yolo'
 

@@ -29,6 +29,18 @@ Use it to:
 - Send prompts to multiple agents
 - Orchestrate parallel work
 
+**Agents available:**
+- `--cc` Claude Code
+- `--cod` Codex CLI
+- `--gmi` Gemini CLI
+
+**Note:** OpenCode (`--oc`) can be used separately with the `oca` command (see lesson 11).
+
+For OpenCode server mode, see lesson 11:
+```bash
+onboard 11  # Learn about OpenCode's unique architecture
+```
+
 ### 2. MCP Agent Mail - Coordination
 **Command:** `am` (starts server)
 
@@ -131,7 +143,7 @@ bv                              # Check tasks
 bd ready                        # See what's ready to work on
 
 # 2. Start your agents
-ntm spawn myproject --cc=2 --cod=1
+ntm spawn myproject --cc=2 --cod=1 --gmi=1
 
 # 3. Set context
 cm context "Implementing user authentication" --json

@@ -113,6 +113,13 @@ user_file_exists() {
     [[ -f "$path" ]]
 }
 
+# Check if a directory exists (from current user perspective)
+# Used for checking config directories in target user's home
+user_dir_exists() {
+    local path="$1"
+    [[ -d "$path" ]]
+}
+
 # Check if a directory exists and is non-empty
 user_dir_has_content() {
     local path="$1"
@@ -388,6 +395,25 @@ check_gemini_status() {
     fi
 }
 
+check_opencode_status() {
+    local opencode_bin
+    opencode_bin="$(find_user_bin "opencode" 2>/dev/null || true)"
+
+    if [[ -z "$opencode_bin" || ! -x "$opencode_bin" ]]; then
+        SERVICE_STATUS[opencode]="not_installed"
+        return
+    fi
+
+    # Check for OpenCode configuration
+    # OpenCode stores config in ~/.opencode/ or ~/.config/opencode/
+    if user_dir_exists "$TARGET_HOME/.opencode" || \
+       user_dir_exists "$TARGET_HOME/.config/opencode"; then
+        SERVICE_STATUS[opencode]="configured"
+    else
+        SERVICE_STATUS[opencode]="installed"
+    fi
+}
+
 check_vercel_status() {
     local vercel_bin="$TARGET_HOME/.bun/bin/vercel"
 
@@ -482,6 +508,7 @@ check_all_status() {
     check_claude_status
     check_codex_status
     check_gemini_status
+    check_opencode_status
     check_vercel_status
     check_supabase_status
     check_wrangler_status
@@ -518,9 +545,9 @@ print_status_table() {
     gum_section "Service Status"
     echo ""
 
-    local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
-    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare" "PostgreSQL")
-    local categories=("AI Agent" "AI Agent" "AI Agent" "Cloud" "Cloud" "Cloud" "Database")
+    local services=("claude" "codex" "gemini" "opencode" "vercel" "supabase" "wrangler" "postgres")
+    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "OpenCode CLI" "Vercel" "Supabase" "Cloudflare" "PostgreSQL")
+    local categories=("AI Agent" "AI Agent" "AI Agent" "AI Agent" "Cloud" "Cloud" "Cloud" "Database")
 
     if [[ "$HAS_GUM" == "true" ]]; then
         # Use gum table for beautiful display
@@ -1214,7 +1241,7 @@ $(gum style --foreground "$ACFS_MUTED" "Configure AI agents and cloud services")
 $(gum style --foreground "$ACFS_TEAL" 'Your ACFS environment is configured!')
 
 $(gum style --foreground "$ACFS_MUTED" 'Next steps:')
-$(gum style --foreground "$ACFS_PRIMARY" '  • Start coding with:') $(gum style --foreground "$ACFS_ACCENT" 'cc') $(gum style --foreground "$ACFS_MUTED" '(Claude Code)')
+$(gum style --foreground "$ACFS_PRIMARY" '  • Start coding with:') $(gum style --foreground "$ACFS_ACCENT" 'cc, cod, gmi, oc')
 $(gum style --foreground "$ACFS_PRIMARY" '  • Create a project:') $(gum style --foreground "$ACFS_ACCENT" 'ntm new myproject')
 $(gum style --foreground "$ACFS_PRIMARY" '  • Run the onboarding:') $(gum style --foreground "$ACFS_ACCENT" 'onboard')
 
@@ -1223,7 +1250,7 @@ $(gum style --foreground "$ACFS_PINK" --bold '  Happy coding! 🚀')"
         gum_completion "Services Setup Complete" "Your ACFS environment is configured!
 
 Next steps:
-  • Start coding with: cc (Claude Code)
+  • Start coding with: cc, cod, gmi, oc
   • Create a project session: ntm new myproject
   • Run the onboarding: onboard
 

@@ -347,7 +347,7 @@ main() {
             echo "Next steps:"
             echo "  1. Log out and back in (or run: source ~/.zshrc)"
             echo "  2. Run: onboard"
-            echo "  3. Start coding with: cc, cod, or gmi"
+            echo "  3. Start coding with: cc, cod, gmi, or oc"
         else
             # Only show log viewing instructions if logs exist
             if [[ -f "$ACFS_INSTALL_LOG" ]] || [[ -f "$ACFS_UPGRADE_LOG" ]]; then

@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: acfs
-# Modules: 4
+# Modules: 5
 
 # Agent workspace with tmux session and project folder
 install_acfs_workspace() {
@@ -400,6 +400,64 @@ INSTALL_ACFS_DOCTOR
     log_success "acfs.doctor installed"
 }
 
+# ACFS utility scripts (ocs for OpenCode server management)
+install_acfs_utilities() {
+    local module_id="acfs.utilities"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing acfs.utilities"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: mkdir -p ~/.acfs/bin (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UTILITIES'
+mkdir -p ~/.acfs/bin
+INSTALL_ACFS_UTILITIES
+        then
+            log_error "acfs.utilities: install command failed: mkdir -p ~/.acfs/bin"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: # Install ocs (OpenCode Server Manager) (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UTILITIES'
+# Install ocs (OpenCode Server Manager)
+if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/acfs/bin/ocs" ]]; then
+  cp "${ACFS_BOOTSTRAP_DIR}/acfs/bin/ocs" ~/.acfs/bin/ocs
+elif [[ -f "acfs/bin/ocs" ]]; then
+  cp "acfs/bin/ocs" ~/.acfs/bin/ocs
+else
+  ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
+  CURL_ARGS=(-fsSL)
+  if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+    CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+  fi
+  curl "${CURL_ARGS[@]}" "${ACFS_RAW}/acfs/bin/ocs" -o ~/.acfs/bin/ocs
+fi
+chmod +x ~/.acfs/bin/ocs
+INSTALL_ACFS_UTILITIES
+        then
+            log_error "acfs.utilities: install command failed: # Install ocs (OpenCode Server Manager)"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: ocs --help || command -v ocs (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UTILITIES'
+ocs --help || command -v ocs
+INSTALL_ACFS_UTILITIES
+        then
+            log_error "acfs.utilities: verify failed: ocs --help || command -v ocs"
+            return 1
+        fi
+    fi
+
+    log_success "acfs.utilities installed"
+}
+
 # Install all acfs modules
 install_acfs() {
     log_section "Installing acfs modules"
@@ -407,6 +465,7 @@ install_acfs() {
     install_acfs_onboard
     install_acfs_update
     install_acfs_doctor
+    install_acfs_utilities
 }
 
 # Run if executed directly

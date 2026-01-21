@@ -696,6 +696,8 @@ check_agents() {
         "Re-run: curl -fsSL https://claude.ai/install.sh | bash"
     check_command "agent.codex" "Codex CLI" "codex" "bun install -g --trust @openai/codex@latest"
     check_command "agent.gemini" "Gemini CLI" "gemini" "bun install -g --trust @google/gemini-cli@latest"
+    check_command "agent.opencode" "OpenCode CLI" "opencode" \
+        "Re-run installer or: curl -fsSL https://opencode.ai/install.sh | bash"
 
     # Check aliases are defined in the zshrc
     if grep -q "^alias cc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
@@ -714,6 +716,18 @@ check_agents() {
         check "agent.alias.gmi" "gmi alias" "pass"
     else
         check "agent.alias.gmi" "gmi alias" "warn" "not in zshrc"
+    fi
+    
+    if grep -q "^alias oc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+        check "agent.alias.oc" "oc alias" "pass"
+    else
+        check "agent.alias.oc" "oc alias" "warn" "not in zshrc"
+    fi
+    
+    if grep -q "^alias oca=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+        check "agent.alias.oca" "oca alias" "pass"
+    else
+        check "agent.alias.oca" "oca alias" "warn" "not in zshrc"
     fi
 
     # Check for PATH conflicts (bead hi7)
@@ -1108,6 +1122,7 @@ deep_check_agent_auth() {
     check_claude_auth
     check_codex_auth
     check_gemini_auth
+    check_opencode_auth
 }
 
 # check_claude_auth - Thorough Claude Code authentication check
@@ -1270,6 +1285,49 @@ check_gemini_auth() {
         check "deep.agent.gemini_auth" "Gemini CLI auth" "pass" "authenticated"
     else
         check "deep.agent.gemini_auth" "Gemini CLI auth" "warn" "not logged in" "Run 'gemini' to authenticate via browser"
+    fi
+}
+
+# check_opencode_auth - Thorough OpenCode CLI authentication check
+# OpenCode uses provider-based auth (similar to using multiple APIs)
+# Config location: ~/.opencode/ or ~/.config/opencode/
+# Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
+check_opencode_auth() {
+    # Skip if not installed
+    if ! command -v opencode &>/dev/null; then
+        check "deep.agent.opencode_auth" "OpenCode CLI" "warn" "not installed" "Re-run installer"
+        return
+    fi
+
+    # Check if binary works
+    if ! opencode --version &>/dev/null; then
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "fail" "binary error" "Reinstall: curl -fsSL https://opencode.ai/install.sh | bash"
+        return
+    fi
+
+    # Check for config directory (indicates setup)
+    local found_config=false
+    if [[ -d "$HOME/.opencode" ]] && [[ -n "$(ls -A "$HOME/.opencode" 2>/dev/null)" ]]; then
+        found_config=true
+    fi
+    
+    if [[ -d "$HOME/.config/opencode" ]] && [[ -n "$(ls -A "$HOME/.config/opencode" 2>/dev/null)" ]]; then
+        found_config=true
+    fi
+
+    # Try to check if models are available (indicates provider auth)
+    # This is a lightweight check - doesn't make API calls, just checks config
+    local has_models=false
+    if opencode models 2>&1 | grep -qiE "(anthropic|openai|google|gemini|claude|gpt)" 2>/dev/null; then
+        has_models=true
+    fi
+
+    if [[ "$has_models" == "true" ]]; then
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "pass" "providers configured"
+    elif [[ "$found_config" == "true" ]]; then
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "warn" "config exists but no providers detected" "Run: opencode auth login"
+    else
+        check "deep.agent.opencode_auth" "OpenCode CLI auth" "warn" "not configured" "Run: opencode to start initial setup"
     fi
 }
 

@@ -26,6 +26,10 @@ installers:
     url: "https://claude.ai/install.sh"
     sha256: "363382bed8849f78692bd2f15167a1020e1f23e7da1476ab8808903b6bebae05"
 
+  opencode:
+    url: "https://opencode.ai/install"
+    sha256: "12eb351c4875b27889ccfa4686cf99eb6815957d287ceab4cfe1107802c48671"
+
   atuin:
     url: "https://setup.atuin.sh"
     sha256: "7cfabf7e18c03953f3fbd9288c97d9d8b47df3666da522ef903608de617370e7"
