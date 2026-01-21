@@ -683,6 +683,26 @@ update_agents() {
     else
         log_item "skip" "Gemini CLI" "not installed (use --force to install)"
     fi
+
+    # OpenCode CLI - has native update command
+    if cmd_exists opencode; then
+        capture_version_before "opencode"
+        
+        # Try native update first
+        if run_cmd "OpenCode CLI" opencode update; then
+            # Show version change without double-counting (run_cmd already incremented SUCCESS_COUNT)
+            if capture_version_after "opencode"; then
+                [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[opencode]} → ${VERSION_AFTER[opencode]}${NC}"
+            fi
+        else
+            log_to_file "OpenCode update failed"
+            log_item "fail" "OpenCode CLI" "update failed"
+        fi
+    elif [[ "$FORCE_MODE" == "true" ]]; then
+        log_item "skip" "OpenCode CLI" "not installed (install via acfs installer)"
+    else
+        log_item "skip" "OpenCode CLI" "not installed (use --force to attempt install)"
+    fi
 }
 
 # Helper for Claude update with proper error handling
@@ -1461,7 +1481,7 @@ USAGE:
 
 CATEGORY OPTIONS (select what to update):
   --apt-only         Only update system packages (apt)
-  --agents-only      Only update coding agents (Claude, Codex, Gemini)
+  --agents-only      Only update coding agents (Claude, Codex, Gemini, OpenCode)
   --cloud-only       Only update cloud CLIs (Wrangler, Supabase, Vercel)
   --shell-only       Only update shell tools (OMZ, P10K, plugins, Atuin, Zoxide)
   --runtime-only     Only update runtimes (Bun, Rust, uv, Go)
