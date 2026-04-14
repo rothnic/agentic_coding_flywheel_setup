@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-04-13T22:12:38+00:00
+# checksums.yaml - Auto-generated 2026-04-14T16:21:29+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -24,11 +24,11 @@ installers:
 
   claude:
     url: "https://claude.ai/install.sh"
-    sha256: "FETCH_FAILED"
+    sha256: "431889ac7d056f636aaf5b71524666d04c89c45560f80329940846479d484778"
 
   atuin:
     url: "https://setup.atuin.sh"
-    sha256: "141da3ae67dcc2cad979837b63126eba7f7d63dc0fcdaa1a75af82837d77139e"
+    sha256: "3e709edea36c6bccfaa19d9ba82c53323da41dd2e8eb05509682c9a60f939bd4"
 
   bun:
     url: "https://bun.sh/install"
