@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-08-02T16:17:44+00:00
+# checksums.yaml - Auto-generated 2026-08-04T05:00:09+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -12,7 +12,7 @@ installers:
 
   cass:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    sha256: "ceb371c5ac476b98272a312aacd652fbb8795e707a767cb3c31e053da09dd035"
+    sha256: "c1b0fd72dfabdcf6d0edc59eb1fbc8132a0c5ffc5159f935f3144d450e693276"
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "8dce900f5897d1fcc9e9d6b40fa71f6911416bd5262432c21fe077e5a169a224"
+    sha256: "70bbe17a1df7b74816d9bd20d2fab5ecca2b325bf603d580e794e5df8d825c3a"
 
   claude:
     url: "https://claude.ai/install.sh"
