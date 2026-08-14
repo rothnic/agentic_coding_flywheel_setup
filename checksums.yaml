@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-08-13T22:12:58+00:00
+# checksums.yaml - Auto-generated 2026-08-14T02:49:49+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -28,7 +28,7 @@ installers:
 
   atuin:
     url: "https://setup.atuin.sh"
-    sha256: "9467a9ab89f6993c00593fee6442d0d97483526a657a5af747c404c48d694f1d"
+    sha256: "4ee016da983caba26a9f7f7df1a6dbe8f6104467211e570fb5ae35601be92a63"
 
   bun:
     url: "https://bun.sh/install"
