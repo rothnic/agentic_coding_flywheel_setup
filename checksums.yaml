@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-10-12T20:02:23+00:00
+# checksums.yaml - Auto-generated 2026-10-13T02:16:36+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -76,7 +76,7 @@ installers:
 
   csctf:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
-    sha256: "ac51a9bc5e00f4c5703d564f1e78aaca60c39162ff3b1c38835245a8bff42cc4"
+    sha256: "41c88bdf7c211e96f73fd9865fde6251eeb3c611a4f6db51a9af3af4f332f000"
 
   ohmyzsh:
     url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
