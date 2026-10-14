@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-10-14T06:03:32+00:00
+# checksums.yaml - Auto-generated 2026-10-14T20:02:16+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "470fb6ad0b886e3a1c9e801f3c074d7fc36ec572faf277b9666aea07eccc3567"
+    sha256: "a62e0030f292ee273cc87b28f57e6bf1cf9c1aee931dacc471cfe769518073b8"
 
   claude:
     url: "https://claude.ai/install.sh"
@@ -56,7 +56,7 @@ installers:
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
-    sha256: "dc9b0680d581b481147dc9b89f3cf78c9d0e3fbfcae19185c66aaae1e0b1bedd"
+    sha256: "52f0ef85f2e5199bdc4e7c5a416ec31072c6e7068b09d1ec6569e74d9ff050cd"
 
   ru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
@@ -76,7 +76,7 @@ installers:
 
   csctf:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
-    sha256: "41c88bdf7c211e96f73fd9865fde6251eeb3c611a4f6db51a9af3af4f332f000"
+    sha256: "141745248d42bbacb22081f7de1528f31c29c3537d1c7c3989f3a635fc2d9524"
 
   ohmyzsh:
     url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
