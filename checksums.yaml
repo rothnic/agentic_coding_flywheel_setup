@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-10-21T02:05:02+00:00
+# checksums.yaml - Auto-generated 2026-10-21T14:02:30+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -68,7 +68,7 @@ installers:
 
   rust:
     url: "https://sh.rustup.rs"
-    sha256: "7d0ea0f8eba7fa1ebfe998091cd7ec4501e33ec5ca6b884eb4d894d7da5170af"
+    sha256: "9502b514362a21096210d498f143b8cdacda365d3dfcf45e8f5541e089ccafc0"
 
   bv:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
