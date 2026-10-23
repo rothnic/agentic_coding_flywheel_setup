@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-10-22T02:04:33+00:00
+# checksums.yaml - Auto-generated 2026-10-23T22:02:00+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "6f5cec8060f0ca6253f6751cdcce0a7055c9fa6897a6ead3644ea7af4e441d42"
+    sha256: "9580b0ace3dceb034b9a24a8118158dc1b8ed287b925a6550561e0b2e21770dc"
 
   claude:
     url: "https://claude.ai/install.sh"
@@ -76,7 +76,7 @@ installers:
 
   csctf:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
-    sha256: "f22f92d30d8afea5c54c63d2515b35df415c6174e4a804200339293fe7ef155c"
+    sha256: "14acc19faa8fc8a11ea10144e93d3c9cba4682e77e894f97b988e351f9466360"
 
   ohmyzsh:
     url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
