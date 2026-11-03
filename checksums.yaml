@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-11-03T04:01:20+00:00
+# checksums.yaml - Auto-generated 2026-11-03T08:01:27+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -28,7 +28,7 @@ installers:
 
   atuin:
     url: "https://setup.atuin.sh"
-    sha256: "68096db7ee8faa96e6950c24db5dc6e7430958a76ac9842409354acfffc52347"
+    sha256: "6c4aba2c831734a8a3c9a924c1199cae05520bf0b359d5e996666a9e9f0e44bf"
 
   bun:
     url: "https://bun.sh/install"
@@ -52,11 +52,11 @@ installers:
 
   ubs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
-    sha256: "1c21066f9eebda6ad7aabf20becd2cf88a34d871b0c9f4e69de6f42c6bcba88f"
+    sha256: "8f25f88557ce66f08d8c1fe144ef009a86a0dc5aedb4b92797f5036541faff42"
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
-    sha256: "52f0ef85f2e5199bdc4e7c5a416ec31072c6e7068b09d1ec6569e74d9ff050cd"
+    sha256: "5ae8ab030d372a8bd22460fabd647427a5903d076ad93da198465d2b280acc1d"
 
   ru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
