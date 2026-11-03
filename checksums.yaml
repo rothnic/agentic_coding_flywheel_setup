@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-11-03T12:01:35+00:00
+# checksums.yaml - Auto-generated 2026-11-03T16:01:16+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "cbd44d26155b186f15b2940778a46d0ddba526b99b1ec7b458cc9d148613991a"
+    sha256: "bc751160564dd5b8b62b6fb480c51128056ba385a617095969c54a8ca86d9c6b"
 
   claude:
     url: "https://claude.ai/install.sh"
@@ -28,7 +28,7 @@ installers:
 
   atuin:
     url: "https://setup.atuin.sh"
-    sha256: "FETCH_FAILED"
+    sha256: "6c4aba2c831734a8a3c9a924c1199cae05520bf0b359d5e996666a9e9f0e44bf"
 
   bun:
     url: "https://bun.sh/install"
@@ -52,7 +52,7 @@ installers:
 
   ubs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
-    sha256: "8f25f88557ce66f08d8c1fe144ef009a86a0dc5aedb4b92797f5036541faff42"
+    sha256: "b331f58e0c8447ebf716baf5f39799d34079072f4b469fd523d487836f9813ba"
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
@@ -68,7 +68,7 @@ installers:
 
   rust:
     url: "https://sh.rustup.rs"
-    sha256: "9502b514362a21096210d498f143b8cdacda365d3dfcf45e8f5541e089ccafc0"
+    sha256: "d890e2fef6fa991b19cde2e608199bc1dca4e37f41f884edf8849ff693048de6"
 
   bv:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
