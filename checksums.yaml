@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-11-03T18:01:20+00:00
+# checksums.yaml - Auto-generated 2026-11-04T06:02:28+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -48,7 +48,7 @@ installers:
 
   caam:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
-    sha256: "f09c75e3e606f9ac854ca2fe3941c49ea8d4ca43f7c210fa47f7cf91f23f2273"
+    sha256: "63ed7d17bb229e2edb1791fff4d7455ad054d9f3f778eaf6abb215073ac02c7e"
 
   ubs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
