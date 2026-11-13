@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-11-12T18:01:16+00:00
+# checksums.yaml - Auto-generated 2026-11-13T02:01:16+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -28,7 +28,7 @@ installers:
 
   atuin:
     url: "https://setup.atuin.sh"
-    sha256: "FETCH_FAILED"
+    sha256: "6c4aba2c831734a8a3c9a924c1199cae05520bf0b359d5e996666a9e9f0e44bf"
 
   bun:
     url: "https://bun.sh/install"
@@ -72,7 +72,7 @@ installers:
 
   bv:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
-    sha256: "13a80ec48ef72b3f50f2f9ce49453175dc5e80afcf11f996ec2ed97356544f0c"
+    sha256: "40346fed6a633ca2504e9308e32b283636556efc66fb77051c39b8f1bc831efe"
 
   csctf:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
