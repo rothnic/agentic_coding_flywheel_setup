@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-11-25T04:01:22+00:00
+# checksums.yaml - Auto-generated 2026-11-25T16:01:16+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -56,7 +56,7 @@ installers:
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
-    sha256: "5ae8ab030d372a8bd22460fabd647427a5903d076ad93da198465d2b280acc1d"
+    sha256: "eba090a2c69cdf5d366277ee787a74de2316d18e209085df528a22a5552da56c"
 
   ru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
